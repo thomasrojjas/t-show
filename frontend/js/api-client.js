@@ -84,7 +84,7 @@ const ApiClient = {
             try {
                 const res = await fetch(`${this.baseUrl}/api/projects`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json; charset=utf-8' },
                     body: JSON.stringify(projectData)
                 });
                 const resJson = await res.json();

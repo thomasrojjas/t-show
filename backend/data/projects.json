@@ -9,16 +9,139 @@
     "showStartMode": "auto",
     "showStartTimeInput": "20:30",
     "blocks": [
-      { "id": "b1", "type": "ANIMACIÓN", "title": "Animadores: Bienvenida & Presentación Inicial", "duration": 15, "bis": 0 },
-      { "id": "b2", "type": "SHOW", "title": "Artista 1 - Show Principal", "duration": 55, "bis": 10 },
-      { "id": "b3", "type": "ANIMACIÓN", "title": "Animadores: Concursos / Intervención", "duration": 15, "bis": 0 },
-      { "id": "b4", "type": "SHOW", "title": "Artista 2 - Show Estelar", "duration": 60, "bis": 15 },
-      { "id": "b5", "type": "SHOW", "title": "Coronación", "duration": 30, "bis": 0 },
-      { "id": "b6", "type": "ANIMACIÓN", "title": "Animadores: Intervención / Sorteo", "duration": 10, "bis": 0 },
-      { "id": "b7", "type": "SHOW", "title": "Artista 4 - Presentation", "duration": 60, "bis": 10 },
-      { "id": "b8", "type": "ANIMACIÓN", "title": "Animadores: Despedida & Cierre del Evento", "duration": 10, "bis": 0 }
+      {
+        "id": "b1",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Bienvenida & Presentación Inicial",
+        "duration": 15,
+        "bis": 0
+      },
+      {
+        "id": "b2",
+        "type": "SHOW",
+        "title": "Artista 1 - Show Principal",
+        "duration": 55,
+        "bis": 10
+      },
+      {
+        "id": "b3",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Concursos / Intervención",
+        "duration": 15,
+        "bis": 0
+      },
+      {
+        "id": "b4",
+        "type": "SHOW",
+        "title": "Artista 2 - Show Estelar",
+        "duration": 60,
+        "bis": 15
+      },
+      {
+        "id": "b5",
+        "type": "SHOW",
+        "title": "Coronación",
+        "duration": 30,
+        "bis": 0
+      },
+      {
+        "id": "b6",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Intervención / Sorteo",
+        "duration": 10,
+        "bis": 0
+      },
+      {
+        "id": "b7",
+        "type": "SHOW",
+        "title": "Artista 4 - Presentation",
+        "duration": 60,
+        "bis": 10
+      },
+      {
+        "id": "b8",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Despedida & Cierre del Evento",
+        "duration": 10,
+        "bis": 0
+      }
     ],
     "savedAt": "2026-08-13 20:30:00",
     "updatedAt": "2026-08-13 20:30:00"
+  },
+  "Show de Coronación de Reina de Aniversario": {
+    "eventName": "Show de Coronación de Reina de Aniversario",
+    "convocatoriaTime": "18:30",
+    "convocatoriaDuration": 30,
+    "doorsTime": "19:30",
+    "doorsDuration": 60,
+    "showStartMode": "auto",
+    "showStartTimeInput": "20:30",
+    "blocks": [
+      {
+        "id": "b_1786670966264_5cqir",
+        "type": "PREPARACIÓN",
+        "title": "Videos de Seguridad",
+        "duration": 10,
+        "bis": 0
+      },
+      {
+        "id": "b1",
+        "type": "ANIMACIÓN",
+        "title": "Bienvenida & Presentación Inicial",
+        "duration": 15,
+        "bis": 0
+      },
+      {
+        "id": "b2",
+        "type": "SHOW",
+        "title": "Artista 1 - Show Principal",
+        "duration": 55,
+        "bis": 10
+      },
+      {
+        "id": "b3",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Concursos / Intervención",
+        "duration": 15,
+        "bis": 0
+      },
+      {
+        "id": "b4",
+        "type": "SHOW",
+        "title": "Artista 2 - Show Estelar",
+        "duration": 60,
+        "bis": 15
+      },
+      {
+        "id": "b5",
+        "type": "SHOW",
+        "title": "Coronación",
+        "duration": 30,
+        "bis": 0
+      },
+      {
+        "id": "b6",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Intervención / Sorteo",
+        "duration": 10,
+        "bis": 0
+      },
+      {
+        "id": "b7",
+        "type": "SHOW",
+        "title": "Artista 4 - Presentation",
+        "duration": 60,
+        "bis": 10
+      },
+      {
+        "id": "b8",
+        "type": "ANIMACIÓN",
+        "title": "Animadores: Despedida & Cierre del Evento",
+        "duration": 10,
+        "bis": 0
+      }
+    ],
+    "updatedAt": "13-08-2026, 9:32:22 p. m."
   }
 }

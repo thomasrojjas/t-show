@@ -23,6 +23,7 @@ Write-Host "====================================================" -ForegroundCol
 
 $dataFilePath = Join-Path $baseDir "backend\data\projects.json"
 $frontendDir = Join-Path $baseDir "frontend"
+$utf8 = [System.Text.Encoding]::UTF8
 
 $mimeTypes = @{
     ".html" = "text/html; charset=utf-8"
@@ -33,6 +34,13 @@ $mimeTypes = @{
     ".jpg"  = "image/jpeg"
     ".svg"  = "image/svg+xml"
     ".ico"  = "image/x-icon"
+}
+
+function Read-ProjectsRaw {
+    if (Test-Path $dataFilePath) {
+        return [System.IO.File]::ReadAllText($dataFilePath, $utf8)
+    }
+    return "{}"
 }
 
 while ($listener.IsListening) {
@@ -57,8 +65,8 @@ while ($listener.IsListening) {
         # API Endpoints
         if ($urlPath -eq "/api/health") {
             $response.ContentType = "application/json; charset=utf-8"
-            $jsonResp = @{ status = "ok"; server = "PowerShell REST Server"; time = (Get-Date).ToString("o") } | ConvertTo-Json
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($jsonResp)
+            $jsonResp = "{ `"status`": `"ok`", `"server`": `"PowerShell REST Server (UTF-8)`", `"time`": `"$((Get-Date).ToString("o"))`" }"
+            $buffer = $utf8.GetBytes($jsonResp)
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
@@ -66,35 +74,32 @@ while ($listener.IsListening) {
 
         if ($urlPath -eq "/api/projects" -and $request.HttpMethod -eq "GET") {
             $response.ContentType = "application/json; charset=utf-8"
-            $content = "{}"
-            if (Test-Path $dataFilePath) { $content = Get-Content $dataFilePath -Raw -Encoding UTF8 }
-            $jsonObj = $content | ConvertFrom-Json
-            $respData = @{ success = $true; count = ($jsonObj.PSObject.Properties | Measure-Object).Count; data = $jsonObj } | ConvertTo-Json -Depth 10
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($respData)
+            $rawContent = Read-ProjectsRaw
+            $respData = "{ `"success`": true, `"data`": $rawContent }"
+            $buffer = $utf8.GetBytes($respData)
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
         }
 
         if ($urlPath -eq "/api/projects" -and $request.HttpMethod -eq "POST") {
-            $reader = New-Object System.IO.StreamReader($request.InputStream, $request.ContentEncoding)
+            $reader = New-Object System.IO.StreamReader($request.InputStream, $utf8)
             $body = $reader.ReadToEnd()
             $reader.Close()
 
             $newProj = $body | ConvertFrom-Json
-            $existing = @{}
-            if (Test-Path $dataFilePath) {
-                $rawExisting = Get-Content $dataFilePath -Raw -Encoding UTF8
-                if ($rawExisting) { $existing = $rawExisting | ConvertFrom-Json }
-            }
+            $rawContent = Read-ProjectsRaw
+            $existing = if ($rawContent -and $rawContent -ne "{}") { $rawContent | ConvertFrom-Json } else { [PSCustomObject]@{} }
 
             $name = $newProj.eventName
             $existing | Add-Member -MemberType NoteProperty -Name $name -Value $newProj -Force
-            $existing | ConvertTo-Json -Depth 10 | Set-Content $dataFilePath -Encoding UTF8
+            
+            $jsonToSave = $existing | ConvertTo-Json -Depth 10
+            [System.IO.File]::WriteAllText($dataFilePath, $jsonToSave, $utf8)
 
             $response.ContentType = "application/json; charset=utf-8"
-            $respData = @{ success = $true; message = "Proyecto '$name' guardado exitosamente"; data = $newProj } | ConvertTo-Json -Depth 10
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($respData)
+            $respData = "{ `"success`": true, `"message`": `"Proyecto guardado exitosamente`" }"
+            $buffer = $utf8.GetBytes($respData)
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
@@ -102,17 +107,16 @@ while ($listener.IsListening) {
 
         if ($urlPath.StartsWith("/api/projects/") -and $request.HttpMethod -eq "DELETE") {
             $projName = $urlPath.Substring(14)
-            $existing = @{}
-            if (Test-Path $dataFilePath) {
-                $rawExisting = Get-Content $dataFilePath -Raw -Encoding UTF8
-                if ($rawExisting) { $existing = $rawExisting | ConvertFrom-Json }
-            }
+            $rawContent = Read-ProjectsRaw
+            $existing = if ($rawContent -and $rawContent -ne "{}") { $rawContent | ConvertFrom-Json } else { [PSCustomObject]@{} }
+            
             if ($existing.PSObject.Properties[$projName]) {
                 $existing.PSObject.Properties.Remove($projName)
-                $existing | ConvertTo-Json -Depth 10 | Set-Content $dataFilePath -Encoding UTF8
+                $jsonToSave = $existing | ConvertTo-Json -Depth 10
+                [System.IO.File]::WriteAllText($dataFilePath, $jsonToSave, $utf8)
                 $response.ContentType = "application/json; charset=utf-8"
-                $respData = @{ success = $true; message = "Proyecto '$projName' eliminado" } | ConvertTo-Json
-                $buffer = [System.Text.Encoding]::UTF8.GetBytes($respData)
+                $respData = "{ `"success`": true, `"message`": `"Proyecto '$projName' eliminado`" }"
+                $buffer = $utf8.GetBytes($respData)
                 $response.OutputStream.Write($buffer, 0, $buffer.Length)
             } else {
                 $response.StatusCode = 404
