@@ -319,6 +319,14 @@ body.live-body {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timer-box-main:hover {
+    border-color: #3b82f6;
+    background: #0a0f1d;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
 }
 
 .timer-box-main-label {
@@ -344,6 +352,153 @@ body.live-body {
 @keyframes pulseOvertime {
     0% { transform: scale(1); filter: brightness(1); }
     100% { transform: scale(1.03); filter: brightness(1.25); text-shadow: 0 0 12px rgba(239, 68, 68, 0.7); }
+}
+
+/* ==========================================================================
+   STAGE CONFIDENCE DISPLAY (VISTA HIPERREDUCIDA PARA ARTISTAS EN ESCENARIO)
+   ========================================================================== */
+.stage-confidence-display {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000000;
+    z-index: 99999;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3vh 4vw;
+    color: #ffffff;
+    user-select: none;
+}
+
+.stage-confidence-display.active {
+    display: flex;
+}
+
+.stage-conf-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 2vh;
+}
+
+.stage-conf-header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+    overflow: hidden;
+}
+
+.stage-conf-label {
+    font-size: clamp(14px, 2vw, 22px);
+    font-weight: 800;
+    color: #9ca3af;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.stage-conf-title {
+    font-size: clamp(22px, 3.8vw, 42px);
+    font-weight: 900;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 65vw;
+}
+
+.btn-exit-stage {
+    background: rgba(30, 41, 59, 0.7);
+    color: #9ca3af;
+    border: 1px solid #334155;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-exit-stage:hover {
+    background: #dc2626;
+    color: white;
+    border-color: #ef4444;
+}
+
+.stage-conf-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    padding: 2vh 0;
+}
+
+.stage-conf-timer-label {
+    font-size: clamp(16px, 2.5vw, 28px);
+    font-weight: 800;
+    color: #9ca3af;
+    letter-spacing: 2px;
+    margin-bottom: 1vh;
+}
+
+.stage-conf-timer-value {
+    font-family: var(--font-mono);
+    font-size: clamp(80px, 22vw, 220px);
+    font-weight: 900;
+    line-height: 0.9;
+    color: #34d399;
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(52, 211, 153, 0.4);
+}
+
+.stage-conf-timer-value.is-overtime {
+    color: #ef4444 !important;
+    text-shadow: 0 0 40px rgba(239, 68, 68, 0.8) !important;
+    animation: stagePulseOvertime 0.9s infinite alternate;
+}
+
+@keyframes stagePulseOvertime {
+    0% { transform: scale(1); filter: brightness(1); }
+    100% { transform: scale(1.04); filter: brightness(1.3); }
+}
+
+.stage-conf-bottom {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+    border-top: 2px solid #1e293b;
+    padding-top: 2vh;
+}
+
+.stage-conf-next-title {
+    font-size: clamp(18px, 2.8vw, 32px);
+    font-weight: 800;
+    color: #38bdf8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70vw;
+}
+
+.stage-conf-progress-track {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 12px;
+    background: #030712;
+}
+
+.stage-conf-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    transition: width 0.3s ease;
 }
 
 .timer-box-small {

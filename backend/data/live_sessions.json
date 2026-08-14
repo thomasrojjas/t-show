@@ -19,7 +19,7 @@
     "Gran Concierto \u0026 Show Estelar":  {
                                                "status":  "live",
                                                "currentIndex":  1,
-                                               "currentBlockStartTime":  "2026-08-14T03:44:49.828Z",
+                                               "currentBlockStartTime":  "2026-08-14T03:56:06.835Z",
                                                "omittedItemNums":  [
                                                                        12
                                                                    ],
@@ -40,6 +40,6 @@
                                                                }
                                                            ],
                                                "projectName":  "Gran Concierto \u0026 Show Estelar",
-                                               "lastUpdated":  "2026-08-14T03:45:28.799Z"
+                                               "lastUpdated":  "2026-08-14T03:56:06.836Z"
                                            }
 }

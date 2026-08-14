@@ -102,9 +102,9 @@
         </div>
 
         <div class="hero-timers-grid">
-            <!-- Cronómetro Principal / Tiempo en Contra -->
-            <div class="timer-box-main">
-                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante</div>
+            <!-- Cronómetro Principal / Tiempo en Contra (Clickeable para Pantalla Completa de Escenario) -->
+            <div class="timer-box-main" onclick="liveApp.openStageConfidenceDisplay()" title="Clic para Pantalla Completa de Escenario (Confidence Monitor)">
+                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante ⛶</div>
                 <div id="heroRemainingTimer" class="timer-box-main-value">00:00</div>
             </div>
 
@@ -123,7 +123,7 @@
                 <div id="heroProjectedEnd" class="timer-box-small-value" style="color: #a78bfa;">--:--</div>
             </div>
 
-            <button class="btn-fullscreen" onclick="liveApp.toggleFullscreen()" title="Modo Pantalla Completa para Tablet">⛶</button>
+            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Pantalla Completa para Tablet de Artistas">⛶</button>
         </div>
 
         <!-- Barra de Progreso Continua de Izquierda a Derecha -->
@@ -131,6 +131,32 @@
             <div id="heroProgressFill" class="hero-progress-fill"></div>
         </div>
     </section>
+
+    <!-- Vista Hiperreducida a Pantalla Completa para Escenario / Artistas (Confidence Monitor) -->
+    <div id="stageConfidenceModal" class="stage-confidence-display">
+        <div class="stage-conf-top">
+            <div class="stage-conf-header-left">
+                <span class="stage-conf-label">EN CURSO:</span>
+                <h1 id="stageConfCurrentTitle" class="stage-conf-title">Listo para Iniciar Pauta</h1>
+                <span id="stageConfBadge" class="badge badge-show">SHOW</span>
+            </div>
+            <button class="btn-exit-stage" onclick="liveApp.closeStageConfidenceDisplay()">✕ Salir (ESC)</button>
+        </div>
+
+        <div class="stage-conf-center">
+            <div id="stageConfTimerLabel" class="stage-conf-timer-label">TIEMPO RESTANTE</div>
+            <div id="stageConfTimerValue" class="stage-conf-timer-value">00:00</div>
+        </div>
+
+        <div class="stage-conf-bottom">
+            <span class="stage-conf-label" style="color: #64748b;">PRÓXIMO MÓDULO:</span>
+            <h2 id="stageConfNextTitle" class="stage-conf-next-title">--</h2>
+        </div>
+
+        <div class="stage-conf-progress-track">
+            <div id="stageConfProgressFill" class="stage-conf-progress-fill"></div>
+        </div>
+    </div>
 
     <!-- Contenedor con Autodesplazamiento de la Escaleta en Vivo -->
     <main class="live-table-container" id="scheduleTableContainer">

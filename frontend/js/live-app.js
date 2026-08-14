@@ -214,14 +214,25 @@ class LiveApp {
     }
 
     toggleFullscreen() {
+        this.openStageConfidenceDisplay();
+    }
+
+    openStageConfidenceDisplay() {
+        const stageModal = document.getElementById('stageConfidenceModal');
+        if (stageModal) stageModal.classList.add('active');
+
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.error(`Error al activar pantalla completa: ${err.message}`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+        this.render();
+    }
+
+    closeStageConfidenceDisplay() {
+        const stageModal = document.getElementById('stageConfidenceModal');
+        if (stageModal) stageModal.classList.remove('active');
+
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
         }
     }
 
@@ -532,6 +543,58 @@ class LiveApp {
             if (heroPlannedTimer && firstItem) heroPlannedTimer.innerText = `${firstItem.duration} min`;
             if (heroProjectedEnd) heroProjectedEnd.innerText = snapshot.projectedEndTime || '--:--';
             if (heroProgressFill) heroProgressFill.style.width = '0%';
+        }
+
+        // 3.1 Stage Confidence Display Update (Vista Hiperreducida para Artistas en Escenario)
+        const stageConfModal = document.getElementById('stageConfidenceModal');
+        const stageConfCurrentTitle = document.getElementById('stageConfCurrentTitle');
+        const stageConfBadge = document.getElementById('stageConfBadge');
+        const stageConfTimerLabel = document.getElementById('stageConfTimerLabel');
+        const stageConfTimerValue = document.getElementById('stageConfTimerValue');
+        const stageConfNextTitle = document.getElementById('stageConfNextTitle');
+        const stageConfProgressFill = document.getElementById('stageConfProgressFill');
+
+        if (stageConfModal && stageConfCurrentTitle && stageConfTimerValue) {
+            const currentTitle = snapshot.currentItem ? snapshot.currentItem.title : (snapshot.items && snapshot.items[0] ? snapshot.items[0].title : 'Listo para Iniciar Pauta');
+            const currentBadge = snapshot.currentItem ? snapshot.currentItem.type : 'SHOW';
+            const nextTitle = snapshot.nextItem ? `${snapshot.nextItem.title} (${snapshot.nextItem.effectiveDuration}m)` : 'Cierre del Evento';
+
+            stageConfCurrentTitle.innerText = currentTitle;
+            if (stageConfBadge) stageConfBadge.innerText = currentBadge;
+            if (stageConfNextTitle) stageConfNextTitle.innerText = nextTitle;
+
+            if (snapshot.status === 'live' && snapshot.currentItem) {
+                if (snapshot.isOvertime) {
+                    if (stageConfTimerLabel) stageConfTimerLabel.innerText = '⚠️ TIEMPO EN CONTRA';
+                    stageConfTimerValue.innerText = `+${LiveEngine.formatDurationSeconds(snapshot.overtimeSeconds)}`;
+                    stageConfTimerValue.classList.add('is-overtime');
+                } else {
+                    if (stageConfTimerLabel) stageConfTimerLabel.innerText = 'TIEMPO RESTANTE';
+                    stageConfTimerValue.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
+                    stageConfTimerValue.classList.remove('is-overtime');
+                    stageConfTimerValue.style.color = snapshot.alertLevel === 'red' ? '#ef4444' : (snapshot.alertLevel === 'yellow' ? '#f59e0b' : '#34d399');
+                }
+            } else if (snapshot.status === 'paused') {
+                if (stageConfTimerLabel) stageConfTimerLabel.innerText = '⏸ PAUSADO';
+                stageConfTimerValue.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
+                stageConfTimerValue.classList.remove('is-overtime');
+                stageConfTimerValue.style.color = '#f59e0b';
+            } else if (snapshot.status === 'finished') {
+                if (stageConfTimerLabel) stageConfTimerLabel.innerText = '🏁 FINALIZADO';
+                stageConfTimerValue.innerText = '00:00';
+                stageConfTimerValue.classList.remove('is-overtime');
+                stageConfTimerValue.style.color = '#10b981';
+            } else {
+                if (stageConfTimerLabel) stageConfTimerLabel.innerText = 'TIEMPO RESTANTE (EN ESPERA)';
+                const firstItem = snapshot.currentItem || (snapshot.items && snapshot.items[0]);
+                stageConfTimerValue.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00';
+                stageConfTimerValue.classList.remove('is-overtime');
+                stageConfTimerValue.style.color = '#38bdf8';
+            }
+
+            if (stageConfProgressFill) {
+                stageConfProgressFill.style.width = `${snapshot.progressPercent}%`;
+            }
         }
 
         // 4. Render Table Rows & Auto-Scroll to Active Block
