@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventTime Pro Live - Escaleta en Vivo</title>
+    <title>Show Time Live - Control en Tiempo Real</title>
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
@@ -18,30 +18,36 @@
 
     <!-- Header Bar -->
     <header class="live-header">
-        <div class="live-brand">
+        <div class="live-brand" id="appBrandLogo" ondblclick="liveApp.toggleRoleModal()" title="Show Time por BaseAndes Software">
             <div class="brand-icon">⏱</div>
             <div>
-                <h1 id="liveProjectTitle" style="font-size: 16px; font-weight: 800; line-height: 1.2;">Gran Concierto & Show Estelar</h1>
+                <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #38bdf8; letter-spacing: 1px;">SHOW TIME</span>
+                    <h1 id="liveProjectTitle" style="font-size: 16px; font-weight: 800; line-height: 1.2; display: inline;">Gran Concierto & Show Estelar</h1>
+                </div>
             </div>
             <span id="liveStatusBadge" class="live-badge-status status-idle">⏸ EN ESPERA</span>
-            <span id="currentRoleBadge" class="role-badge role-viewer">👁 ESPECTADOR</span>
+            <span id="currentRoleBadge" class="role-badge role-viewer" style="display: none;">👁 ESPECTADOR</span>
         </div>
 
         <div class="live-header-center">
             <div class="clock-display" id="masterClock">00:00:00</div>
             
-            <!-- Botón Maestro Play / Pausa -->
-            <button id="btnHeaderPlay" class="btn-play-master" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
+            <!-- Botón Maestro Play / Pausa (Solo visible para Director/Admin) -->
+            <button id="btnHeaderPlay" class="btn-play-master" style="display: none;" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
                 <span id="btnHeaderPlayIcon">▶</span>
-                <span id="btnHeaderPlayText">PLAY / HORARIO</span>
+                <span id="btnHeaderPlayText">PLAY / EN VIVO</span>
             </button>
         </div>
 
         <div class="live-header-actions">
-            <button class="btn-fullscreen" onclick="liveApp.toggleFullscreen()" title="Pantalla Completa para Tablets y Monitores de Artistas">⛶ Pantalla Completa</button>
-            <button class="btn btn-secondary" onclick="liveApp.copyShareLink()" title="Copiar enlace">🔗 Compartir</button>
-            <button class="btn btn-secondary" id="btnToggleRole" onclick="liveApp.toggleRoleModal()">🔑 Cambiar Rol</button>
-            <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">⚙ Planificación</a>
+            <!-- MODO 2: Pantalla Completa de la Aplicación General -->
+            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla Completa de toda la aplicación">⛶ Pantalla Completa</button>
+            
+            <!-- Botones Ocultos para Rol Espectador (Visibles solo para Director/Admin) -->
+            <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">🔗 Compartir</button>
+            <button class="btn btn-secondary" id="btnToggleRole" style="display: none;" onclick="liveApp.toggleRoleModal()">🔑 Cambiar Rol</button>
+            <a href="index.html" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">⚙ Planificación</a>
         </div>
     </header>
 
@@ -102,8 +108,8 @@
         </div>
 
         <div class="hero-timers-grid">
-            <!-- Cronómetro Principal / Tiempo en Contra (Clickeable para Pantalla Completa de Escenario) -->
-            <div class="timer-box-main" onclick="liveApp.openStageConfidenceDisplay()" title="Clic para Pantalla Completa de Escenario (Confidence Monitor)">
+            <!-- MODO 1: Clic en el cuadro del reloj abre vista ampliada hiperreducida para artistas -->
+            <div class="timer-box-main" id="heroTimerBoxMain" onclick="liveApp.openStageConfidenceDisplay()" title="Clic para Pantalla Completa de Escenario (Solo Tiempo & Bloques)">
                 <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante ⛶</div>
                 <div id="heroRemainingTimer" class="timer-box-main-value">00:00</div>
             </div>
@@ -123,7 +129,8 @@
                 <div id="heroProjectedEnd" class="timer-box-small-value" style="color: #a78bfa;">--:--</div>
             </div>
 
-            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Pantalla Completa para Tablet de Artistas">⛶</button>
+            <!-- Botón Modo 1 de artistas -->
+            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Artistas en Escenario (Solo Tiempo)">⏱⛶</button>
         </div>
 
         <!-- Barra de Progreso Continua de Izquierda a Derecha -->
@@ -132,7 +139,7 @@
         </div>
     </section>
 
-    <!-- Vista Hiperreducida a Pantalla Completa para Escenario / Artistas (Confidence Monitor) -->
+    <!-- MODO 1: Vista Hiperreducida a Pantalla Completa para Escenario / Artistas (Confidence Monitor) -->
     <div id="stageConfidenceModal" class="stage-confidence-display">
         <div class="stage-conf-top">
             <div class="stage-conf-header-left">
@@ -177,6 +184,11 @@
             </tbody>
         </table>
     </main>
+
+    <!-- Footer Attribution -->
+    <footer style="text-align: center; padding: 4px; font-size: 11px; color: #6b7280; flex-shrink: 0;">
+        Show Time • Desarrollado por <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none; font-weight: 700;">BaseAndes Software | Software a medida para empresas</a>
+    </footer>
 
     <!-- Modal de Selección y Validación de Roles -->
     <div id="pinModal" class="modal-overlay">

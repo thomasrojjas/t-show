@@ -1,4 +1,4 @@
-﻿$port = 3000
+$port = 3000
 $prefix = "http://localhost:$port/"
 $baseDir = $PSScriptRoot
 
@@ -16,10 +16,10 @@ try {
 }
 
 Write-Host "====================================================" -ForegroundColor Cyan
-Write-Host "   EventTime Pro v4.0 - Servidor Local Activo" -ForegroundColor Yellow
-Write-Host "   Acceso Web: $prefix" -ForegroundColor Green
-Write-Host "   API REST:   $($prefix)api/projects" -ForegroundColor Green
-Write-Host "   Live API:   $($prefix)api/live" -ForegroundColor Green
+Write-Host "   ⏱  Show Time v4.0 - BaseAndes Software" -ForegroundColor Yellow
+Write-Host "   📡 Acceso Web: $prefix" -ForegroundColor Green
+Write-Host "   🔌 API REST:   $($prefix)api/projects" -ForegroundColor Green
+Write-Host "   🔴 Live API:   $($prefix)api/live" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Cyan
 
 $dataFilePath = Join-Path $baseDir "backend\data\projects.json"

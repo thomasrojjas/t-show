@@ -1,6 +1,7 @@
 /**
- * LiveEngine
+ * Show Time - LiveEngine
  * Core real-time math engine for live show tracking, progressive timing, block extension, and cascading projection
+ * Developed by BaseAndes Software (https://www.baseandes.com/)
  */
 const LiveEngine = {
     /**
@@ -184,8 +185,11 @@ const LiveEngine = {
                 }
             }
         } 
-        // 2. MANUAL DIRECTOR TRACKING MODE (Control Manual)
-        else if (status === 'live' && trackingMode === 'manual' && executableItems.length > 0 && currentIndex < executableItems.length) {
+        // 2. MANUAL DIRECTOR TRACKING MODE (Control Manual / TAP)
+        else if (status === 'live' && trackingMode === 'manual' && executableItems.length > 0) {
+            if (currentIndex >= executableItems.length) {
+                currentIndex = executableItems.length - 1;
+            }
             currentItem = executableItems[currentIndex];
             nextItem = executableItems[currentIndex + 1] || null;
             const blockStartMs = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime).getTime() : now.getTime();
@@ -203,6 +207,7 @@ const LiveEngine = {
             }
         } else if (executableItems.length > 0) {
             // Idle / Paused
+            if (currentIndex >= executableItems.length) currentIndex = 0;
             currentItem = executableItems[currentIndex] || executableItems[0];
             nextItem = executableItems[currentIndex + 1] || null;
             remainingSeconds = (currentItem ? currentItem.effectiveDuration : 0) * 60;

@@ -1,6 +1,7 @@
 /**
- * LiveApp
+ * Show Time - LiveApp
  * Main UI and execution controller for Single-Screen Stage Display, Director & Administrator Platform
+ * Developed by BaseAndes Software (https://www.baseandes.com/)
  */
 
 class LiveApp {
@@ -72,6 +73,15 @@ class LiveApp {
             }
         });
 
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeStageConfidenceDisplay();
+                this.closeModal('pinModal');
+                this.closeModal('reportModal');
+            }
+        });
+
         // Load project from API / LocalStorage
         await this.loadProject();
 
@@ -127,15 +137,29 @@ class LiveApp {
         const directorBar = document.getElementById('directorToolbar');
         const roleBadge = document.getElementById('currentRoleBadge');
 
+        // Viewer privileged elements
+        const btnToggleRole = document.getElementById('btnToggleRole');
+        const btnShare = document.getElementById('btnShare');
+        const btnPlan = document.getElementById('btnPlan');
+        const btnHeaderPlay = document.getElementById('btnHeaderPlay');
+
+        const isViewer = (this.role === 'viewer');
+
         if (adminBar) adminBar.style.display = (this.role === 'admin') ? 'flex' : 'none';
         if (directorBar) directorBar.style.display = (this.role === 'director') ? 'flex' : 'none';
 
         if (roleBadge) {
             roleBadge.className = `role-badge role-${this.role}`;
-            if (this.role === 'admin') roleBadge.innerText = '👑 ADMINISTRADOR';
+            if (this.role === 'admin') roleBadge.innerText = '👑 ADMIN';
             else if (this.role === 'director') roleBadge.innerText = '🎬 DIRECTOR';
-            else roleBadge.innerText = '👁 ESPECTADOR';
+            else roleBadge.style.display = 'none';
         }
+
+        // Hide privileged controls from Viewer
+        if (btnToggleRole) btnToggleRole.style.display = isViewer ? 'none' : 'inline-flex';
+        if (btnShare) btnShare.style.display = isViewer ? 'none' : 'inline-flex';
+        if (btnPlan) btnPlan.style.display = isViewer ? 'none' : 'inline-flex';
+        if (btnHeaderPlay) btnHeaderPlay.style.display = isViewer ? 'none' : 'inline-flex';
     }
 
     toggleRoleModal() {
@@ -213,10 +237,24 @@ class LiveApp {
         if (modal) modal.classList.remove('active');
     }
 
-    toggleFullscreen() {
-        this.openStageConfidenceDisplay();
+    // --- FULLSCREEN MODES ---
+
+    /**
+     * MODO 2: Pantalla Completa de la Aplicación General (Header, Hero, Escaleta)
+     */
+    toggleAppFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
     }
 
+    /**
+     * MODO 1: Pantalla Completa Hiperreducida para Artistas en Escenario (Confidence Monitor)
+     */
     openStageConfidenceDisplay() {
         const stageModal = document.getElementById('stageConfidenceModal');
         if (stageModal) stageModal.classList.add('active');
@@ -241,14 +279,14 @@ class LiveApp {
     async togglePlayPause() {
         if (this.liveState.status === 'live') {
             this.liveState.status = 'paused';
-            await this.syncAndRender('⏸ Seguimiento en Vivo Pausado');
+            await this.syncAndRender('⏸ Show Pausado');
         } else {
             this.liveState.status = 'live';
             if (!this.liveState.currentBlockStartTime) {
                 this.liveState.currentBlockStartTime = new Date().toISOString();
             }
-            const modeName = this.liveState.trackingMode === 'manual' ? 'Conducción Manual' : 'Seguimiento por Horario';
-            await this.syncAndRender(`▶ ¡Play en Vivo Activado! (${modeName})`);
+            const modeName = this.liveState.trackingMode === 'manual' ? 'Manual (Director)' : 'Según Horario';
+            await this.syncAndRender(`▶ ¡Show en Vivo! (${modeName})`);
         }
     }
 
@@ -304,20 +342,21 @@ class LiveApp {
         }
     }
 
+    /**
+     * TAP: Termina el bloque actual y pasa de inmediato al siguiente bloque
+     */
     async tapNextBlock() {
         if (this.role !== 'director' && this.role !== 'admin') return;
-        if (this.liveState.status !== 'live') {
-            this.liveState.status = 'live';
-        }
 
-        const snapshot = LiveEngine.computeLiveSnapshot(this.projectData, this.liveState);
-        const currentItem = snapshot.currentItem;
         const now = new Date();
+        const snapshot = LiveEngine.computeLiveSnapshot(this.projectData, this.liveState);
+        const currentItem = snapshot ? snapshot.currentItem : null;
 
         if (currentItem) {
             const startMs = this.liveState.currentBlockStartTime ? new Date(this.liveState.currentBlockStartTime).getTime() : now.getTime();
-            const actualDurationMinutes = Math.round((now.getTime() - startMs) / 60000);
+            const actualDurationMinutes = Math.max(1, Math.round((now.getTime() - startMs) / 60000));
 
+            if (!this.liveState.history) this.liveState.history = [];
             this.liveState.history.push({
                 num: currentItem.num,
                 type: currentItem.type,
@@ -334,10 +373,13 @@ class LiveApp {
             });
         }
 
-        this.liveState.currentIndex += 1;
+        // Force manual execution mode so the TAP index takes absolute effect
+        this.liveState.trackingMode = 'manual';
+        this.liveState.status = 'live';
+        this.liveState.currentIndex = (this.liveState.currentIndex || 0) + 1;
         this.liveState.currentBlockStartTime = now.toISOString();
 
-        const activeRemaining = snapshot.items.filter(i => !i.isMuted);
+        const activeRemaining = snapshot ? snapshot.items.filter(i => !i.isMuted) : [];
         if (this.liveState.currentIndex >= activeRemaining.length) {
             this.liveState.status = 'finished';
             await this.syncAndRender('🏁 ¡Evento Concluido!');
@@ -345,7 +387,7 @@ class LiveApp {
             return;
         }
 
-        await this.syncAndRender(`⚡ TAP: Pasando a siguiente bloque (#${this.liveState.currentIndex + 1})`);
+        await this.syncAndRender(`⚡ TAP ejecutado: Bloque #${this.liveState.currentIndex + 1} en curso`);
     }
 
     async muteBlock(itemNum, title) {
@@ -473,11 +515,11 @@ class LiveApp {
 
             if (heroRemainingTimer && heroTimerLabel) {
                 if (snapshot.isOvertime) {
-                    heroTimerLabel.innerText = 'TIEMPO EN CONTRA';
+                    heroTimerLabel.innerText = 'TIEMPO EN CONTRA ⛶';
                     heroRemainingTimer.innerText = `+${LiveEngine.formatDurationSeconds(snapshot.overtimeSeconds)}`;
                     heroRemainingTimer.classList.add('is-overtime');
                 } else {
-                    heroTimerLabel.innerText = 'TIEMPO RESTANTE';
+                    heroTimerLabel.innerText = 'TIEMPO RESTANTE ⛶';
                     heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
                     heroRemainingTimer.classList.remove('is-overtime');
                     heroRemainingTimer.style.color = snapshot.alertLevel === 'red' ? '#ef4444' : (snapshot.alertLevel === 'yellow' ? '#f59e0b' : '#34d399');
@@ -514,7 +556,7 @@ class LiveApp {
                 heroTypeBadge.className = `hero-type-badge ${snapshot.currentItem.badgeClass}`;
             }
             if (heroRemainingTimer && heroTimerLabel) {
-                heroTimerLabel.innerText = 'PAUSADO';
+                heroTimerLabel.innerText = 'PAUSADO ⛶';
                 heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
                 heroRemainingTimer.classList.remove('is-overtime');
                 heroRemainingTimer.style.color = '#f59e0b';
@@ -534,7 +576,7 @@ class LiveApp {
                 heroTypeBadge.className = `hero-type-badge ${firstItem.badgeClass}`;
             }
             if (heroRemainingTimer && heroTimerLabel) {
-                heroTimerLabel.innerText = 'TIEMPO RESTANTE';
+                heroTimerLabel.innerText = 'TIEMPO RESTANTE ⛶';
                 heroRemainingTimer.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00';
                 heroRemainingTimer.classList.remove('is-overtime');
                 heroRemainingTimer.style.color = '#38bdf8';
@@ -545,7 +587,7 @@ class LiveApp {
             if (heroProgressFill) heroProgressFill.style.width = '0%';
         }
 
-        // 3.1 Stage Confidence Display Update (Vista Hiperreducida para Artistas en Escenario)
+        // 3.1 Stage Confidence Display Update (MODO 1: Pantalla Completa para Artistas)
         const stageConfModal = document.getElementById('stageConfidenceModal');
         const stageConfCurrentTitle = document.getElementById('stageConfCurrentTitle');
         const stageConfBadge = document.getElementById('stageConfBadge');
@@ -610,7 +652,7 @@ class LiveApp {
             tbody.innerHTML = '';
             let activeRowElement = null;
 
-            snapshot.items.forEach((r, idx) => {
+            snapshot.items.forEach((r) => {
                 const tr = document.createElement('tr');
                 tr.className = `row-${r.rowState}`;
                 tr.id = `scheduleRow_${r.num}`;
@@ -658,7 +700,7 @@ class LiveApp {
                 tbody.appendChild(tr);
             });
 
-            // 5. Automatic Smooth Scroll into Active Block View (Zero interaction needed)
+            // 5. Automatic Smooth Scroll into Active Block View
             if (activeRowElement && snapshot.currentIndex !== this.lastScrolledIndex) {
                 this.lastScrolledIndex = snapshot.currentIndex;
                 activeRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -714,7 +756,7 @@ class LiveApp {
     copyShareLink() {
         const url = window.location.origin + window.location.pathname + `?project=${encodeURIComponent(this.projectName)}`;
         navigator.clipboard.writeText(url).then(() => {
-            PrintExportManager.showToast('Enlace copiado al portapapeles', 'success');
+            PrintExportManager.showToast('Enlace de Espectador copiado al portapapeles', 'success');
         });
     }
 }

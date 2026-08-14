@@ -1,19 +1,21 @@
 {
-  "name": "eventtime-pro-backend",
+  "name": "show-time-backend",
   "version": "1.0.0",
-  "description": "Backend API para EventTime Pro - Plataforma Avanzada de Timing",
+  "description": "Backend REST API para Show Time - Plataforma Profesional de Timing para Eventos en Vivo",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
   "keywords": [
+    "showtime",
     "timing",
-    "events",
+    "live-events",
+    "run-of-show",
     "escaleta",
     "production"
   ],
-  "author": "GR Medios",
+  "author": "BaseAndes Software (https://www.baseandes.com/)",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",

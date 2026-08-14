@@ -1,10 +1,13 @@
 /**
- * ApiClient
+ * Show Time - ApiClient
  * Hybrid storage client that interacts with Backend REST API and falls back to LocalStorage
+ * Developed by BaseAndes Software (https://www.baseandes.com/)
  */
 const ApiClient = {
-    baseUrl: window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000',
-    LOCAL_KEY: 'eventTimeProjects',
+    baseUrl: (typeof window !== 'undefined' && window.SHOWTIME_API_URL)
+        ? window.SHOWTIME_API_URL
+        : (window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000'),
+    LOCAL_KEY: 'showTimeProjects',
     isBackendAvailable: false,
 
     /**

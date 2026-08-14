@@ -16,10 +16,99 @@
                                                        "projectName":  "Show de Coronación de Reina de Aniversario",
                                                        "lastUpdated":  "2026-08-14T03:30:51.181Z"
                                                    },
+    "Test":  {
+                 "status":  "live",
+                 "trackingMode":  "schedule",
+                 "currentIndex":  5,
+                 "currentBlockStartTime":  "2026-08-14T04:17:12.835Z",
+                 "omittedItemNums":  [
+
+                                     ],
+                 "mutedBlockNums":  [
+
+                                    ],
+                 "blockExtensions":  {
+                                         "3":  12
+                                     },
+                 "history":  [
+                                 {
+                                     "num":  3,
+                                     "type":  "ANIMACIÓN",
+                                     "title":  "inicio",
+                                     "plannedStart":  "00:02",
+                                     "plannedDuration":  10,
+                                     "plannedEnd":  "00:12",
+                                     "actualStart":  "2026-08-14T04:14:53.356Z",
+                                     "actualStartFormatted":  "00:14:53",
+                                     "actualEnd":  "2026-08-14T04:16:10.854Z",
+                                     "actualEndFormatted":  "00:16:10",
+                                     "actualDurationMinutes":  1,
+                                     "diffMinutes":  -9
+                                 },
+                                 {
+                                     "num":  3,
+                                     "type":  "ANIMACIÓN",
+                                     "title":  "inicio",
+                                     "plannedStart":  "00:02",
+                                     "plannedDuration":  10,
+                                     "plannedEnd":  "00:12",
+                                     "actualStart":  "2026-08-14T04:16:10.854Z",
+                                     "actualStartFormatted":  "00:16:10",
+                                     "actualEnd":  "2026-08-14T04:16:10.886Z",
+                                     "actualEndFormatted":  "00:16:10",
+                                     "actualDurationMinutes":  0,
+                                     "diffMinutes":  -10
+                                 },
+                                 {
+                                     "num":  3,
+                                     "type":  "ANIMACIÓN",
+                                     "title":  "inicio",
+                                     "plannedStart":  "00:02",
+                                     "plannedDuration":  10,
+                                     "plannedEnd":  "00:12",
+                                     "actualStart":  "2026-08-14T04:16:10.886Z",
+                                     "actualStartFormatted":  "00:16:10",
+                                     "actualEnd":  "2026-08-14T04:16:11.240Z",
+                                     "actualEndFormatted":  "00:16:11",
+                                     "actualDurationMinutes":  0,
+                                     "diffMinutes":  -10
+                                 },
+                                 {
+                                     "num":  3,
+                                     "type":  "ANIMACIÓN",
+                                     "title":  "inicio",
+                                     "plannedStart":  "00:02",
+                                     "plannedDuration":  10,
+                                     "plannedEnd":  "00:12",
+                                     "actualStart":  "2026-08-14T04:16:11.240Z",
+                                     "actualStartFormatted":  "00:16:11",
+                                     "actualEnd":  "2026-08-14T04:16:20.198Z",
+                                     "actualEndFormatted":  "00:16:20",
+                                     "actualDurationMinutes":  0,
+                                     "diffMinutes":  -10
+                                 },
+                                 {
+                                     "num":  3,
+                                     "type":  "ANIMACIÓN",
+                                     "title":  "inicio",
+                                     "plannedStart":  "00:02",
+                                     "plannedDuration":  12,
+                                     "plannedEnd":  "00:12",
+                                     "actualStart":  "2026-08-14T04:16:20.198Z",
+                                     "actualStartFormatted":  "00:16:20",
+                                     "actualEnd":  "2026-08-14T04:16:53.433Z",
+                                     "actualEndFormatted":  "00:16:53",
+                                     "actualDurationMinutes":  1,
+                                     "diffMinutes":  -11
+                                 }
+                             ],
+                 "projectName":  "Test",
+                 "lastUpdated":  "2026-08-14T04:17:12.835Z"
+             },
     "Gran Concierto \u0026 Show Estelar":  {
-                                               "status":  "live",
-                                               "currentIndex":  1,
-                                               "currentBlockStartTime":  "2026-08-14T03:56:06.835Z",
+                                               "status":  "paused",
+                                               "currentIndex":  2,
+                                               "currentBlockStartTime":  "2026-08-14T04:11:03.792Z",
                                                "omittedItemNums":  [
                                                                        12
                                                                    ],
@@ -37,9 +126,26 @@
                                                                    "actualEndFormatted":  "23:44:49",
                                                                    "actualDurationMinutes":  52,
                                                                    "diffMinutes":  -8
+                                                               },
+                                                               {
+                                                                   "num":  1,
+                                                                   "type":  "CONVOCATORIA",
+                                                                   "title":  "Convocatoria de Comisiones \u0026 Briefing de Producción",
+                                                                   "plannedStart":  "18:30",
+                                                                   "plannedDuration":  30,
+                                                                   "plannedEnd":  "19:00",
+                                                                   "actualStart":  "2026-08-14T03:56:06.835Z",
+                                                                   "actualStartFormatted":  "23:56:06",
+                                                                   "actualEnd":  "2026-08-14T04:11:03.792Z",
+                                                                   "actualEndFormatted":  "00:11:03",
+                                                                   "actualDurationMinutes":  15,
+                                                                   "diffMinutes":  -15
                                                                }
                                                            ],
                                                "projectName":  "Gran Concierto \u0026 Show Estelar",
-                                               "lastUpdated":  "2026-08-14T03:56:06.836Z"
+                                               "lastUpdated":  "2026-08-14T04:50:22.060Z",
+                                               "blockExtensions":  {
+                                                                       "1":  5
+                                                                   }
                                            }
 }

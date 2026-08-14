@@ -1,9 +1,12 @@
 /**
- * LiveSync
+ * Show Time - LiveSync
  * Real-time synchronization layer between Director/Admin controls and multiple Viewers
+ * Developed by BaseAndes Software (https://www.baseandes.com/)
  */
 const LiveSync = {
-    baseUrl: window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000',
+    baseUrl: (typeof window !== 'undefined' && window.SHOWTIME_API_URL)
+        ? window.SHOWTIME_API_URL
+        : (window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000'),
     pollInterval: null,
 
     /**
