@@ -45,7 +45,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://showtime-api.onrender.com/api/:path*"
+      "destination": "https://timming-3bdp.onrender.com/api/:path*"
     }
   ]
 }
