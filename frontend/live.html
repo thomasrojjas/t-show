@@ -25,6 +25,7 @@
                 <p style="font-size: 11px; color: var(--live-text-muted);">Escaleta de Control en Tiempo Real & Monitoreo</p>
             </div>
             <span id="liveStatusBadge" class="live-badge-status status-idle">⏸ EN ESPERA</span>
+            <span id="currentRoleBadge" class="role-badge role-viewer">👁 ESPECTADOR</span>
         </div>
 
         <div class="live-header-center">
@@ -39,20 +40,36 @@
 
         <div class="live-header-actions">
             <button class="btn btn-secondary" onclick="liveApp.copyShareLink()" title="Copiar enlace para técnicos, animadores y móviles">🔗 Compartir Vista</button>
-            <button class="btn btn-secondary" id="btnToggleRole" onclick="liveApp.toggleRoleModal()">🔑 Acceso Director</button>
+            <button class="btn btn-secondary" id="btnToggleRole" onclick="liveApp.toggleRoleModal()">🔑 Cambiar Rol</button>
             <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">⚙ Planificación</a>
         </div>
     </header>
 
-    <!-- Barra de Herramientas del Director (Solo visible con PIN validado) -->
+    <!-- Barra de Herramientas del Administrador General (PIN: 9999) -->
+    <section id="adminToolbar" class="admin-toolbar" style="display: none;">
+        <div class="admin-info">
+            <span>👑 Panel de Control del Administrador</span>
+            <div class="mode-toggle-group" style="margin-left: 10px;">
+                <button id="btnAdminModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')">🕒 Según Horario</button>
+                <button id="btnAdminModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')">⚡ Manual</button>
+            </div>
+        </div>
+        <div class="director-buttons">
+            <button class="btn-play-master" onclick="liveApp.startShow()">▶ Iniciar Show</button>
+            <button class="btn-stop-show" onclick="liveApp.stopShow()">⏹ Detener Show</button>
+            <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">⏸ Pausar / Reanudar</button>
+            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
+            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">🔄 Reiniciar Sesión</button>
+        </div>
+    </section>
+
+    <!-- Barra de Herramientas del Director de Escenario (PIN: 1234) -->
     <section id="directorToolbar" class="director-toolbar" style="display: none;">
         <div class="director-info">
-            <span>🎛 Panel de Control del Director</span>
-            
-            <!-- Selector de Modo de Seguimiento -->
+            <span>🎬 Panel de Conducción del Director</span>
             <div class="mode-toggle-group" style="margin-left: 10px;">
-                <button id="btnModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')" title="Sincronizar automáticamente con las horas del reloj">🕒 Según Horario</button>
-                <button id="btnModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')" title="Avanzar bloques manualmente con el botón TAP">⚡ Conducción Manual</button>
+                <button id="btnModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')">🕒 Según Horario</button>
+                <button id="btnModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')">⚡ Manual</button>
             </div>
         </div>
         <div class="director-buttons">
@@ -61,10 +78,8 @@
                 <span id="btnDirectorPlayIcon">▶</span>
                 <span id="btnDirectorPlayText">Iniciar Play</span>
             </button>
-            <button class="btn-live-sec" onclick="liveApp.resyncNow()">⏱ Reajustar a Hora Actual</button>
+            <button class="btn-live-sec" onclick="liveApp.resyncNow()">⏱ Reajustar Hora</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
-            <button class="btn-live-sec" style="color: #fca5a5;" onclick="liveApp.finishShow()">🏁 Finalizar Show</button>
-            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">🔄 Reiniciar</button>
         </div>
     </section>
 
@@ -126,17 +141,26 @@
         </table>
     </main>
 
-    <!-- Modal de Ingreso de PIN de Director -->
+    <!-- Modal de Selección y Validación de Roles -->
     <div id="pinModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 380px; text-align: center;">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">🔒 Acceso de Director</h2>
-            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 16px;">Ingresa el PIN de seguridad para habilitar los controles de mando y reajuste en vivo.</p>
+        <div class="modal-card" style="max-width: 420px; text-align: center;">
+            <h2 style="font-size: 18px; margin-bottom: 8px;">🔑 Acceso a Roles del Sistema</h2>
+            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 16px;">Ingresa el PIN correspondiente para desbloquear el rol deseado.</p>
             
-            <input type="password" id="pinInput" class="form-control" placeholder="PIN de 4 dígitos (Ej: 1234)" style="text-align: center; font-size: 20px; letter-spacing: 4px; margin-bottom: 16px;" onkeydown="if(event.key==='Enter') liveApp.verifyPIN()">
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;">
+                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1; border: 1px solid #ef4444;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador</button>
+                <button type="button" id="btnSelectRoleDirector" class="btn btn-secondary" style="flex: 1; border: 1px solid #6366f1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director</button>
+            </div>
+
+            <div id="roleHintText" style="font-size: 11px; color: #38bdf8; margin-bottom: 10px; font-weight: 700;">
+                👑 Administrador: Control de Inicio/Detención y Silenciar Bloques
+            </div>
+
+            <input type="password" id="pinInput" class="form-control" placeholder="PIN de seguridad" style="text-align: center; font-size: 22px; letter-spacing: 6px; margin-bottom: 16px;" onkeydown="if(event.key==='Enter') liveApp.verifyPIN()">
             
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn btn-secondary" onclick="liveApp.closeModal('pinModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="liveApp.verifyPIN()">Ingresar</button>
+                <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">👁 Modo Espectador</button>
+                <button class="btn btn-primary" onclick="liveApp.verifyPIN()">Verificar e Ingresar</button>
             </div>
         </div>
     </div>

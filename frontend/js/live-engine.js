@@ -16,7 +16,7 @@ const LiveEngine = {
     },
 
     /**
-     * Format seconds into "MM:SS" or "HH:MM:SS"
+     * Format seconds into "MM:SS" or "HH:MM:SS" with explicit seconds
      */
     formatDurationSeconds(totalSeconds) {
         const isNegative = totalSeconds < 0;
@@ -53,11 +53,20 @@ const LiveEngine = {
         // Extract list of all printable schedule items from base plan
         const allItems = JSON.parse(JSON.stringify(baseComputed.tableRows || []));
 
-        // Filter out omitted blocks
-        const activeItems = allItems.filter(item => {
-            const isOmitted = liveState.omittedItemNums && liveState.omittedItemNums.includes(item.num);
-            return !isOmitted;
-        });
+        const omittedList = liveState.omittedItemNums || [];
+        const mutedList = liveState.mutedBlockNums || [];
+
+        // Identify muted and omitted items
+        const processedItems = allItems.map(item => {
+            const isOmitted = omittedList.includes(item.num);
+            const isMuted = mutedList.includes(item.num);
+            return {
+                ...item,
+                isOmitted,
+                isMuted,
+                effectiveDuration: isMuted ? 0 : item.duration
+            };
+        }).filter(item => !item.isOmitted); // Omitted completely removed
 
         const status = liveState.status || 'idle'; // 'idle' | 'live' | 'paused' | 'finished'
         const trackingMode = liveState.trackingMode || 'schedule'; // 'schedule' | 'manual'
@@ -79,68 +88,81 @@ const LiveEngine = {
             return d;
         };
 
-        // Attach absolute timestamps to items
+        // Recalculate schedule starting times in cascade taking muted (0 duration) into account
+        let rollingTime = null;
         let prevEndHour = -1;
         let dayOffset = 0;
-        const mappedScheduleItems = activeItems.map((item, idx) => {
-            const startHour = parseInt((item.start || '00:00').split(':')[0]) || 0;
-            if (prevEndHour > 18 && startHour < 6) {
-                dayOffset = 1; // crossed midnight
+
+        const mappedScheduleItems = [];
+
+        for (let i = 0; i < processedItems.length; i++) {
+            const item = processedItems[i];
+            
+            if (i === 0) {
+                const startHour = parseInt((item.start || '00:00').split(':')[0]) || 0;
+                rollingTime = getRowDateTime(item.start, now, false);
             }
-            const startDate = getRowDateTime(item.start, now, dayOffset > 0);
-            const endDate = new Date(startDate.getTime() + (item.duration * 60000));
+
+            const startHour = rollingTime.getHours();
+            if (prevEndHour > 18 && startHour < 6) {
+                dayOffset = 1;
+            }
+
+            const startDate = new Date(rollingTime);
+            const durationMin = item.isMuted ? 0 : item.duration;
+            const endDate = new Date(startDate.getTime() + (durationMin * 60000));
             prevEndHour = endDate.getHours();
-            return {
+            rollingTime = new Date(endDate);
+
+            mappedScheduleItems.push({
                 ...item,
+                recalcStart: TimingEngine.formatTime(startDate),
+                recalcEnd: TimingEngine.formatTime(endDate),
                 startDate,
                 endDate
-            };
-        });
+            });
+        }
+
+        // Filter active (non-muted) items for execution pointer
+        const executableItems = mappedScheduleItems.filter(item => !item.isMuted);
 
         // 1. AUTO SCHEDULE TRACKING MODE (Seguimiento según Horario Programado)
-        if (status === 'live' && trackingMode === 'schedule' && mappedScheduleItems.length > 0) {
-            // Find which item corresponds to current clock time
+        if (status === 'live' && trackingMode === 'schedule' && executableItems.length > 0) {
             let foundIdx = -1;
-            for (let i = 0; i < mappedScheduleItems.length; i++) {
-                const item = mappedScheduleItems[i];
+            for (let i = 0; i < executableItems.length; i++) {
+                const item = executableItems[i];
                 if (now >= item.startDate && now < item.endDate) {
                     foundIdx = i;
                     break;
                 }
             }
 
-            // If time is before first item
-            if (foundIdx === -1 && now < mappedScheduleItems[0].startDate) {
+            if (foundIdx === -1 && now < executableItems[0].startDate) {
                 currentIndex = 0;
-                currentItem = mappedScheduleItems[0];
-                const diffToStartSec = Math.max(0, Math.floor((mappedScheduleItems[0].startDate.getTime() - now.getTime()) / 1000));
+                currentItem = executableItems[0];
+                const diffToStartSec = Math.max(0, Math.floor((executableItems[0].startDate.getTime() - now.getTime()) / 1000));
                 elapsedSeconds = 0;
                 remainingSeconds = diffToStartSec;
                 progressPercent = 0;
-            } 
-            // If time is after last item
-            else if (foundIdx === -1 && now >= mappedScheduleItems[mappedScheduleItems.length - 1].endDate) {
-                currentIndex = mappedScheduleItems.length - 1;
-                currentItem = mappedScheduleItems[currentIndex];
+            } else if (foundIdx === -1 && now >= executableItems[executableItems.length - 1].endDate) {
+                currentIndex = executableItems.length - 1;
+                currentItem = executableItems[currentIndex];
                 elapsedSeconds = (currentItem.duration || 1) * 60;
                 remainingSeconds = 0;
                 progressPercent = 100;
-            } 
-            // Currently within a scheduled item or gap
-            else {
+            } else {
                 if (foundIdx !== -1) {
                     currentIndex = foundIdx;
-                    currentItem = mappedScheduleItems[currentIndex];
+                    currentItem = executableItems[currentIndex];
                     const totalDurSec = (currentItem.duration || 1) * 60;
                     elapsedSeconds = Math.max(0, Math.floor((now.getTime() - currentItem.startDate.getTime()) / 1000));
                     remainingSeconds = Math.max(0, Math.floor((currentItem.endDate.getTime() - now.getTime()) / 1000));
                     progressPercent = Math.min(100, Math.max(0, (elapsedSeconds / totalDurSec) * 100));
                 } else {
-                    // In a gap between items: pick next upcoming item
-                    for (let i = 0; i < mappedScheduleItems.length; i++) {
-                        if (now < mappedScheduleItems[i].startDate) {
+                    for (let i = 0; i < executableItems.length; i++) {
+                        if (now < executableItems[i].startDate) {
                             currentIndex = i;
-                            currentItem = mappedScheduleItems[i];
+                            currentItem = executableItems[i];
                             elapsedSeconds = 0;
                             remainingSeconds = Math.max(0, Math.floor((currentItem.startDate.getTime() - now.getTime()) / 1000));
                             progressPercent = 0;
@@ -150,9 +172,9 @@ const LiveEngine = {
                 }
             }
         } 
-        // 2. MANUAL DIRECTOR TRACKING MODE (Control por Director con TAP)
-        else if (status === 'live' && trackingMode === 'manual' && activeItems.length > 0 && currentIndex < activeItems.length) {
-            currentItem = activeItems[currentIndex];
+        // 2. MANUAL DIRECTOR TRACKING MODE (Control Manual)
+        else if (status === 'live' && trackingMode === 'manual' && executableItems.length > 0 && currentIndex < executableItems.length) {
+            currentItem = executableItems[currentIndex];
             const blockStartMs = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime).getTime() : now.getTime();
             const totalDurationSec = (currentItem.duration || 1) * 60;
 
@@ -166,61 +188,67 @@ const LiveEngine = {
             } else {
                 progressPercent = Math.min(100, Math.max(0, (elapsedSeconds / totalDurationSec) * 100));
             }
-        } else if (activeItems.length > 0) {
+        } else if (executableItems.length > 0) {
             // Idle / Paused
-            currentItem = activeItems[currentIndex] || activeItems[0];
+            currentItem = executableItems[currentIndex] || executableItems[0];
             remainingSeconds = (currentItem ? currentItem.duration : 0) * 60;
         }
 
-        // Project remaining future blocks
+        // Project remaining future blocks in manual mode
         let projectedCurrentTime = new Date();
         if (status === 'live' && trackingMode === 'manual') {
             const remainingCurrentBlockSec = Math.max(0, remainingSeconds);
             projectedCurrentTime = new Date(now.getTime() + remainingCurrentBlockSec * 1000);
         }
 
-        const enrichedItems = activeItems.map((item, idx) => {
-            let rowState = 'future'; // 'completed' | 'active' | 'future'
-            let liveStart = item.start;
-            let liveEnd = item.end;
+        // Enrich items for the UI table
+        const enrichedItems = mappedScheduleItems.map((item, idx) => {
+            let rowState = 'future'; // 'completed' | 'active' | 'future' | 'muted'
+            let liveStart = item.recalcStart;
+            let liveEnd = item.recalcEnd;
             let rowProgress = 0;
 
-            if (trackingMode === 'schedule') {
-                const schedItem = mappedScheduleItems[idx];
-                if (schedItem) {
-                    if (now >= schedItem.endDate) {
-                        rowState = 'completed';
-                        rowProgress = 100;
-                    } else if (now >= schedItem.startDate && now < schedItem.endDate && status === 'live') {
-                        rowState = 'active';
-                        rowProgress = progressPercent;
-                    } else {
-                        rowState = 'future';
-                        rowProgress = 0;
-                    }
+            if (item.isMuted) {
+                rowState = 'muted';
+                liveStart = '--:--';
+                liveEnd = '--:--';
+                rowProgress = 0;
+            } else if (trackingMode === 'schedule') {
+                if (now >= item.endDate) {
+                    rowState = 'completed';
+                    rowProgress = 100;
+                } else if (now >= item.startDate && now < item.endDate && status === 'live') {
+                    rowState = 'active';
+                    rowProgress = progressPercent;
+                } else {
+                    rowState = 'future';
+                    rowProgress = 0;
                 }
             } else {
                 // Manual mode
-                if (idx < currentIndex) {
-                    rowState = 'completed';
-                    const hist = (liveState.history || []).find(h => h.num === item.num);
-                    if (hist) {
-                        liveStart = hist.actualStartFormatted || item.start;
-                        liveEnd = hist.actualEndFormatted || item.end;
+                const execIdx = executableItems.findIndex(e => e.num === item.num);
+                if (execIdx !== -1) {
+                    if (execIdx < currentIndex) {
+                        rowState = 'completed';
+                        const hist = (liveState.history || []).find(h => h.num === item.num);
+                        if (hist) {
+                            liveStart = hist.actualStartFormatted || item.start;
+                            liveEnd = hist.actualEndFormatted || item.end;
+                        }
+                        rowProgress = 100;
+                    } else if (execIdx === currentIndex && status === 'live') {
+                        rowState = 'active';
+                        const blockStart = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime) : now;
+                        liveStart = TimingEngine.formatTime(blockStart);
+                        const projectedBlockEnd = new Date(blockStart.getTime() + (item.duration * 60000));
+                        liveEnd = TimingEngine.formatTime(projectedBlockEnd);
+                        rowProgress = progressPercent;
+                    } else if (status === 'live' && execIdx > currentIndex) {
+                        rowState = 'future';
+                        liveStart = TimingEngine.formatTime(projectedCurrentTime);
+                        projectedCurrentTime = TimingEngine.addMinutes(projectedCurrentTime, item.duration);
+                        liveEnd = TimingEngine.formatTime(projectedCurrentTime);
                     }
-                    rowProgress = 100;
-                } else if (idx === currentIndex && status === 'live') {
-                    rowState = 'active';
-                    const blockStart = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime) : now;
-                    liveStart = TimingEngine.formatTime(blockStart);
-                    const projectedBlockEnd = new Date(blockStart.getTime() + (item.duration * 60000));
-                    liveEnd = TimingEngine.formatTime(projectedBlockEnd);
-                    rowProgress = progressPercent;
-                } else if (status === 'live' && idx > currentIndex) {
-                    rowState = 'future';
-                    liveStart = TimingEngine.formatTime(projectedCurrentTime);
-                    projectedCurrentTime = TimingEngine.addMinutes(projectedCurrentTime, item.duration);
-                    liveEnd = TimingEngine.formatTime(projectedCurrentTime);
                 }
             }
 
@@ -245,6 +273,11 @@ const LiveEngine = {
             }
         }
 
+        const lastMapped = mappedScheduleItems[mappedScheduleItems.length - 1];
+        const projectedEndTime = (status === 'live' && trackingMode === 'manual') 
+            ? TimingEngine.formatTime(projectedCurrentTime) 
+            : (lastMapped ? lastMapped.recalcEnd : baseComputed.metrics.endTimeFormatted);
+
         return {
             status,
             trackingMode,
@@ -258,12 +291,11 @@ const LiveEngine = {
             alertLevel,
             items: enrichedItems,
             history: liveState.history || [],
-            projectedEndTime: (status === 'live' && trackingMode === 'manual') ? TimingEngine.formatTime(projectedCurrentTime) : baseComputed.metrics.endTimeFormatted
+            projectedEndTime
         };
     }
 };
 
-// Export for module/browser
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = LiveEngine;
 }

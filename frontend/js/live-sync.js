@@ -1,6 +1,6 @@
 /**
  * LiveSync
- * Real-time synchronization layer between Director controls and multiple Viewers
+ * Real-time synchronization layer between Director/Admin controls and multiple Viewers
  */
 const LiveSync = {
     baseUrl: window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000',
@@ -14,9 +14,12 @@ const LiveSync = {
 
         // Try API
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1200);
             const res = await fetch(`${this.baseUrl}/api/live?project=${encodeURIComponent(projectName)}`, {
-                signal: AbortSignal.timeout(1200)
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             if (res.ok) {
                 const json = await res.json();
                 if (json.success && json.data) {
@@ -37,6 +40,10 @@ const LiveSync = {
         }
     },
 
+    async pullLiveState(projectName) {
+        return await this.fetchLiveState(projectName);
+    },
+
     /**
      * Save live state to API and LocalStorage
      */
@@ -47,15 +54,21 @@ const LiveSync = {
         liveState.lastUpdated = new Date().toISOString();
 
         // Local cache
-        localStorage.setItem(`liveState_${projectName}`, JSON.stringify(liveState));
+        try {
+            localStorage.setItem(`liveState_${projectName}`, JSON.stringify(liveState));
+        } catch (e) {}
 
         // Sync with API
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500);
             await fetch(`${this.baseUrl}/api/live`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body: JSON.stringify(liveState)
+                body: JSON.stringify(liveState),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
         } catch (e) {
             // Offline mode
         }
@@ -66,12 +79,19 @@ const LiveSync = {
      */
     startListening(projectName, onUpdateCallback) {
         this.stopListening();
+        if (!projectName) return;
         this.pollInterval = setInterval(async () => {
-            const state = await this.fetchLiveState(projectName);
-            if (state && onUpdateCallback) {
-                onUpdateCallback(state);
-            }
+            try {
+                const state = await this.fetchLiveState(projectName);
+                if (state && onUpdateCallback) {
+                    onUpdateCallback(state);
+                }
+            } catch (e) {}
         }, 1200);
+    },
+
+    startLivePolling(projectName, onUpdateCallback) {
+        this.startListening(projectName, onUpdateCallback);
     },
 
     /**
@@ -84,3 +104,7 @@ const LiveSync = {
         }
     }
 };
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = LiveSync;
+}

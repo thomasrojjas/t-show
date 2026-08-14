@@ -1,113 +1,47 @@
 /**
  * LiveApp
- * Main UI and execution controller for Live Stage & Viewer Platform
+ * Main UI and execution controller for Live Stage, Director & Administrator Platform
  */
 
 class LiveApp {
     constructor() {
         this.projectData = null;
         this.projectName = '';
-        this.role = 'viewer'; // 'viewer' | 'director'
+        this.role = 'viewer'; // 'viewer' | 'director' | 'admin'
+        this.targetModalRole = 'admin'; // 'admin' | 'director'
+        
         this.directorPIN = '1234';
+        this.adminPIN = '9999';
+
         this.liveState = {
             status: 'idle', // 'idle' | 'live' | 'paused' | 'finished'
+            trackingMode: 'schedule', // 'schedule' | 'manual'
             currentIndex: 0,
             currentBlockStartTime: null,
             omittedItemNums: [],
+            mutedBlockNums: [],
             history: []
         };
+
         this.tickerInterval = null;
 
+        // Start clock immediately so top master clock ALWAYS ticks
+        this.startMasterClock();
+        this.startTicker();
+
+        // Initialize asynchronous data
         this.init();
     }
 
-    async init() {
-        // Extract project name from URL or use first available
-        const urlParams = new URLSearchParams(window.location.search);
-        this.projectName = urlParams.get('project') || '';
-
-        // Load project from API / LocalStorage
-        await this.loadProject();
-
-        // Check if director role requested
-        if (urlParams.get('role') === 'director') {
-            this.role = 'director';
-        }
-
-        // Start listening to live session
-        await this.initLiveState();
-
-        // Bind events
-        this.bindEvents();
-
-        // Start 1-second master ticker
-        this.startTicker();
-
-        // Update UI
-        this.updateRoleUI();
-        this.render();
-    }
-
-    async loadProject() {
-        const all = await ApiClient.getAllProjects();
-        const projects = all.data || {};
-
-        if (this.projectName && projects[this.projectName]) {
-            this.projectData = projects[this.projectName];
-        } else {
-            const names = Object.keys(projects);
-            if (names.length > 0) {
-                this.projectName = names[0];
-                this.projectData = projects[this.projectName];
-            } else {
-                this.projectName = 'Gran Concierto & Show Estelar';
-                this.projectData = {
-                    eventName: this.projectName,
-                    convocatoriaTime: '18:30',
-                    convocatoriaDuration: 30,
-                    doorsTime: '19:30',
-                    doorsDuration: 60,
-                    showStartMode: 'auto',
-                    showStartTimeInput: '20:30',
-                    blocks: [
-                        { id: 'b1', type: 'ANIMACIÓN', title: 'Animadores: Bienvenida & Presentación Inicial', duration: 15, bis: 0 },
-                        { id: 'b2', type: 'SHOW', title: 'Artista 1 - Show Principal', duration: 55, bis: 10 },
-                        { id: 'b3', type: 'ANIMACIÓN', title: 'Animadores: Concursos / Intervención', duration: 15, bis: 0 },
-                        { id: 'b4', type: 'SHOW', title: 'Artista 2 - Show Estelar', duration: 60, bis: 15 },
-                        { id: 'b5', type: 'SHOW', title: 'Coronación', duration: 30, bis: 0 },
-                        { id: 'b6', type: 'ANIMACIÓN', title: 'Animadores: Intervención / Sorteo', duration: 10, bis: 0 },
-                        { id: 'b7', type: 'SHOW', title: 'Artista 4 - Presentation', duration: 60, bis: 10 },
-                        { id: 'b8', type: 'ANIMACIÓN', title: 'Animadores: Despedida & Cierre del Evento', duration: 10, bis: 0 }
-                    ]
-                };
-            }
-        }
-    }
-
-    async initLiveState() {
-        // Start polling from server
-        LiveSync.startLivePolling(this.projectName, (remoteState) => {
-            if (remoteState) {
-                this.liveState = remoteState;
-                this.render();
-            }
-        });
-
-        // Pull initial state
-        const initial = await LiveSync.pullLiveState(this.projectName);
-        if (initial) {
-            this.liveState = initial;
-        }
-    }
-
-    bindEvents() {
-        // Master Clock
-        setInterval(() => {
+    startMasterClock() {
+        const updateClock = () => {
             const clockEl = document.getElementById('masterClock');
             if (clockEl) {
                 clockEl.innerText = LiveEngine.formatTimeSeconds(new Date());
             }
-        }, 1000);
+        };
+        updateClock();
+        setInterval(updateClock, 1000);
     }
 
     startTicker() {
@@ -117,50 +51,144 @@ class LiveApp {
         }, 1000);
     }
 
-    updateRoleUI() {
-        const directorBar = document.getElementById('directorToolbar');
-        const roleBtn = document.getElementById('btnToggleRole');
-        const shareLinkBtn = document.getElementById('btnShareViewer');
+    async init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        this.projectName = urlParams.get('project') || '';
 
-        if (this.role === 'director') {
-            if (directorBar) directorBar.style.display = 'flex';
-            if (roleBtn) roleBtn.innerHTML = '🔒 Salir de Modo Director';
-        } else {
-            if (directorBar) directorBar.style.display = 'none';
-            if (roleBtn) roleBtn.innerHTML = '🔑 Acceso Director';
+        const roleParam = urlParams.get('role');
+        if (roleParam === 'admin') {
+            this.role = 'admin';
+        } else if (roleParam === 'director') {
+            this.role = 'director';
+        }
+
+        // Load project from API / LocalStorage
+        await this.loadProject();
+
+        // Load initial live state & start listener
+        await this.initLiveState();
+
+        // Update UI
+        this.updateRoleUI();
+        this.render();
+    }
+
+    async loadProject() {
+        try {
+            const all = await ApiClient.getAllProjects();
+            const projects = (all && all.data) ? all.data : {};
+
+            if (this.projectName && projects[this.projectName]) {
+                this.projectData = projects[this.projectName];
+            } else {
+                const names = Object.keys(projects);
+                if (names.length > 0) {
+                    this.projectName = names[0];
+                    this.projectData = projects[this.projectName];
+                }
+            }
+        } catch (e) {
+            console.error('Error loading project data:', e);
+        }
+    }
+
+    async initLiveState() {
+        try {
+            // Pull initial state
+            const initial = await LiveSync.fetchLiveState(this.projectName);
+            if (initial) {
+                this.liveState = { ...this.liveState, ...initial };
+            }
+
+            // Start polling from server
+            LiveSync.startListening(this.projectName, (remoteState) => {
+                if (remoteState) {
+                    this.liveState = remoteState;
+                    this.render();
+                }
+            });
+        } catch (e) {
+            console.error('Error initializing live sync:', e);
+        }
+    }
+
+    updateRoleUI() {
+        const adminBar = document.getElementById('adminToolbar');
+        const directorBar = document.getElementById('directorToolbar');
+        const roleBadge = document.getElementById('currentRoleBadge');
+
+        if (adminBar) adminBar.style.display = (this.role === 'admin') ? 'flex' : 'none';
+        if (directorBar) directorBar.style.display = (this.role === 'director') ? 'flex' : 'none';
+
+        if (roleBadge) {
+            roleBadge.className = `role-badge role-${this.role}`;
+            if (this.role === 'admin') roleBadge.innerText = '👑 ADMINISTRADOR';
+            else if (this.role === 'director') roleBadge.innerText = '🎬 DIRECTOR';
+            else roleBadge.innerText = '👁 ESPECTADOR';
         }
     }
 
     toggleRoleModal() {
-        if (this.role === 'director') {
-            this.role = 'viewer';
-            this.updateRoleUI();
-            this.render();
-            PrintExportManager.showToast('Modo Espectador activado (Solo Lectura)', 'info');
-        } else {
-            this.openModal('pinModal');
-            setTimeout(() => {
-                const pinInput = document.getElementById('pinInput');
-                if (pinInput) {
-                    pinInput.value = '';
-                    pinInput.focus();
-                }
-            }, 100);
+        this.setModalTargetRole(this.role === 'admin' ? 'admin' : 'director');
+        this.openModal('pinModal');
+        setTimeout(() => {
+            const pinInput = document.getElementById('pinInput');
+            if (pinInput) {
+                pinInput.value = '';
+                pinInput.focus();
+            }
+        }, 100);
+    }
+
+    setModalTargetRole(targetRole) {
+        this.targetModalRole = targetRole;
+        const btnAdmin = document.getElementById('btnSelectRoleAdmin');
+        const btnDirector = document.getElementById('btnSelectRoleDirector');
+        const hintText = document.getElementById('roleHintText');
+
+        if (btnAdmin && btnDirector) {
+            if (targetRole === 'admin') {
+                btnAdmin.classList.add('btn-primary');
+                btnAdmin.classList.remove('btn-secondary');
+                btnDirector.classList.add('btn-secondary');
+                btnDirector.classList.remove('btn-primary');
+                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> Control de Inicio, Detención y Silenciar Bloques (PIN: 9999)';
+            } else {
+                btnDirector.classList.add('btn-primary');
+                btnDirector.classList.remove('btn-secondary');
+                btnAdmin.classList.add('btn-secondary');
+                btnAdmin.classList.remove('btn-primary');
+                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> Conducción con Botón TAP y Reajuste en Vivo (PIN: 1234)';
+            }
         }
+    }
+
+    setRoleAsViewer() {
+        this.role = 'viewer';
+        this.closeModal('pinModal');
+        this.updateRoleUI();
+        this.render();
+        PrintExportManager.showToast('Modo Espectador activado (Solo Lectura)', 'info');
     }
 
     verifyPIN() {
         const pinInput = document.getElementById('pinInput');
         const pinVal = pinInput ? pinInput.value.trim() : '';
 
-        if (pinVal === this.directorPIN) {
+        if (this.targetModalRole === 'admin' && (pinVal === this.adminPIN || pinVal === 'admin')) {
+            this.role = 'admin';
+            this.closeModal('pinModal');
+            this.updateRoleUI();
+            this.render();
+            PrintExportManager.showToast('¡Modo Administrador desbloqueado!', 'success');
+        } else if (this.targetModalRole === 'director' && pinVal === this.directorPIN) {
             this.role = 'director';
             this.closeModal('pinModal');
             this.updateRoleUI();
             this.render();
-            PrintExportManager.showToast('¡Modo Director desbloqueado!', 'success');
+            PrintExportManager.showToast('¡Modo Director de Escenario desbloqueado!', 'success');
         } else {
-            alert('PIN incorrecto. Intenta con 1234');
+            alert(`PIN incorrecto para rol ${this.targetModalRole === 'admin' ? 'Administrador (9999)' : 'Director (1234)'}`);
             if (pinInput) pinInput.focus();
         }
     }
@@ -192,12 +220,6 @@ class LiveApp {
     }
 
     async setTrackingMode(mode) {
-        if (this.role !== 'director') {
-            // Viewers can also toggle local viewing mode if preferred
-            this.liveState.trackingMode = mode;
-            this.render();
-            return;
-        }
         this.liveState.trackingMode = mode;
         if (mode === 'manual' && !this.liveState.currentBlockStartTime) {
             this.liveState.currentBlockStartTime = new Date().toISOString();
@@ -205,7 +227,7 @@ class LiveApp {
         await this.syncAndRender(`Modo de seguimiento: ${mode === 'schedule' ? '🕒 Según Horario Programado' : '⚡ Conducción Manual'}`);
     }
 
-    // --- DIRECTOR ACTIONS ---
+    // --- ADMIN & DIRECTOR ACTIONS ---
 
     async startShow() {
         this.liveState.status = 'live';
@@ -215,15 +237,52 @@ class LiveApp {
         await this.syncAndRender('▶ ¡Evento Iniciado en Vivo!');
     }
 
+    async stopShow() {
+        if (this.role !== 'admin') {
+            alert('Solo el Administrador puede detener oficialmente el show.');
+            return;
+        }
+        if (confirm('¿Detener el programa/show en vivo? El cronómetro se pausará y los tiempos quedarán registrados.')) {
+            this.liveState.status = 'paused';
+            await this.syncAndRender('⏹ Show detenido por el Administrador');
+        }
+    }
+
+    async muteBlock(itemNum, title) {
+        if (this.role !== 'admin') {
+            alert('Solo el Administrador puede silenciar o excluir bloques.');
+            return;
+        }
+        if (confirm(`¿Silenciar y excluir el bloque "${title}"? Se ajustarán los horarios de todos los bloques siguientes automáticamente.`)) {
+            if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
+            if (!this.liveState.mutedBlockNums.includes(itemNum)) {
+                this.liveState.mutedBlockNums.push(itemNum);
+            }
+            await this.syncAndRender(`🔇 Bloque "${title}" silenciado. Tiempos recalculados.`);
+        }
+    }
+
+    async unmuteBlock(itemNum, title) {
+        if (this.role !== 'admin') {
+            alert('Solo el Administrador puede reactivar bloques.');
+            return;
+        }
+        if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
+        this.liveState.mutedBlockNums = this.liveState.mutedBlockNums.filter(n => n !== itemNum);
+        await this.syncAndRender(`🔊 Bloque "${title}" reactivado. Tiempos recalculados.`);
+    }
+
     async tapNextBlock() {
-        if (this.role !== 'director' || this.liveState.status !== 'live') return;
+        if (this.role !== 'director' && this.role !== 'admin') return;
+        if (this.liveState.status !== 'live') {
+            this.liveState.status = 'live';
+        }
 
         const snapshot = LiveEngine.computeLiveSnapshot(this.projectData, this.liveState);
         const currentItem = snapshot.currentItem;
         const now = new Date();
 
         if (currentItem) {
-            // Record history
             const startMs = this.liveState.currentBlockStartTime ? new Date(this.liveState.currentBlockStartTime).getTime() : now.getTime();
             const actualDurationMinutes = Math.round((now.getTime() - startMs) / 60000);
 
@@ -243,24 +302,22 @@ class LiveApp {
             });
         }
 
-        // Advance to next active item
         this.liveState.currentIndex += 1;
         this.liveState.currentBlockStartTime = now.toISOString();
 
-        // Check if show finished
-        if (this.liveState.currentIndex >= snapshot.items.length) {
+        if (this.liveState.currentIndex >= snapshot.items.filter(i => !i.isMuted).length) {
             this.liveState.status = 'finished';
             await this.syncAndRender('🏁 ¡Evento Concluido!');
             this.openReportModal();
             return;
         }
 
-        await this.syncAndRender(`⚡ TAP ejecutado: Cambio a bloque #${this.liveState.currentIndex + 1}`);
+        await this.syncAndRender(`⚡ TAP: Cambio a bloque #${this.liveState.currentIndex + 1}`);
     }
 
     async omitBlock(itemNum, title) {
-        if (this.role !== 'director') return;
-        if (confirm(`¿Omitir o eliminar en vivo el bloque "${title}"?`)) {
+        if (this.role !== 'director' && this.role !== 'admin') return;
+        if (confirm(`¿Omitir de la escaleta el bloque "${title}"?`)) {
             if (!this.liveState.omittedItemNums) this.liveState.omittedItemNums = [];
             this.liveState.omittedItemNums.push(itemNum);
             await this.syncAndRender(`Bloque "${title}" omitido. Escaleta recalculada.`);
@@ -268,13 +325,13 @@ class LiveApp {
     }
 
     async resyncNow() {
-        if (this.role !== 'director' || this.liveState.status !== 'live') return;
+        if (this.role !== 'director' && this.role !== 'admin') return;
         this.liveState.currentBlockStartTime = new Date().toISOString();
-        await this.syncAndRender('⏱ Horario reajustado a partir del momento actual');
+        await this.syncAndRender('⏱ Horario reajustado a partir de este instante');
     }
 
     async finishShow() {
-        if (this.role !== 'director') return;
+        if (this.role !== 'director' && this.role !== 'admin') return;
         if (confirm('¿Finalizar oficialmente la ejecución del show en vivo?')) {
             this.liveState.status = 'finished';
             await this.syncAndRender('Evento finalizado');
@@ -283,13 +340,15 @@ class LiveApp {
     }
 
     async resetLiveSession() {
-        if (this.role !== 'director') return;
+        if (this.role !== 'director' && this.role !== 'admin') return;
         if (confirm('¿Restablecer la sesión en vivo al estado inicial de espera?')) {
             this.liveState = {
                 status: 'idle',
+                trackingMode: 'schedule',
                 currentIndex: 0,
                 currentBlockStartTime: null,
                 omittedItemNums: [],
+                mutedBlockNums: [],
                 history: []
             };
             await this.syncAndRender('Sesión en vivo restablecida');
@@ -324,7 +383,7 @@ class LiveApp {
             if (snapshot.status === 'finished') statusBadge.innerText = '🏁 FINALIZADO';
         }
 
-        // 1.1 Update Play / Pause Buttons in Header and Director Toolbar
+        // 1.1 Update Play / Pause Buttons in Header and Toolbars
         const btnHeaderPlay = document.getElementById('btnHeaderPlay');
         const btnHeaderPlayIcon = document.getElementById('btnHeaderPlayIcon');
         const btnHeaderPlayText = document.getElementById('btnHeaderPlayText');
@@ -357,13 +416,15 @@ class LiveApp {
             }
         }
 
-        // Mode switch buttons
-        const btnModeSchedule = document.getElementById('btnModeSchedule');
-        const btnModeManual = document.getElementById('btnModeManual');
-        if (btnModeSchedule && btnModeManual) {
-            btnModeSchedule.classList.toggle('active', isSchedule);
-            btnModeManual.classList.toggle('active', !isSchedule);
-        }
+        // Mode switch buttons in toolbars
+        ['btnModeSchedule', 'btnAdminModeSchedule'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', isSchedule);
+        });
+        ['btnModeManual', 'btnAdminModeManual'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', !isSchedule);
+        });
 
         // 2. Full-Screen Ambient Perimeter Border Alert
         const borderEl = document.getElementById('screenAmbientBorder');
@@ -453,7 +514,7 @@ class LiveApp {
                 heroTypeBadge.innerText = firstItem.type;
                 heroTypeBadge.className = `hero-type-badge ${firstItem.badgeClass}`;
             }
-            if (heroRemainingTimer) { heroRemainingTimer.innerText = firstItem ? `${firstItem.duration}:00` : '--:--'; heroRemainingTimer.style.color = '#38bdf8'; }
+            if (heroRemainingTimer) { heroRemainingTimer.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00'; heroRemainingTimer.style.color = '#38bdf8'; }
             if (heroElapsedTimer) { heroElapsedTimer.innerText = '00:00'; }
             if (heroPlannedTimer && firstItem) { heroPlannedTimer.innerText = `${firstItem.duration} min`; }
             if (heroProjectedEnd) { heroProjectedEnd.innerText = snapshot.projectedEndTime || '--:--'; }
@@ -462,9 +523,14 @@ class LiveApp {
 
         // 4. Render Table Rows
         const tbody = document.getElementById('liveTableBody');
+        const thActions = document.getElementById('thActions');
+        if (thActions) {
+            thActions.innerText = (this.role === 'admin') ? 'Gestión Admin' : (this.role === 'director' ? 'Acción Director' : '');
+        }
+
         if (tbody) {
             tbody.innerHTML = '';
-            snapshot.items.forEach((r, idx) => {
+            snapshot.items.forEach((r) => {
                 const tr = document.createElement('tr');
                 tr.className = `row-${r.rowState}`;
 
@@ -473,31 +539,53 @@ class LiveApp {
                     let fillClass = '';
                     if (snapshot.alertLevel === 'yellow') fillClass = 'fill-yellow';
                     if (snapshot.alertLevel === 'red' || snapshot.alertLevel === 'overtime') fillClass = 'fill-red';
-                    progressHtml = `<div class="row-progress-fill ${fillClass}" style="width: ${snapshot.progressPercent}%"></div>`;
+                    progressHtml = `<div class="row-progress-fill ${fillClass}" style="width: ${snapshot.progressPercent}%;"></div>`;
                 }
 
                 let actionsHtml = '';
-                if (this.role === 'director') {
-                    if (r.rowState === 'future') {
-                        actionsHtml = `<button class="btn-omit-block" onclick="liveApp.omitBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Omitir o eliminar este bloque en vivo">✕ Omitir</button>`;
+
+                // Actions for Admin
+                if (this.role === 'admin') {
+                    if (r.isMuted) {
+                        actionsHtml = `<button class="btn-action-unmute" onclick="liveApp.unmuteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Reactivar bloque e incluirlo nuevamente en los tiempos">🔊 Reactivar</button>`;
+                    } else if (r.rowState === 'active' || r.rowState === 'future') {
+                        actionsHtml = `<button class="btn-action-mute" onclick="liveApp.muteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Silenciar y excluir este bloque de los tiempos">🔇 Silenciar</button>`;
+                    } else {
+                        actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 11px;">✔ HECHO</span>`;
+                    }
+                } 
+                // Actions for Director
+                else if (this.role === 'director') {
+                    if (r.isMuted) {
+                        actionsHtml = `<span style="color: #9ca3af; font-size: 11px;">🔇 Silenciado</span>`;
                     } else if (r.rowState === 'active') {
-                        actionsHtml = `<span style="color: #38bdf8; font-weight: 800; font-size: 11px;">🔴 EN CURSO</span>`;
+                        actionsHtml = `<button class="btn-tap" style="padding: 4px 10px; font-size: 11px;" onclick="liveApp.tapNextBlock()">⚡ TAP</button>`;
+                    } else if (r.rowState === 'future') {
+                        actionsHtml = `<button class="btn-live-sec" style="padding: 4px 8px; font-size: 10px; color: #f87171;" onclick="liveApp.omitBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')">✕ Omitir</button>`;
                     } else {
                         actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 11px;">✔ HECHO</span>`;
                     }
                 }
+
+                const badgeHtml = r.isMuted 
+                    ? `<span class="badge badge-muted">🔇 SILENCIADO</span>` 
+                    : `<span class="badge ${r.badgeClass}">${r.type}</span>`;
+
+                const durationHtml = r.isMuted 
+                    ? `<span style="color: #9ca3af; text-decoration: line-through;">${r.duration} min</span> <span style="font-size: 10px; color: #f87171;">(0 min)</span>` 
+                    : `${r.duration} min`;
 
                 tr.innerHTML = `
                     <td style="text-align: center; font-weight: bold; width: 40px; position: relative; z-index: 1;">
                         ${progressHtml}
                         ${r.num}
                     </td>
-                    <td style="position: relative; z-index: 1;"><span class="badge ${r.badgeClass}">${r.type}</span></td>
+                    <td style="position: relative; z-index: 1;">${badgeHtml}</td>
                     <td style="font-weight: 700; position: relative; z-index: 1;">${r.title}</td>
                     <td class="time-cell" style="position: relative; z-index: 1;">${r.liveStart}</td>
-                    <td style="font-weight: 700; position: relative; z-index: 1;">${r.duration} min</td>
+                    <td style="font-weight: 700; position: relative; z-index: 1;">${durationHtml}</td>
                     <td class="time-cell" style="position: relative; z-index: 1;">${r.liveEnd}</td>
-                    ${this.role === 'director' ? `<td style="text-align: right; position: relative; z-index: 1;">${actionsHtml}</td>` : ''}
+                    ${(this.role === 'admin' || this.role === 'director') ? `<td style="text-align: right; position: relative; z-index: 1;">${actionsHtml}</td>` : ''}
                 `;
                 tbody.appendChild(tr);
             });
