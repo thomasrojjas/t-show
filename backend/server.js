@@ -40,6 +40,41 @@ try {
     app.post('/api/projects', projectsRoute.saveProject);
     app.delete('/api/projects/:name', projectsRoute.deleteProject);
 
+    // Live Session endpoints
+    const LIVE_DATA_FILE = path.join(__dirname, 'data', 'live_sessions.json');
+    app.get('/api/live', (req, res) => {
+        const queryProj = req.query.project;
+        let sessions = {};
+        try {
+            if (fs.existsSync(LIVE_DATA_FILE)) {
+                sessions = JSON.parse(fs.readFileSync(LIVE_DATA_FILE, 'utf8') || '{}');
+            }
+        } catch (e) {}
+        if (queryProj) {
+            res.json({ success: true, data: sessions[queryProj] || null });
+        } else {
+            res.json({ success: true, data: sessions });
+        }
+    });
+
+    app.post('/api/live', (req, res) => {
+        const payload = req.body;
+        if (!payload || !payload.projectName) {
+            return res.status(400).json({ success: false, message: 'projectName requerido' });
+        }
+        let sessions = {};
+        try {
+            if (fs.existsSync(LIVE_DATA_FILE)) {
+                sessions = JSON.parse(fs.readFileSync(LIVE_DATA_FILE, 'utf8') || '{}');
+            }
+        } catch (e) {}
+        sessions[payload.projectName] = payload;
+        try {
+            fs.writeFileSync(LIVE_DATA_FILE, JSON.stringify(sessions, null, 2), 'utf8');
+        } catch (e) {}
+        res.json({ success: true, message: 'Estado en vivo actualizado' });
+    });
+
     // Static Frontend files
     app.use(express.static(FRONTEND_DIR));
 
