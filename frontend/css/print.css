@@ -1,0 +1,176 @@
+/* PRINT STYLING - SEPARATED PAGES FOR STRUCTURE & TIMING */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm 15mm;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        background: white !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        font-size: 11pt !important;
+    }
+
+    /* Hide screen-only interface elements */
+    .header-bar, 
+    .actions, 
+    .panel:first-child, 
+    button, 
+    .btn,
+    .btn-icon, 
+    select, 
+    .timeline-container,
+    .toast-container,
+    .no-print {
+        display: none !important;
+    }
+
+    .main-grid {
+        display: block !important;
+    }
+
+    /* Print Headers */
+    .print-header {
+        display: block !important;
+        border-bottom: 2px solid #000;
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+    }
+
+    .print-header h1 {
+        font-size: 18pt;
+        color: #000;
+        margin-bottom: 4px;
+    }
+
+    .print-header p {
+        font-size: 10pt;
+        color: #444;
+    }
+
+    /* PAGE 1: ESTRUCTURA Y CONFIGURACION DE BLOQUES */
+    .left-panel-print {
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+
+    .panel {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        color: black !important;
+        margin-bottom: 16px !important;
+        padding: 14px !important;
+    }
+
+    .panel-title {
+        color: black !important;
+        border-bottom: 2px solid #000 !important;
+        font-size: 13pt !important;
+        margin-bottom: 12px !important;
+    }
+
+    .segment-card {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: black !important;
+        margin-bottom: 10px !important;
+        padding: 10px !important;
+    }
+
+    .segment-card-title {
+        color: black !important;
+        font-weight: 800 !important;
+        font-size: 11pt !important;
+    }
+
+    .block-item {
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        color: black !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 8px !important;
+        padding: 8px 12px !important;
+    }
+
+    .form-control {
+        background: white !important;
+        color: black !important;
+        border: 1px solid #94a3b8 !important;
+        font-size: 10pt !important;
+        padding: 6px 8px !important;
+    }
+
+    /* PAGE 2: TIMING Y ESCALETA DEFINITIVA */
+    .right-panel-print {
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-top: 0 !important;
+    }
+
+    .metrics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .metric-card {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 10px !important;
+        box-shadow: none !important;
+    }
+
+    .metric-label {
+        color: #475569 !important;
+        font-size: 8pt !important;
+    }
+
+    .metric-value {
+        color: black !important;
+        font-size: 16pt !important;
+    }
+
+    .table-container {
+        border: 1px solid #000 !important;
+    }
+
+    .timing-table {
+        font-size: 10pt !important;
+    }
+
+    .timing-table th {
+        background: #e2e8f0 !important;
+        color: black !important;
+        border-bottom: 2px solid #000 !important;
+        padding: 8px 10px !important;
+    }
+
+    .timing-table td {
+        background: white !important;
+        color: black !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        padding: 8px 10px !important;
+    }
+
+    .badge {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+        background: transparent !important;
+        font-size: 8pt !important;
+        padding: 2px 6px !important;
+    }
+
+    .time-cell {
+        color: #000 !important;
+        font-weight: 800 !important;
+    }
+}

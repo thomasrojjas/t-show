@@ -1,0 +1,22 @@
+{
+  "name": "eventtime-pro-backend",
+  "version": "1.0.0",
+  "description": "Backend API para EventTime Pro - Plataforma Avanzada de Timing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "timing",
+    "events",
+    "escaleta",
+    "production"
+  ],
+  "author": "GR Medios",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

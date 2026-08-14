@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventTime Pro v4.0 - Plataforma Avanzada de Timing</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/timeline.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header class="header-bar">
+        <div class="brand">
+            <div class="brand-icon">⏱</div>
+            <div class="brand-text">
+                <h1>EventTime Pro <span class="brand-badge">v4.0</span></h1>
+                <p>Gestor Profesional de Timing e Impresión Multipágina</p>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-success" onclick="app.saveProject()">💾 Guardar Proyecto</button>
+            <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">📥 Exportar JSON</button>
+            <button class="btn btn-secondary" onclick="app.resetToDefaults()">🔄 Restablecer</button>
+            <button class="btn btn-primary" onclick="app.print()">🖨 Imprimir / Exportar PDF</button>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        
+        <!-- Left Panel Controls (PÁGINA 1 EN IMPRESIÓN) -->
+        <section class="left-panel-print">
+            
+            <!-- Encabezado exclusivo de impresión para Hoja 1 -->
+            <div class="print-header" style="display: none;">
+                <h1>Pauta Técnica & Estructura de Evento</h1>
+                <p>EventTime Pro v4.0 - Hoja 1: Parámetros y Bloques del Espectáculo</p>
+            </div>
+
+            <!-- Project Manager Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>Proyectos Guardados</span>
+                    <span id="storageBadge" style="font-size: 11px; color: var(--accent-success); font-weight: bold;">Sincronizando...</span>
+                </div>
+                <div id="savedProjectsContainer" class="saved-projects-list">
+                    <!-- Dynamic Saved Projects -->
+                </div>
+            </div>
+
+            <!-- Global Event Parameters Separated in Distinct Segments -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>Horarios Clave del Evento (Página 1: Estructura)</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventName">Nombre del Evento</label>
+                    <input type="text" id="eventName" class="form-control" value="Gran Concierto & Show Estelar">
+                </div>
+
+                <!-- SEGMENTO 1: CONVOCATORIA DE COMISIONES -->
+                <div class="segment-card" style="border-left: 4px solid #c084fc;">
+                    <div class="segment-card-title" style="color: #c084fc;">
+                        <span>📋 Segmento 1: Convocatoria Comisiones</span>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="convocatoriaTime">Hora Convocatoria</label>
+                            <input type="time" id="convocatoriaTime" class="form-control" value="18:30">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="convocatoriaDuration">Duración Reunión (min)</label>
+                            <input type="number" id="convocatoriaDuration" class="form-control" value="30" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEGMENTO 2: APERTURA DE PUERTAS -->
+                <div class="segment-card" style="border-left: 4px solid #06b6d4;">
+                    <div class="segment-card-title" style="color: #06b6d4;">
+                        <span>🚪 Segmento 2: Apertura de Puertas</span>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="doorsTime">Hora Apertura Puertas</label>
+                            <input type="time" id="doorsTime" class="form-control" value="19:30">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="doorsDuration">DJ / Ambientación (min)</label>
+                            <input type="number" id="doorsDuration" class="form-control" value="60" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEGMENTO 3: INICIO DEL SHOW (AJUSTABLE DERECHO Y CALCULADO AUTO) -->
+                <div class="segment-card" style="border-left: 4px solid #818cf8;">
+                    <div class="segment-card-title" style="color: #818cf8;">
+                        <span>🎤 Segmento 3: Inicio del Show (Ajustable)</span>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="showStartMode">Modo Horario Show</label>
+                            <select id="showStartMode" class="form-control">
+                                <option value="auto">Automático (Post-Puertas)</option>
+                                <option value="manual">Manual (Personalizado)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="showStartTimeInput">Hora Inicio del Show</label>
+                            <input type="time" id="showStartTimeInput" class="form-control" value="20:30">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Block Manager Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>Estructura & Bloques del Evento</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">Reordena con ▲ ▼ o arrastra</span>
+                </div>
+
+                <div id="blocksContainer" class="blocks-list">
+                    <!-- Dynamic Blocks rendered by BlocksManager -->
+                </div>
+
+                <div class="grid-3 no-print" style="margin-top: 14px;">
+                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('show')">+ Show</button>
+                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('anim')">+ Animador</button>
+                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('other')">+ Bloque Libre</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel Output (PÁGINA 2 EN IMPRESIÓN) -->
+        <main class="right-panel-print">
+            
+            <!-- Encabezado exclusivo de impresión para Hoja 2 -->
+            <div class="print-header" style="display: none;">
+                <h1>Escaleta & Minuta Oficial de Timing</h1>
+                <p>EventTime Pro v4.0 - Hoja 2: Cronograma Definitivo de Transmisión / Escenario</p>
+            </div>
+
+            <!-- Top Metric Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Convocatoria</div>
+                    <div class="metric-value" id="metricConvTime" style="color: #c084fc;">18:30</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Apertura Puertas</div>
+                    <div class="metric-value" id="metricDoorsTime" style="color: #06b6d4;">19:30</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Inicio Show</div>
+                    <div class="metric-value" id="metricShowStartTime" style="color: #34d399;">20:30</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Hora Término</div>
+                    <div class="metric-value" id="metricEndTime" style="color: #f59e0b;">01:20</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Duración Total</div>
+                    <div class="metric-value" id="metricTotalDuration" style="color: #818cf8;">6h 50m</div>
+                </div>
+            </div>
+
+            <!-- Main Timing Table Panel -->
+            <div class="panel" style="padding: 18px;">
+                <div class="panel-title" style="border-bottom: none; margin-bottom: 12px;">
+                    <span id="displayEventTitle" style="font-size: 18px; font-weight: 800;">Gran Concierto & Show Estelar</span>
+                    <span style="font-size: 12px; color: var(--accent-success); font-weight: bold;">● Pauta de Timing Oficial</span>
+                </div>
+
+                <div class="table-container">
+                    <table class="timing-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">#</th>
+                                <th style="width: 130px;">Tipo</th>
+                                <th>Descripción / Nombre</th>
+                                <th style="width: 90px;">Inicio</th>
+                                <th style="width: 90px;">Duración</th>
+                                <th style="width: 90px;">Término</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timingTableBody">
+                            <!-- Table rows generated dynamically by app.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Visual Timeline Footer -->
+                <div class="timeline-container">
+                    <div class="timeline-header">
+                        <span>Distribución Visual del Evento</span>
+                        <span id="timelineTotalSpan" style="color: #818cf8; font-weight: 800;">18:30 A 01:20 (6H 50M)</span>
+                    </div>
+                    <div class="timeline-bar" id="timelineBar">
+                        <!-- Visual segments rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Application JavaScript Modules -->
+    <script src="js/timing-engine.js"></script>
+    <script src="js/blocks-manager.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/print-export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
