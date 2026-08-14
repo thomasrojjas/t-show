@@ -85,18 +85,19 @@ class LiveApp {
     }
 
     async initLiveState() {
-        const savedLive = await LiveSync.fetchLiveState(this.projectName);
-        if (savedLive) {
-            this.liveState = { ...this.liveState, ...savedLive };
-        }
-
-        // Start background listener for remote updates
-        LiveSync.startListening(this.projectName, (incomingState) => {
-            if (incomingState && incomingState.lastUpdated !== this.liveState.lastUpdated) {
-                this.liveState = incomingState;
+        // Start polling from server
+        LiveSync.startLivePolling(this.projectName, (remoteState) => {
+            if (remoteState) {
+                this.liveState = remoteState;
                 this.render();
             }
         });
+
+        // Pull initial state
+        const initial = await LiveSync.pullLiveState(this.projectName);
+        if (initial) {
+            this.liveState = initial;
+        }
     }
 
     bindEvents() {
@@ -174,15 +175,44 @@ class LiveApp {
         if (modal) modal.classList.remove('active');
     }
 
+    // --- PLAY / PAUSE & TRACKING CONTROLS ---
+
+    async togglePlayPause() {
+        if (this.liveState.status === 'live') {
+            this.liveState.status = 'paused';
+            await this.syncAndRender('⏸ Seguimiento en Vivo Pausado');
+        } else {
+            this.liveState.status = 'live';
+            if (!this.liveState.currentBlockStartTime) {
+                this.liveState.currentBlockStartTime = new Date().toISOString();
+            }
+            const modeName = this.liveState.trackingMode === 'manual' ? 'Conducción Manual' : 'Seguimiento por Horario';
+            await this.syncAndRender(`▶ ¡Play en Vivo Activado! (${modeName})`);
+        }
+    }
+
+    async setTrackingMode(mode) {
+        if (this.role !== 'director') {
+            // Viewers can also toggle local viewing mode if preferred
+            this.liveState.trackingMode = mode;
+            this.render();
+            return;
+        }
+        this.liveState.trackingMode = mode;
+        if (mode === 'manual' && !this.liveState.currentBlockStartTime) {
+            this.liveState.currentBlockStartTime = new Date().toISOString();
+        }
+        await this.syncAndRender(`Modo de seguimiento: ${mode === 'schedule' ? '🕒 Según Horario Programado' : '⚡ Conducción Manual'}`);
+    }
+
     // --- DIRECTOR ACTIONS ---
 
     async startShow() {
-        if (this.role !== 'director') return;
         this.liveState.status = 'live';
         this.liveState.currentIndex = 0;
         this.liveState.currentBlockStartTime = new Date().toISOString();
         this.liveState.history = [];
-        await this.syncAndRender('¡Evento Iniciado en Vivo!');
+        await this.syncAndRender('▶ ¡Evento Iniciado en Vivo!');
     }
 
     async tapNextBlock() {
@@ -282,13 +312,57 @@ class LiveApp {
         const titleEl = document.getElementById('liveProjectTitle');
         if (titleEl) titleEl.innerText = this.projectName;
 
+        const isLive = snapshot.status === 'live';
+        const isSchedule = (this.liveState.trackingMode || 'schedule') === 'schedule';
+
         const statusBadge = document.getElementById('liveStatusBadge');
         if (statusBadge) {
             statusBadge.className = `live-badge-status status-${snapshot.status}`;
             if (snapshot.status === 'idle') statusBadge.innerText = '⏸ EN ESPERA';
-            if (snapshot.status === 'live') statusBadge.innerText = '🔴 EN VIVO';
-            if (snapshot.status === 'paused') statusBadge.innerText = '⏸ PAUSA';
+            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? '🔴 EN VIVO (HORARIO)' : '🔴 EN VIVO (MANUAL)';
+            if (snapshot.status === 'paused') statusBadge.innerText = '⏸ EN PAUSA';
             if (snapshot.status === 'finished') statusBadge.innerText = '🏁 FINALIZADO';
+        }
+
+        // 1.1 Update Play / Pause Buttons in Header and Director Toolbar
+        const btnHeaderPlay = document.getElementById('btnHeaderPlay');
+        const btnHeaderPlayIcon = document.getElementById('btnHeaderPlayIcon');
+        const btnHeaderPlayText = document.getElementById('btnHeaderPlayText');
+
+        if (btnHeaderPlay && btnHeaderPlayIcon && btnHeaderPlayText) {
+            if (isLive) {
+                btnHeaderPlay.classList.add('is-playing');
+                btnHeaderPlayIcon.innerText = '⏸';
+                btnHeaderPlayText.innerText = 'PAUSAR';
+            } else {
+                btnHeaderPlay.classList.remove('is-playing');
+                btnHeaderPlayIcon.innerText = '▶';
+                btnHeaderPlayText.innerText = isSchedule ? 'PLAY / SEGUIR HORARIO' : 'PLAY (INICIAR)';
+            }
+        }
+
+        const btnDirectorPlay = document.getElementById('btnDirectorPlay');
+        const btnDirectorPlayIcon = document.getElementById('btnDirectorPlayIcon');
+        const btnDirectorPlayText = document.getElementById('btnDirectorPlayText');
+
+        if (btnDirectorPlay && btnDirectorPlayIcon && btnDirectorPlayText) {
+            if (isLive) {
+                btnDirectorPlay.classList.add('is-playing');
+                btnDirectorPlayIcon.innerText = '⏸';
+                btnDirectorPlayText.innerText = 'Pausar Show';
+            } else {
+                btnDirectorPlay.classList.remove('is-playing');
+                btnDirectorPlayIcon.innerText = '▶';
+                btnDirectorPlayText.innerText = isSchedule ? '▶ Play Horario' : '▶ Play Manual';
+            }
+        }
+
+        // Mode switch buttons
+        const btnModeSchedule = document.getElementById('btnModeSchedule');
+        const btnModeManual = document.getElementById('btnModeManual');
+        if (btnModeSchedule && btnModeManual) {
+            btnModeSchedule.classList.toggle('active', isSchedule);
+            btnModeManual.classList.toggle('active', !isSchedule);
         }
 
         // 2. Full-Screen Ambient Perimeter Border Alert
@@ -349,9 +423,40 @@ class LiveApp {
             if (heroBlockName) heroBlockName.innerText = '🏁 Evento Finalizado con Éxito';
             if (heroRemainingTimer) { heroRemainingTimer.innerText = '00:00'; heroRemainingTimer.style.color = '#10b981'; }
             if (heroProgressFill) heroProgressFill.style.width = '100%';
+        } else if (snapshot.status === 'paused' && snapshot.currentItem) {
+            if (heroBlockName) heroBlockName.innerText = `⏸ ${snapshot.currentItem.title} (En Pausa)`;
+            if (heroTypeBadge) {
+                heroTypeBadge.innerText = snapshot.currentItem.type;
+                heroTypeBadge.className = `hero-type-badge ${snapshot.currentItem.badgeClass}`;
+            }
+            if (heroRemainingTimer) {
+                heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
+                heroRemainingTimer.style.color = '#f59e0b';
+            }
+            if (heroElapsedTimer) {
+                heroElapsedTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.elapsedSeconds);
+            }
+            if (heroPlannedTimer) {
+                heroPlannedTimer.innerText = `${snapshot.currentItem.duration} min`;
+            }
+            if (heroProjectedEnd) {
+                heroProjectedEnd.innerText = snapshot.projectedEndTime;
+            }
+            if (heroProgressFill) {
+                heroProgressFill.style.width = `${snapshot.progressPercent}%`;
+                heroProgressFill.className = 'hero-progress-fill fill-yellow';
+            }
         } else {
-            if (heroBlockName) heroBlockName.innerText = 'Listo para Iniciar Pauta en Vivo';
-            if (heroRemainingTimer) { heroRemainingTimer.innerText = '--:--'; heroRemainingTimer.style.color = '#9ca3af'; }
+            const firstItem = snapshot.currentItem || (snapshot.items && snapshot.items[0]);
+            if (heroBlockName) heroBlockName.innerText = firstItem ? `Listo: ${firstItem.title}` : 'Listo para Iniciar Pauta en Vivo';
+            if (heroTypeBadge && firstItem) {
+                heroTypeBadge.innerText = firstItem.type;
+                heroTypeBadge.className = `hero-type-badge ${firstItem.badgeClass}`;
+            }
+            if (heroRemainingTimer) { heroRemainingTimer.innerText = firstItem ? `${firstItem.duration}:00` : '--:--'; heroRemainingTimer.style.color = '#38bdf8'; }
+            if (heroElapsedTimer) { heroElapsedTimer.innerText = '00:00'; }
+            if (heroPlannedTimer && firstItem) { heroPlannedTimer.innerText = `${firstItem.duration} min`; }
+            if (heroProjectedEnd) { heroProjectedEnd.innerText = snapshot.projectedEndTime || '--:--'; }
             if (heroProgressFill) heroProgressFill.style.width = '0%';
         }
 

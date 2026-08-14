@@ -29,6 +29,12 @@
 
         <div class="live-header-center">
             <div class="clock-display" id="masterClock">00:00:00</div>
+            
+            <!-- Botón Maestro Play / Pausa -->
+            <button id="btnHeaderPlay" class="btn-play-master" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
+                <span id="btnHeaderPlayIcon">▶</span>
+                <span id="btnHeaderPlayText">PLAY / SEGUIR HORARIO</span>
+            </button>
         </div>
 
         <div class="live-header-actions">
@@ -42,10 +48,19 @@
     <section id="directorToolbar" class="director-toolbar" style="display: none;">
         <div class="director-info">
             <span>🎛 Panel de Control del Director</span>
+            
+            <!-- Selector de Modo de Seguimiento -->
+            <div class="mode-toggle-group" style="margin-left: 10px;">
+                <button id="btnModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')" title="Sincronizar automáticamente con las horas del reloj">🕒 Según Horario</button>
+                <button id="btnModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')" title="Avanzar bloques manualmente con el botón TAP">⚡ Conducción Manual</button>
+            </div>
         </div>
         <div class="director-buttons">
             <button class="btn-tap" onclick="liveApp.tapNextBlock()">⚡ TAP: CAMBIO AHORA</button>
-            <button class="btn-live-sec" onclick="liveApp.startShow()">▶ Iniciar Show</button>
+            <button id="btnDirectorPlay" class="btn-play-master" onclick="liveApp.togglePlayPause()">
+                <span id="btnDirectorPlayIcon">▶</span>
+                <span id="btnDirectorPlayText">Iniciar Play</span>
+            </button>
             <button class="btn-live-sec" onclick="liveApp.resyncNow()">⏱ Reajustar a Hora Actual</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
             <button class="btn-live-sec" style="color: #fca5a5;" onclick="liveApp.finishShow()">🏁 Finalizar Show</button>

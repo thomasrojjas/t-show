@@ -182,6 +182,76 @@ body.live-body {
     background: #4b5563;
 }
 
+/* Play / Pause Master Button */
+.btn-play-master {
+    background: linear-gradient(135deg, #10b981, #047857);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid #34d399;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.btn-play-master:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.6);
+}
+
+.btn-play-master.is-playing {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #fbbf24;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-play-master.is-playing:hover {
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.6);
+}
+
+/* Mode Switcher Pills */
+.mode-toggle-group {
+    display: inline-flex;
+    background: #030712;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 4px;
+}
+
+.mode-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mode-toggle-btn:hover {
+    color: #f3f4f6;
+}
+
+.mode-toggle-btn.active {
+    background: #4338ca;
+    color: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 2px 6px rgba(67, 56, 202, 0.4);
+}
+
 /* Live Active Hero Card */
 .active-hero-card {
     background: #0f172a;
