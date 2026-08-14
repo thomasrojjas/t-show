@@ -92,6 +92,8 @@ class App {
         // Update Title Display
         const titleEl = document.getElementById('displayEventTitle');
         if (titleEl) titleEl.innerText = formData.eventName;
+        const printTitleEl = document.getElementById('printEventTitle');
+        if (printTitleEl) printTitleEl.innerText = formData.eventName;
 
         // Run computation in Timing Engine
         const result = TimingEngine.computeSchedule(formData, formData.blocks);

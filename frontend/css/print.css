@@ -1,8 +1,8 @@
-/* PRINT STYLING - SEPARATED PAGES FOR STRUCTURE & TIMING */
+/* PRINT STYLING - EXCLUSIVELY ESCALETA & TIMING OFICIAL */
 @media print {
     @page {
         size: A4 portrait;
-        margin: 12mm 15mm;
+        margin: 10mm 12mm;
     }
 
     * {
@@ -11,16 +11,17 @@
     }
 
     body {
-        background: white !important;
+        background: #ffffff !important;
         color: #000000 !important;
         padding: 0 !important;
-        font-size: 11pt !important;
+        margin: 0 !important;
+        font-size: 10pt !important;
     }
 
-    /* Hide screen-only interface elements */
+    /* Ocultar completamente la barra superior, botones y el panel izquierdo de edición */
     .header-bar, 
     .actions, 
-    .panel:first-child, 
+    .left-panel-print,
     button, 
     .btn,
     .btn-icon, 
@@ -33,144 +34,144 @@
 
     .main-grid {
         display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    /* Print Headers */
+    /* Panel derecho (Escaleta Oficial de Timing) como único contenido impreso */
+    .right-panel-print {
+        display: block !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Encabezado formal de producción para la impresión */
     .print-header {
         display: block !important;
-        border-bottom: 2px solid #000;
-        padding-bottom: 8px;
-        margin-bottom: 15px;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 6px;
+        margin-bottom: 12px;
     }
 
     .print-header h1 {
-        font-size: 18pt;
-        color: #000;
-        margin-bottom: 4px;
+        font-size: 16pt;
+        font-weight: 800;
+        color: #000000;
+        margin: 0 0 2px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .print-header p {
-        font-size: 10pt;
-        color: #444;
+        font-size: 9pt;
+        color: #333333;
+        margin: 0;
+        font-weight: 600;
     }
 
-    /* PAGE 1: ESTRUCTURA Y CONFIGURACION DE BLOQUES */
-    .left-panel-print {
-        page-break-after: always !important;
-        break-after: page !important;
-    }
-
-    .panel {
-        background: white !important;
-        border: 1px solid #ccc !important;
-        box-shadow: none !important;
-        color: black !important;
-        margin-bottom: 16px !important;
-        padding: 14px !important;
-    }
-
-    .panel-title {
-        color: black !important;
-        border-bottom: 2px solid #000 !important;
-        font-size: 13pt !important;
-        margin-bottom: 12px !important;
-    }
-
-    .segment-card {
-        background: #f8fafc !important;
-        border: 1px solid #cbd5e1 !important;
-        color: black !important;
-        margin-bottom: 10px !important;
-        padding: 10px !important;
-    }
-
-    .segment-card-title {
-        color: black !important;
-        font-weight: 800 !important;
-        font-size: 11pt !important;
-    }
-
-    .block-item {
-        background: #f1f5f9 !important;
-        border: 1px solid #cbd5e1 !important;
-        color: black !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 8px !important;
-        padding: 8px 12px !important;
-    }
-
-    .form-control {
-        background: white !important;
-        color: black !important;
-        border: 1px solid #94a3b8 !important;
-        font-size: 10pt !important;
-        padding: 6px 8px !important;
-    }
-
-    /* PAGE 2: TIMING Y ESCALETA DEFINITIVA */
-    .right-panel-print {
-        page-break-before: always !important;
-        break-before: page !important;
-        margin-top: 0 !important;
-    }
-
+    /* Tarjetas de Métricas en fila horizontal compacta */
     .metrics-grid {
         display: grid !important;
         grid-template-columns: repeat(5, 1fr) !important;
-        gap: 8px !important;
-        margin-bottom: 16px !important;
+        gap: 6px !important;
+        margin-bottom: 14px !important;
     }
 
     .metric-card {
         background: #f8fafc !important;
-        border: 1px solid #cbd5e1 !important;
-        padding: 10px !important;
+        border: 1px solid #94a3b8 !important;
+        border-radius: 4px !important;
+        padding: 6px 8px !important;
         box-shadow: none !important;
+        text-align: center;
     }
 
     .metric-label {
         color: #475569 !important;
-        font-size: 8pt !important;
+        font-size: 7.5pt !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
     }
 
     .metric-value {
-        color: black !important;
-        font-size: 16pt !important;
+        color: #000000 !important;
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+        margin-top: 2px;
+        font-family: 'Segoe UI', monospace;
+    }
+
+    /* Contenedor y tabla de la escaleta */
+    .panel {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .panel-title {
+        color: #000000 !important;
+        border-bottom: 1.5px solid #000000 !important;
+        font-size: 12pt !important;
+        font-weight: 800 !important;
+        margin-bottom: 8px !important;
+        padding-bottom: 4px !important;
     }
 
     .table-container {
-        border: 1px solid #000 !important;
+        border: 1.5px solid #000000 !important;
+        border-radius: 4px !important;
+        overflow: visible !important;
     }
 
     .timing-table {
-        font-size: 10pt !important;
+        width: 100% !important;
+        font-size: 9.5pt !important;
+        border-collapse: collapse !important;
     }
 
     .timing-table th {
         background: #e2e8f0 !important;
-        color: black !important;
-        border-bottom: 2px solid #000 !important;
-        padding: 8px 10px !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
+        font-size: 8.5pt !important;
+        text-transform: uppercase;
+        border-bottom: 1.5px solid #000000 !important;
+        padding: 6px 8px !important;
     }
 
     .timing-table td {
-        background: white !important;
-        color: black !important;
+        background: #ffffff !important;
+        color: #000000 !important;
         border-bottom: 1px solid #cbd5e1 !important;
-        padding: 8px 10px !important;
+        padding: 6px 8px !important;
+        font-size: 9pt !important;
+    }
+
+    .timing-table tr:nth-child(even) td {
+        background: #f8fafc !important;
+    }
+
+    .timing-table tr:last-child td {
+        border-bottom: none !important;
     }
 
     .badge {
-        border: 1px solid #000 !important;
-        color: #000 !important;
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
         background: transparent !important;
-        font-size: 8pt !important;
-        padding: 2px 6px !important;
+        font-size: 7.5pt !important;
+        font-weight: 800 !important;
+        padding: 1px 5px !important;
+        border-radius: 3px !important;
     }
 
     .time-cell {
-        color: #000 !important;
+        color: #000000 !important;
         font-weight: 800 !important;
+        font-family: 'Segoe UI', monospace;
     }
 }
