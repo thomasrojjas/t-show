@@ -1,6 +1,6 @@
 /**
  * LiveApp
- * Main UI and execution controller for Live Stage, Director & Administrator Platform
+ * Main UI and execution controller for Single-Screen Stage Display, Director & Administrator Platform
  */
 
 class LiveApp {
@@ -8,7 +8,7 @@ class LiveApp {
         this.projectData = null;
         this.projectName = '';
         this.role = 'viewer'; // 'viewer' | 'director' | 'admin'
-        this.targetModalRole = 'admin'; // 'admin' | 'director'
+        this.targetModalRole = 'director'; // 'director' | 'admin'
         
         this.directorPIN = '1234';
         this.adminPIN = '9999';
@@ -20,16 +20,18 @@ class LiveApp {
             currentBlockStartTime: null,
             omittedItemNums: [],
             mutedBlockNums: [],
+            blockExtensions: {},
             history: []
         };
 
         this.tickerInterval = null;
+        this.lastScrolledIndex = -1;
 
-        // Start clock immediately so top master clock ALWAYS ticks
+        // Start clocks immediately
         this.startMasterClock();
         this.startTicker();
 
-        // Initialize asynchronous data
+        // Initialize data
         this.init();
     }
 
@@ -61,6 +63,14 @@ class LiveApp {
         } else if (roleParam === 'director') {
             this.role = 'director';
         }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.extend-menu-container')) {
+                const drop = document.getElementById('extendDropdown');
+                if (drop) drop.classList.remove('show');
+            }
+        });
 
         // Load project from API / LocalStorage
         await this.loadProject();
@@ -152,13 +162,13 @@ class LiveApp {
                 btnAdmin.classList.remove('btn-secondary');
                 btnDirector.classList.add('btn-secondary');
                 btnDirector.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> Control de Inicio, Detención y Silenciar Bloques (PIN: 9999)';
+                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> Inicio/Detención y Silenciado de Bloques (PIN: 9999)';
             } else {
                 btnDirector.classList.add('btn-primary');
                 btnDirector.classList.remove('btn-secondary');
                 btnAdmin.classList.add('btn-secondary');
                 btnAdmin.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> Conducción con Botón TAP y Reajuste en Vivo (PIN: 1234)';
+                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> Botón TAP, Extender tiempo y Silenciar bloques (PIN: 1234)';
             }
         }
     }
@@ -180,15 +190,15 @@ class LiveApp {
             this.closeModal('pinModal');
             this.updateRoleUI();
             this.render();
-            PrintExportManager.showToast('¡Modo Administrador desbloqueado!', 'success');
+            PrintExportManager.showToast('¡Modo Administrador activado!', 'success');
         } else if (this.targetModalRole === 'director' && pinVal === this.directorPIN) {
             this.role = 'director';
             this.closeModal('pinModal');
             this.updateRoleUI();
             this.render();
-            PrintExportManager.showToast('¡Modo Director de Escenario desbloqueado!', 'success');
+            PrintExportManager.showToast('¡Modo Director de Escenario activado!', 'success');
         } else {
-            alert(`PIN incorrecto para rol ${this.targetModalRole === 'admin' ? 'Administrador (9999)' : 'Director (1234)'}`);
+            alert(`PIN incorrecto para ${this.targetModalRole === 'admin' ? 'Administrador (9999)' : 'Director (1234)'}`);
             if (pinInput) pinInput.focus();
         }
     }
@@ -201,6 +211,18 @@ class LiveApp {
     closeModal(id) {
         const modal = document.getElementById(id);
         if (modal) modal.classList.remove('active');
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error al activar pantalla completa: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
     }
 
     // --- PLAY / PAUSE & TRACKING CONTROLS ---
@@ -224,10 +246,10 @@ class LiveApp {
         if (mode === 'manual' && !this.liveState.currentBlockStartTime) {
             this.liveState.currentBlockStartTime = new Date().toISOString();
         }
-        await this.syncAndRender(`Modo de seguimiento: ${mode === 'schedule' ? '🕒 Según Horario Programado' : '⚡ Conducción Manual'}`);
+        await this.syncAndRender(`Modo: ${mode === 'schedule' ? '🕒 Según Horario' : '⚡ Conducción Manual'}`);
     }
 
-    // --- ADMIN & DIRECTOR ACTIONS ---
+    // --- DIRECTOR & ADMIN ACTIONS ---
 
     async startShow() {
         this.liveState.status = 'live';
@@ -239,37 +261,36 @@ class LiveApp {
 
     async stopShow() {
         if (this.role !== 'admin') {
-            alert('Solo el Administrador puede detener oficialmente el show.');
+            alert('Solo el Administrador puede detener el show.');
             return;
         }
         if (confirm('¿Detener el programa/show en vivo? El cronómetro se pausará y los tiempos quedarán registrados.')) {
             this.liveState.status = 'paused';
-            await this.syncAndRender('⏹ Show detenido por el Administrador');
+            await this.syncAndRender('⏹ Show detenido');
         }
     }
 
-    async muteBlock(itemNum, title) {
-        if (this.role !== 'admin') {
-            alert('Solo el Administrador puede silenciar o excluir bloques.');
-            return;
-        }
-        if (confirm(`¿Silenciar y excluir el bloque "${title}"? Se ajustarán los horarios de todos los bloques siguientes automáticamente.`)) {
-            if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
-            if (!this.liveState.mutedBlockNums.includes(itemNum)) {
-                this.liveState.mutedBlockNums.push(itemNum);
-            }
-            await this.syncAndRender(`🔇 Bloque "${title}" silenciado. Tiempos recalculados.`);
-        }
+    toggleExtendMenu() {
+        const drop = document.getElementById('extendDropdown');
+        if (drop) drop.classList.toggle('show');
     }
 
-    async unmuteBlock(itemNum, title) {
-        if (this.role !== 'admin') {
-            alert('Solo el Administrador puede reactivar bloques.');
-            return;
+    async extendCurrentBlock(extraMinutes) {
+        const drop = document.getElementById('extendDropdown');
+        if (drop) drop.classList.remove('show');
+
+        const snapshot = LiveEngine.computeLiveSnapshot(this.projectData, this.liveState);
+        if (!snapshot || !snapshot.currentItem) return;
+
+        const itemNum = snapshot.currentItem.num;
+        if (!this.liveState.blockExtensions) this.liveState.blockExtensions = {};
+
+        if (extraMinutes > 0) {
+            this.liveState.blockExtensions[itemNum] = (this.liveState.blockExtensions[itemNum] || 0) + extraMinutes;
+            await this.syncAndRender(`⏱ Bloque extendido en +${extraMinutes} min. Horarios recalculados.`);
+        } else {
+            await this.syncAndRender('⏱ Bloque en curso mantenido.');
         }
-        if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
-        this.liveState.mutedBlockNums = this.liveState.mutedBlockNums.filter(n => n !== itemNum);
-        await this.syncAndRender(`🔊 Bloque "${title}" reactivado. Tiempos recalculados.`);
     }
 
     async tapNextBlock() {
@@ -291,57 +312,64 @@ class LiveApp {
                 type: currentItem.type,
                 title: currentItem.title,
                 plannedStart: currentItem.start,
-                plannedDuration: currentItem.duration,
+                plannedDuration: currentItem.effectiveDuration || currentItem.duration,
                 plannedEnd: currentItem.end,
                 actualStart: new Date(startMs).toISOString(),
                 actualStartFormatted: LiveEngine.formatTimeSeconds(new Date(startMs)),
                 actualEnd: now.toISOString(),
                 actualEndFormatted: LiveEngine.formatTimeSeconds(now),
                 actualDurationMinutes: actualDurationMinutes,
-                diffMinutes: actualDurationMinutes - currentItem.duration
+                diffMinutes: actualDurationMinutes - (currentItem.effectiveDuration || currentItem.duration)
             });
         }
 
         this.liveState.currentIndex += 1;
         this.liveState.currentBlockStartTime = now.toISOString();
 
-        if (this.liveState.currentIndex >= snapshot.items.filter(i => !i.isMuted).length) {
+        const activeRemaining = snapshot.items.filter(i => !i.isMuted);
+        if (this.liveState.currentIndex >= activeRemaining.length) {
             this.liveState.status = 'finished';
             await this.syncAndRender('🏁 ¡Evento Concluido!');
             this.openReportModal();
             return;
         }
 
-        await this.syncAndRender(`⚡ TAP: Cambio a bloque #${this.liveState.currentIndex + 1}`);
+        await this.syncAndRender(`⚡ TAP: Pasando a siguiente bloque (#${this.liveState.currentIndex + 1})`);
     }
 
-    async omitBlock(itemNum, title) {
-        if (this.role !== 'director' && this.role !== 'admin') return;
-        if (confirm(`¿Omitir de la escaleta el bloque "${title}"?`)) {
-            if (!this.liveState.omittedItemNums) this.liveState.omittedItemNums = [];
-            this.liveState.omittedItemNums.push(itemNum);
-            await this.syncAndRender(`Bloque "${title}" omitido. Escaleta recalculada.`);
+    async muteBlock(itemNum, title) {
+        if (this.role !== 'admin' && this.role !== 'director') {
+            alert('Acceso restringido.');
+            return;
         }
+        if (confirm(`¿Silenciar y excluir de los tiempos el bloque "${title}"? Sigue figurando en la lista pero no suma tiempo.`)) {
+            if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
+            if (!this.liveState.mutedBlockNums.includes(itemNum)) {
+                this.liveState.mutedBlockNums.push(itemNum);
+            }
+            await this.syncAndRender(`🔇 Bloque "${title}" silenciado.`);
+        }
+    }
+
+    async unmuteBlock(itemNum, title) {
+        if (this.role !== 'admin' && this.role !== 'director') {
+            alert('Acceso restringido.');
+            return;
+        }
+        if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
+        this.liveState.mutedBlockNums = this.liveState.mutedBlockNums.filter(n => n !== itemNum);
+        await this.syncAndRender(`🔊 Bloque "${title}" reactivado.`);
     }
 
     async resyncNow() {
         if (this.role !== 'director' && this.role !== 'admin') return;
         this.liveState.currentBlockStartTime = new Date().toISOString();
-        await this.syncAndRender('⏱ Horario reajustado a partir de este instante');
-    }
-
-    async finishShow() {
-        if (this.role !== 'director' && this.role !== 'admin') return;
-        if (confirm('¿Finalizar oficialmente la ejecución del show en vivo?')) {
-            this.liveState.status = 'finished';
-            await this.syncAndRender('Evento finalizado');
-            this.openReportModal();
-        }
+        await this.syncAndRender('⏱ Horario reajustado a partir del momento actual');
     }
 
     async resetLiveSession() {
         if (this.role !== 'director' && this.role !== 'admin') return;
-        if (confirm('¿Restablecer la sesión en vivo al estado inicial de espera?')) {
+        if (confirm('¿Restablecer la sesión en vivo al estado inicial?')) {
             this.liveState = {
                 status: 'idle',
                 trackingMode: 'schedule',
@@ -349,6 +377,7 @@ class LiveApp {
                 currentBlockStartTime: null,
                 omittedItemNums: [],
                 mutedBlockNums: [],
+                blockExtensions: {},
                 history: []
             };
             await this.syncAndRender('Sesión en vivo restablecida');
@@ -361,13 +390,13 @@ class LiveApp {
         if (message) PrintExportManager.showToast(message, 'info');
     }
 
-    // --- RENDERING ---
+    // --- RENDERING & AUTO-SCROLL ---
 
     render() {
         const snapshot = LiveEngine.computeLiveSnapshot(this.projectData, this.liveState);
         if (!snapshot) return;
 
-        // 1. Update Title & Status Badge
+        // 1. Title & Status
         const titleEl = document.getElementById('liveProjectTitle');
         if (titleEl) titleEl.innerText = this.projectName;
 
@@ -378,12 +407,12 @@ class LiveApp {
         if (statusBadge) {
             statusBadge.className = `live-badge-status status-${snapshot.status}`;
             if (snapshot.status === 'idle') statusBadge.innerText = '⏸ EN ESPERA';
-            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? '🔴 EN VIVO (HORARIO)' : '🔴 EN VIVO (MANUAL)';
+            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? '🔴 EN VIVO' : '🔴 MANUAL';
             if (snapshot.status === 'paused') statusBadge.innerText = '⏸ EN PAUSA';
             if (snapshot.status === 'finished') statusBadge.innerText = '🏁 FINALIZADO';
         }
 
-        // 1.1 Update Play / Pause Buttons in Header and Toolbars
+        // Header Play Button
         const btnHeaderPlay = document.getElementById('btnHeaderPlay');
         const btnHeaderPlayIcon = document.getElementById('btnHeaderPlayIcon');
         const btnHeaderPlayText = document.getElementById('btnHeaderPlayText');
@@ -396,37 +425,11 @@ class LiveApp {
             } else {
                 btnHeaderPlay.classList.remove('is-playing');
                 btnHeaderPlayIcon.innerText = '▶';
-                btnHeaderPlayText.innerText = isSchedule ? 'PLAY / SEGUIR HORARIO' : 'PLAY (INICIAR)';
+                btnHeaderPlayText.innerText = 'PLAY / EN VIVO';
             }
         }
 
-        const btnDirectorPlay = document.getElementById('btnDirectorPlay');
-        const btnDirectorPlayIcon = document.getElementById('btnDirectorPlayIcon');
-        const btnDirectorPlayText = document.getElementById('btnDirectorPlayText');
-
-        if (btnDirectorPlay && btnDirectorPlayIcon && btnDirectorPlayText) {
-            if (isLive) {
-                btnDirectorPlay.classList.add('is-playing');
-                btnDirectorPlayIcon.innerText = '⏸';
-                btnDirectorPlayText.innerText = 'Pausar Show';
-            } else {
-                btnDirectorPlay.classList.remove('is-playing');
-                btnDirectorPlayIcon.innerText = '▶';
-                btnDirectorPlayText.innerText = isSchedule ? '▶ Play Horario' : '▶ Play Manual';
-            }
-        }
-
-        // Mode switch buttons in toolbars
-        ['btnModeSchedule', 'btnAdminModeSchedule'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.classList.toggle('active', isSchedule);
-        });
-        ['btnModeManual', 'btnAdminModeManual'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.classList.toggle('active', !isSchedule);
-        });
-
-        // 2. Full-Screen Ambient Perimeter Border Alert
+        // 2. Ambient Alert Border
         const borderEl = document.getElementById('screenAmbientBorder');
         if (borderEl) {
             borderEl.className = '';
@@ -435,14 +438,20 @@ class LiveApp {
             if (snapshot.alertLevel === 'overtime') borderEl.classList.add('screen-alert-overtime');
         }
 
-        // 3. Hero Card
+        // 3. Stage Display Hero Card
         const heroBlockName = document.getElementById('heroBlockName');
         const heroTypeBadge = document.getElementById('heroTypeBadge');
+        const heroTimerLabel = document.getElementById('heroTimerLabel');
         const heroRemainingTimer = document.getElementById('heroRemainingTimer');
         const heroElapsedTimer = document.getElementById('heroElapsedTimer');
         const heroPlannedTimer = document.getElementById('heroPlannedTimer');
         const heroProgressFill = document.getElementById('heroProgressFill');
         const heroProjectedEnd = document.getElementById('heroProjectedEnd');
+        const heroNextBlockName = document.getElementById('heroNextBlockName');
+
+        if (heroNextBlockName) {
+            heroNextBlockName.innerText = snapshot.nextItem ? `${snapshot.nextItem.title} (${snapshot.nextItem.effectiveDuration}m)` : 'Cierre del Show';
+        }
 
         if (snapshot.currentItem && snapshot.status === 'live') {
             if (heroBlockName) heroBlockName.innerText = snapshot.currentItem.title;
@@ -451,12 +460,15 @@ class LiveApp {
                 heroTypeBadge.className = `hero-type-badge ${snapshot.currentItem.badgeClass}`;
             }
 
-            if (heroRemainingTimer) {
+            if (heroRemainingTimer && heroTimerLabel) {
                 if (snapshot.isOvertime) {
+                    heroTimerLabel.innerText = 'TIEMPO EN CONTRA';
                     heroRemainingTimer.innerText = `+${LiveEngine.formatDurationSeconds(snapshot.overtimeSeconds)}`;
-                    heroRemainingTimer.style.color = '#ef4444';
+                    heroRemainingTimer.classList.add('is-overtime');
                 } else {
+                    heroTimerLabel.innerText = 'TIEMPO RESTANTE';
                     heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
+                    heroRemainingTimer.classList.remove('is-overtime');
                     heroRemainingTimer.style.color = snapshot.alertLevel === 'red' ? '#ef4444' : (snapshot.alertLevel === 'yellow' ? '#f59e0b' : '#34d399');
                 }
             }
@@ -466,7 +478,7 @@ class LiveApp {
             }
 
             if (heroPlannedTimer) {
-                heroPlannedTimer.innerText = `${snapshot.currentItem.duration} min`;
+                heroPlannedTimer.innerText = `${snapshot.currentItem.effectiveDuration || snapshot.currentItem.duration} min`;
             }
 
             if (heroProjectedEnd) {
@@ -482,7 +494,7 @@ class LiveApp {
             }
         } else if (snapshot.status === 'finished') {
             if (heroBlockName) heroBlockName.innerText = '🏁 Evento Finalizado con Éxito';
-            if (heroRemainingTimer) { heroRemainingTimer.innerText = '00:00'; heroRemainingTimer.style.color = '#10b981'; }
+            if (heroRemainingTimer) { heroRemainingTimer.innerText = '00:00'; heroRemainingTimer.classList.remove('is-overtime'); heroRemainingTimer.style.color = '#10b981'; }
             if (heroProgressFill) heroProgressFill.style.width = '100%';
         } else if (snapshot.status === 'paused' && snapshot.currentItem) {
             if (heroBlockName) heroBlockName.innerText = `⏸ ${snapshot.currentItem.title} (En Pausa)`;
@@ -490,52 +502,59 @@ class LiveApp {
                 heroTypeBadge.innerText = snapshot.currentItem.type;
                 heroTypeBadge.className = `hero-type-badge ${snapshot.currentItem.badgeClass}`;
             }
-            if (heroRemainingTimer) {
+            if (heroRemainingTimer && heroTimerLabel) {
+                heroTimerLabel.innerText = 'PAUSADO';
                 heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
+                heroRemainingTimer.classList.remove('is-overtime');
                 heroRemainingTimer.style.color = '#f59e0b';
             }
-            if (heroElapsedTimer) {
-                heroElapsedTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.elapsedSeconds);
-            }
-            if (heroPlannedTimer) {
-                heroPlannedTimer.innerText = `${snapshot.currentItem.duration} min`;
-            }
-            if (heroProjectedEnd) {
-                heroProjectedEnd.innerText = snapshot.projectedEndTime;
-            }
+            if (heroElapsedTimer) heroElapsedTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.elapsedSeconds);
+            if (heroPlannedTimer) heroPlannedTimer.innerText = `${snapshot.currentItem.effectiveDuration || snapshot.currentItem.duration} min`;
+            if (heroProjectedEnd) heroProjectedEnd.innerText = snapshot.projectedEndTime;
             if (heroProgressFill) {
                 heroProgressFill.style.width = `${snapshot.progressPercent}%`;
                 heroProgressFill.className = 'hero-progress-fill fill-yellow';
             }
         } else {
             const firstItem = snapshot.currentItem || (snapshot.items && snapshot.items[0]);
-            if (heroBlockName) heroBlockName.innerText = firstItem ? `Listo: ${firstItem.title}` : 'Listo para Iniciar Pauta en Vivo';
+            if (heroBlockName) heroBlockName.innerText = firstItem ? `Listo: ${firstItem.title}` : 'Listo para Iniciar Pauta';
             if (heroTypeBadge && firstItem) {
                 heroTypeBadge.innerText = firstItem.type;
                 heroTypeBadge.className = `hero-type-badge ${firstItem.badgeClass}`;
             }
-            if (heroRemainingTimer) { heroRemainingTimer.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00'; heroRemainingTimer.style.color = '#38bdf8'; }
-            if (heroElapsedTimer) { heroElapsedTimer.innerText = '00:00'; }
-            if (heroPlannedTimer && firstItem) { heroPlannedTimer.innerText = `${firstItem.duration} min`; }
-            if (heroProjectedEnd) { heroProjectedEnd.innerText = snapshot.projectedEndTime || '--:--'; }
+            if (heroRemainingTimer && heroTimerLabel) {
+                heroTimerLabel.innerText = 'TIEMPO RESTANTE';
+                heroRemainingTimer.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00';
+                heroRemainingTimer.classList.remove('is-overtime');
+                heroRemainingTimer.style.color = '#38bdf8';
+            }
+            if (heroElapsedTimer) heroElapsedTimer.innerText = '00:00';
+            if (heroPlannedTimer && firstItem) heroPlannedTimer.innerText = `${firstItem.duration} min`;
+            if (heroProjectedEnd) heroProjectedEnd.innerText = snapshot.projectedEndTime || '--:--';
             if (heroProgressFill) heroProgressFill.style.width = '0%';
         }
 
-        // 4. Render Table Rows
+        // 4. Render Table Rows & Auto-Scroll to Active Block
         const tbody = document.getElementById('liveTableBody');
         const thActions = document.getElementById('thActions');
+        const isOperator = (this.role === 'admin' || this.role === 'director');
+
         if (thActions) {
-            thActions.innerText = (this.role === 'admin') ? 'Gestión Admin' : (this.role === 'director' ? 'Acción Director' : '');
+            thActions.style.display = isOperator ? '' : 'none';
         }
 
         if (tbody) {
             tbody.innerHTML = '';
-            snapshot.items.forEach((r) => {
+            let activeRowElement = null;
+
+            snapshot.items.forEach((r, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = `row-${r.rowState}`;
+                tr.id = `scheduleRow_${r.num}`;
 
                 let progressHtml = '';
                 if (r.rowState === 'active') {
+                    activeRowElement = tr;
                     let fillClass = '';
                     if (snapshot.alertLevel === 'yellow') fillClass = 'fill-yellow';
                     if (snapshot.alertLevel === 'red' || snapshot.alertLevel === 'overtime') fillClass = 'fill-red';
@@ -543,27 +562,13 @@ class LiveApp {
                 }
 
                 let actionsHtml = '';
-
-                // Actions for Admin
-                if (this.role === 'admin') {
+                if (isOperator) {
                     if (r.isMuted) {
-                        actionsHtml = `<button class="btn-action-unmute" onclick="liveApp.unmuteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Reactivar bloque e incluirlo nuevamente en los tiempos">🔊 Reactivar</button>`;
+                        actionsHtml = `<button class="btn-action-unmute" onclick="liveApp.unmuteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Reactivar bloque">🔊 Activar</button>`;
                     } else if (r.rowState === 'active' || r.rowState === 'future') {
-                        actionsHtml = `<button class="btn-action-mute" onclick="liveApp.muteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Silenciar y excluir este bloque de los tiempos">🔇 Silenciar</button>`;
+                        actionsHtml = `<button class="btn-action-mute" onclick="liveApp.muteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Silenciar bloque sin contabilizar tiempo">🔇 Silenciar</button>`;
                     } else {
-                        actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 11px;">✔ HECHO</span>`;
-                    }
-                } 
-                // Actions for Director
-                else if (this.role === 'director') {
-                    if (r.isMuted) {
-                        actionsHtml = `<span style="color: #9ca3af; font-size: 11px;">🔇 Silenciado</span>`;
-                    } else if (r.rowState === 'active') {
-                        actionsHtml = `<button class="btn-tap" style="padding: 4px 10px; font-size: 11px;" onclick="liveApp.tapNextBlock()">⚡ TAP</button>`;
-                    } else if (r.rowState === 'future') {
-                        actionsHtml = `<button class="btn-live-sec" style="padding: 4px 8px; font-size: 10px; color: #f87171;" onclick="liveApp.omitBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')">✕ Omitir</button>`;
-                    } else {
-                        actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 11px;">✔ HECHO</span>`;
+                        actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 10px;">✔ HECHO</span>`;
                     }
                 }
 
@@ -572,11 +577,11 @@ class LiveApp {
                     : `<span class="badge ${r.badgeClass}">${r.type}</span>`;
 
                 const durationHtml = r.isMuted 
-                    ? `<span style="color: #9ca3af; text-decoration: line-through;">${r.duration} min</span> <span style="font-size: 10px; color: #f87171;">(0 min)</span>` 
-                    : `${r.duration} min`;
+                    ? `<span style="color: #6b7280; text-decoration: line-through;">${r.originalDuration} min</span> <span style="font-size: 9px; color: #f87171;">(0m)</span>` 
+                    : `${r.effectiveDuration} min`;
 
                 tr.innerHTML = `
-                    <td style="text-align: center; font-weight: bold; width: 40px; position: relative; z-index: 1;">
+                    <td style="text-align: center; font-weight: bold; width: 45px; position: relative; z-index: 1;">
                         ${progressHtml}
                         ${r.num}
                     </td>
@@ -585,10 +590,16 @@ class LiveApp {
                     <td class="time-cell" style="position: relative; z-index: 1;">${r.liveStart}</td>
                     <td style="font-weight: 700; position: relative; z-index: 1;">${durationHtml}</td>
                     <td class="time-cell" style="position: relative; z-index: 1;">${r.liveEnd}</td>
-                    ${(this.role === 'admin' || this.role === 'director') ? `<td style="text-align: right; position: relative; z-index: 1;">${actionsHtml}</td>` : ''}
+                    ${isOperator ? `<td style="text-align: right; position: relative; z-index: 1;">${actionsHtml}</td>` : ''}
                 `;
                 tbody.appendChild(tr);
             });
+
+            // 5. Automatic Smooth Scroll into Active Block View (Zero interaction needed)
+            if (activeRowElement && snapshot.currentIndex !== this.lastScrolledIndex) {
+                this.lastScrolledIndex = snapshot.currentIndex;
+                activeRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     }
 
@@ -640,7 +651,7 @@ class LiveApp {
     copyShareLink() {
         const url = window.location.origin + window.location.pathname + `?project=${encodeURIComponent(this.projectName)}`;
         navigator.clipboard.writeText(url).then(() => {
-            PrintExportManager.showToast('Enlace de Espectador copiado al portapapeles', 'success');
+            PrintExportManager.showToast('Enlace copiado al portapapeles', 'success');
         });
     }
 }

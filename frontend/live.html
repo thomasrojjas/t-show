@@ -13,7 +13,7 @@
 </head>
 <body class="live-body">
 
-    <!-- Marco Perimetral de Alertas de Pantalla Completa (Ambient Screen Flash) -->
+    <!-- Marco Perimetral de Alertas de Pantalla Completa -->
     <div id="screenAmbientBorder"></div>
 
     <!-- Header Bar -->
@@ -21,8 +21,7 @@
         <div class="live-brand">
             <div class="brand-icon">⏱</div>
             <div>
-                <h1 id="liveProjectTitle" style="font-size: 18px; font-weight: 800;">Gran Concierto & Show Estelar</h1>
-                <p style="font-size: 11px; color: var(--live-text-muted);">Escaleta de Control en Tiempo Real & Monitoreo</p>
+                <h1 id="liveProjectTitle" style="font-size: 16px; font-weight: 800; line-height: 1.2;">Gran Concierto & Show Estelar</h1>
             </div>
             <span id="liveStatusBadge" class="live-badge-status status-idle">⏸ EN ESPERA</span>
             <span id="currentRoleBadge" class="role-badge role-viewer">👁 ESPECTADOR</span>
@@ -34,85 +33,97 @@
             <!-- Botón Maestro Play / Pausa -->
             <button id="btnHeaderPlay" class="btn-play-master" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
                 <span id="btnHeaderPlayIcon">▶</span>
-                <span id="btnHeaderPlayText">PLAY / SEGUIR HORARIO</span>
+                <span id="btnHeaderPlayText">PLAY / HORARIO</span>
             </button>
         </div>
 
         <div class="live-header-actions">
-            <button class="btn btn-secondary" onclick="liveApp.copyShareLink()" title="Copiar enlace para técnicos, animadores y móviles">🔗 Compartir Vista</button>
+            <button class="btn-fullscreen" onclick="liveApp.toggleFullscreen()" title="Pantalla Completa para Tablets y Monitores de Artistas">⛶ Pantalla Completa</button>
+            <button class="btn btn-secondary" onclick="liveApp.copyShareLink()" title="Copiar enlace">🔗 Compartir</button>
             <button class="btn btn-secondary" id="btnToggleRole" onclick="liveApp.toggleRoleModal()">🔑 Cambiar Rol</button>
             <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">⚙ Planificación</a>
         </div>
     </header>
 
-    <!-- Barra de Herramientas del Administrador General (PIN: 9999) -->
+    <!-- Barra Simplificada del Administrador General (PIN: 9999) -->
     <section id="adminToolbar" class="admin-toolbar" style="display: none;">
-        <div class="admin-info">
-            <span>👑 Panel de Control del Administrador</span>
-            <div class="mode-toggle-group" style="margin-left: 10px;">
-                <button id="btnAdminModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')">🕒 Según Horario</button>
-                <button id="btnAdminModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')">⚡ Manual</button>
-            </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">👑 PANEL ADMINISTRADOR</span>
         </div>
-        <div class="director-buttons">
+        <div class="toolbar-actions">
             <button class="btn-play-master" onclick="liveApp.startShow()">▶ Iniciar Show</button>
             <button class="btn-stop-show" onclick="liveApp.stopShow()">⏹ Detener Show</button>
             <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">⏸ Pausar / Reanudar</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
-            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">🔄 Reiniciar Sesión</button>
+            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">🔄 Reiniciar</button>
         </div>
     </section>
 
-    <!-- Barra de Herramientas del Director de Escenario (PIN: 1234) -->
+    <!-- Barra Simplificada del Director de Escenario (PIN: 1234) -->
     <section id="directorToolbar" class="director-toolbar" style="display: none;">
-        <div class="director-info">
-            <span>🎬 Panel de Conducción del Director</span>
-            <div class="mode-toggle-group" style="margin-left: 10px;">
-                <button id="btnModeSchedule" class="mode-toggle-btn active" onclick="liveApp.setTrackingMode('schedule')">🕒 Según Horario</button>
-                <button id="btnModeManual" class="mode-toggle-btn" onclick="liveApp.setTrackingMode('manual')">⚡ Manual</button>
-            </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 800; color: #c7d2fe;">🎬 CONTROL DIRECTOR</span>
         </div>
-        <div class="director-buttons">
-            <button class="btn-tap" onclick="liveApp.tapNextBlock()">⚡ TAP: CAMBIO AHORA</button>
-            <button id="btnDirectorPlay" class="btn-play-master" onclick="liveApp.togglePlayPause()">
-                <span id="btnDirectorPlayIcon">▶</span>
-                <span id="btnDirectorPlayText">Iniciar Play</span>
+        <div class="toolbar-actions">
+            <!-- Botón de TAP Directo para Siguiente Bloque -->
+            <button class="btn-tap" onclick="liveApp.tapNextBlock()" title="Terminar el bloque actual y pasar de inmediato al siguiente">
+                ⚡ TAP: SIGUIENTE BLOQUE
             </button>
-            <button class="btn-live-sec" onclick="liveApp.resyncNow()">⏱ Reajustar Hora</button>
+
+            <!-- Menú de Extensión de Tiempo de Este Módulo -->
+            <div class="extend-menu-container">
+                <button class="btn-extend" onclick="liveApp.toggleExtendMenu()" title="Mantenerse en este bloque y extender duración">
+                    ➕ Extender Tiempo ▾
+                </button>
+                <div id="extendDropdown" class="extend-dropdown">
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">➕ Extender +2 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(5)">➕ Extender +5 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(10)">➕ Extender +10 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(0)" style="color: #34d399;">⏱ Mantenerse en Curso</button>
+                </div>
+            </div>
+
+            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">⏱ Reajustar Hora</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
         </div>
     </section>
 
-    <!-- Hero Card: Bloque Activo en Escenario -->
-    <section class="active-hero-card">
+    <!-- Hero Card: Stage Display de Alto Impacto para Observador / Artistas -->
+    <section class="active-hero-card" id="stageHeroCard">
         <div class="hero-top-row">
             <div class="hero-title-group">
                 <span id="heroTypeBadge" class="hero-type-badge badge-show">SHOW</span>
                 <h2 id="heroBlockName" class="hero-block-name">Listo para Iniciar Pauta en Vivo</h2>
             </div>
-            <div>
-                <span style="font-size: 11px; color: var(--live-text-muted); font-weight: 700;">FIN PROYECTADO: </span>
-                <span id="heroProjectedEnd" style="font-size: 14px; font-weight: 800; color: #38bdf8;">--:--</span>
+            <div id="heroUpNextContainer" class="hero-up-next">
+                <span>PRÓXIMO: </span>
+                <strong id="heroNextBlockName" style="color: #38bdf8;">--</strong>
             </div>
         </div>
 
-        <div class="hero-timers-row">
-            <div class="timer-box">
-                <div class="timer-box-label">Tiempo Restante</div>
-                <div id="heroRemainingTimer" class="timer-box-value" style="color: #34d399;">--:--</div>
+        <div class="hero-timers-grid">
+            <!-- Cronómetro Principal / Tiempo en Contra -->
+            <div class="timer-box-main">
+                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante</div>
+                <div id="heroRemainingTimer" class="timer-box-main-value">00:00</div>
             </div>
-            <div class="timer-box">
-                <div class="timer-box-label">Tiempo Transcurrido</div>
-                <div id="heroElapsedTimer" class="timer-box-value" style="color: #38bdf8;">00:00</div>
+
+            <div class="timer-box-small">
+                <div class="timer-box-small-label">Transcurrido</div>
+                <div id="heroElapsedTimer" class="timer-box-small-value">00:00</div>
             </div>
-            <div class="timer-box">
-                <div class="timer-box-label">Duración Pactada</div>
-                <div id="heroPlannedTimer" class="timer-box-value" style="color: #a78bfa;">-- min</div>
+
+            <div class="timer-box-small">
+                <div class="timer-box-small-label">Pactado</div>
+                <div id="heroPlannedTimer" class="timer-box-small-value">-- min</div>
             </div>
-            <div class="timer-box">
-                <div class="timer-box-label">Alerta Perimetral</div>
-                <div id="heroAlertStatus" class="timer-box-value" style="font-size: 15px; color: #9ca3af; margin-top: 8px;">ACTIVA</div>
+
+            <div class="timer-box-small">
+                <div class="timer-box-small-label">Fin Proyectado</div>
+                <div id="heroProjectedEnd" class="timer-box-small-value" style="color: #a78bfa;">--:--</div>
             </div>
+
+            <button class="btn-fullscreen" onclick="liveApp.toggleFullscreen()" title="Modo Pantalla Completa para Tablet">⛶</button>
         </div>
 
         <!-- Barra de Progreso Continua de Izquierda a Derecha -->
@@ -121,51 +132,51 @@
         </div>
     </section>
 
-    <!-- Tabla Principal de Escaleta en Vivo -->
-    <main class="live-table-container">
+    <!-- Contenedor con Autodesplazamiento de la Escaleta en Vivo -->
+    <main class="live-table-container" id="scheduleTableContainer">
         <table class="live-table">
             <thead>
                 <tr>
-                    <th style="width: 50px; text-align: center;">#</th>
-                    <th style="width: 140px;">Tipo</th>
+                    <th style="width: 45px; text-align: center;">#</th>
+                    <th style="width: 120px;">Tipo</th>
                     <th>Descripción / Nombre del Bloque</th>
-                    <th style="width: 110px;">Inicio</th>
-                    <th style="width: 110px;">Duración</th>
-                    <th style="width: 110px;">Término</th>
-                    <th style="width: 100px; text-align: right;" id="thActions"></th>
+                    <th style="width: 90px;">Inicio</th>
+                    <th style="width: 100px;">Duración</th>
+                    <th style="width: 90px;">Fin</th>
+                    <th style="width: 120px; text-align: right;" id="thActions">Gestión</th>
                 </tr>
             </thead>
             <tbody id="liveTableBody">
-                <!-- Generado dinámicamente por live-app.js -->
+                <!-- Generado dinámicamente con auto-scroll a bloque activo -->
             </tbody>
         </table>
     </main>
 
     <!-- Modal de Selección y Validación de Roles -->
     <div id="pinModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 420px; text-align: center;">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">🔑 Acceso a Roles del Sistema</h2>
-            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 16px;">Ingresa el PIN correspondiente para desbloquear el rol deseado.</p>
+        <div class="modal-card" style="max-width: 400px; text-align: center;">
+            <h2 style="font-size: 17px; margin-bottom: 6px;">🔑 Acceso a Roles</h2>
+            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">Selecciona el rol e ingresa el PIN correspondiente.</p>
             
-            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;">
-                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1; border: 1px solid #ef4444;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador</button>
-                <button type="button" id="btnSelectRoleDirector" class="btn btn-secondary" style="flex: 1; border: 1px solid #6366f1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director</button>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
+                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director (1234)</button>
+                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador (9999)</button>
             </div>
 
             <div id="roleHintText" style="font-size: 11px; color: #38bdf8; margin-bottom: 10px; font-weight: 700;">
-                👑 Administrador: Control de Inicio/Detención y Silenciar Bloques
+                🎬 Director: Conducción con botón TAP, Extender tiempo y Silenciar bloques
             </div>
 
-            <input type="password" id="pinInput" class="form-control" placeholder="PIN de seguridad" style="text-align: center; font-size: 22px; letter-spacing: 6px; margin-bottom: 16px;" onkeydown="if(event.key==='Enter') liveApp.verifyPIN()">
+            <input type="password" id="pinInput" class="form-control" placeholder="PIN de seguridad" style="text-align: center; font-size: 20px; letter-spacing: 6px; margin-bottom: 14px;" onkeydown="if(event.key==='Enter') liveApp.verifyPIN()">
             
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">👁 Modo Espectador</button>
-                <button class="btn btn-primary" onclick="liveApp.verifyPIN()">Verificar e Ingresar</button>
+                <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">👁 Espectador</button>
+                <button class="btn btn-primary" onclick="liveApp.verifyPIN()">Ingresar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Reporte Comparativo Post-Show (Planificado vs Real) -->
+    <!-- Modal de Reporte Comparativo Post-Show -->
     <div id="reportModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 750px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; padding-bottom: 10px; margin-bottom: 14px;">

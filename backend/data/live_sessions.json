@@ -1,15 +1,45 @@
 ﻿{
-    "Gran Concierto \u0026 Show Estelar":  {
-                                               "status":  "live",
-                                               "currentIndex":  0,
-                                               "currentBlockStartTime":  "2026-08-14T02:52:53.544Z",
-                                               "omittedItemNums":  [
+    "Show de Coronación de Reina de Aniversario":  {
+                                                       "status":  "live",
+                                                       "trackingMode":  "schedule",
+                                                       "currentIndex":  0,
+                                                       "currentBlockStartTime":  "2026-08-14T03:26:47.399Z",
+                                                       "omittedItemNums":  [
+
+                                                                           ],
+                                                       "mutedBlockNums":  [
+
+                                                                          ],
+                                                       "history":  [
 
                                                                    ],
+                                                       "projectName":  "Show de Coronación de Reina de Aniversario",
+                                                       "lastUpdated":  "2026-08-14T03:30:51.181Z"
+                                                   },
+    "Gran Concierto \u0026 Show Estelar":  {
+                                               "status":  "live",
+                                               "currentIndex":  1,
+                                               "currentBlockStartTime":  "2026-08-14T03:44:49.828Z",
+                                               "omittedItemNums":  [
+                                                                       12
+                                                                   ],
                                                "history":  [
-
+                                                               {
+                                                                   "num":  11,
+                                                                   "type":  "SHOW",
+                                                                   "title":  "Artista 4 - Presentation",
+                                                                   "plannedStart":  "00:00",
+                                                                   "plannedDuration":  60,
+                                                                   "plannedEnd":  "01:00",
+                                                                   "actualStart":  "2026-08-14T02:52:53.544Z",
+                                                                   "actualStartFormatted":  "22:52:53",
+                                                                   "actualEnd":  "2026-08-14T03:44:49.828Z",
+                                                                   "actualEndFormatted":  "23:44:49",
+                                                                   "actualDurationMinutes":  52,
+                                                                   "diffMinutes":  -8
+                                                               }
                                                            ],
                                                "projectName":  "Gran Concierto \u0026 Show Estelar",
-                                               "lastUpdated":  "2026-08-14T03:10:58.346Z"
+                                               "lastUpdated":  "2026-08-14T03:45:28.799Z"
                                            }
 }
