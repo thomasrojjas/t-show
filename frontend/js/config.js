@@ -12,7 +12,7 @@
 
     if (!isLocalhost) {
         // Production: point directly to Render backend
-        window.SHOWTIME_API_URL = 'https://timming-3bdp.onrender.com';
+        window.SHOWTIME_API_URL = 'https://t-show-api.onrender.com';
     }
     // If localhost, SHOWTIME_API_URL remains undefined and api-client.js uses window.location.origin
 })();
