@@ -27,6 +27,7 @@
             <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">📥 Exportar JSON</button>
             <button class="btn btn-secondary" onclick="app.resetToDefaults()">🔄 Restablecer</button>
             <button class="btn btn-primary" onclick="app.print()">🖨 Imprimir / Exportar PDF</button>
+            <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">🚪 Salir</button>
         </div>
     </header>
 
@@ -218,6 +219,11 @@
 
     <!-- Application JavaScript Modules -->
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Guard de sesión — si no hay token, Auth.requireSession() ya redirige a login.html.
+        Auth.requireSession();
+    </script>
     <script src="js/timing-engine.js"></script>
     <script src="js/blocks-manager.js"></script>
     <script src="js/api-client.js"></script>

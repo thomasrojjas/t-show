@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión — T-Show</title>
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-icon">⏱</div>
+            <h1>T-Show</h1>
+        </div>
+        <p class="auth-subtitle">Ingresa con tu usuario y PIN</p>
+
+        <form id="loginForm" class="auth-form" autocomplete="off">
+            <div class="form-group">
+                <label class="form-label" for="username">Usuario</label>
+                <input type="text" id="username" class="form-control" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="pin">PIN</label>
+                <input type="password" id="pin" class="form-control" inputmode="numeric" pattern="\d{4,6}" maxlength="6" autocomplete="current-password" required>
+            </div>
+            <div id="loginError" class="auth-error" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Ingresar</button>
+        </form>
+    </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    const form = document.getElementById('loginForm');
+    const errorBox = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    // Si ya hay sesión, saltar directo a la app.
+    if (Auth.getToken()) {
+        window.location.href = 'index.html';
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Ingresando...';
+
+        const username = document.getElementById('username').value.trim();
+        const pin = document.getElementById('pin').value.trim();
+
+        try {
+            const user = await Auth.login(username, pin);
+            const params = new URLSearchParams(window.location.search);
+            const redirect = params.get('redirect');
+            if (user.role === 'superadmin' && !redirect) {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = redirect ? decodeURIComponent(redirect) : 'index.html';
+            }
+        } catch (err) {
+            errorBox.textContent = err.message || 'Usuario o PIN incorrectos';
+            errorBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Ingresar';
+        }
+    });
+</script>
+</body>
+</html>

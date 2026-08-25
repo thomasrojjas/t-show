@@ -3,6 +3,11 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
+const { checkDbConnection } = require('./supabaseClient');
+const { ensureSuperadmin } = require('./scripts/seedSuperadmin');
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
@@ -10,7 +15,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
 const LIVE_DATA_FILE = path.join(DATA_DIR, 'live_sessions.json');
 
-// Ensure data directory exists
+// Ensure data directory exists (legacy JSON storage — se retira en la Fase 3)
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -18,19 +23,25 @@ if (!fs.existsSync(DATA_DIR)) {
 // Middleware
 app.use(cors({
     origin: CORS_ORIGIN,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 
+// Auth y usuarios (Fase 2)
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+
 // Health Check for Render zero-downtime deploys
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    const dbOk = await checkDbConnection();
     res.json({
         status: 'ok',
         app: 'Show Time Backend API',
         developedBy: 'BaseAndes Software (https://www.baseandes.com/)',
         timestamp: new Date().toISOString(),
-        env: process.env.NODE_ENV || 'development'
+        env: process.env.NODE_ENV || 'development',
+        db: dbOk ? 'ok' : 'unreachable'
     });
 });
 
@@ -151,11 +162,12 @@ if (fs.existsSync(FRONTEND_DIR)) {
 }
 
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log('====================================================');
     console.log(`   ⏱ Show Time API - BaseAndes Software`);
     console.log(`   📡 Puerto: ${PORT}`);
     console.log(`   🌍 CORS Origin: ${CORS_ORIGIN}`);
     console.log(`   🔌 Health: http://localhost:${PORT}/api/health`);
     console.log('====================================================');
+    await ensureSuperadmin();
 });
