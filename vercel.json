@@ -2,7 +2,6 @@
   "version": 2,
   "name": "show-time",
   "cleanUrls": true,
-  "public": false,
   "headers": [
     {
       "source": "/(.*)",
