@@ -105,7 +105,7 @@ Los montos quedan deliberadamente sin valor hasta que negocio defina precios, im
 | Ruta | Uso previsto | Integración |
 | --- | --- | --- |
 | Mercado Pago Checkout Bricks | Checkout embebido y personalizable en el frontend | El frontend usa solo la clave pública/SDK; Render crea y confirma la operación con el Access Token. |
-| Mercado Pago directo | Flujo directo de Mercado Pago distinto de Bricks | Se encapsula detrás del adaptador `mercadopago`; se debe seleccionar el producto exacto al implementar (Checkout API o Checkout Pro) sin duplicar la lógica comercial. |
+| Mercado Pago Checkout Pro | Pasarela alojada por Mercado Pago, con redirección desde T-Show | Se encapsula detrás del adaptador `mercadopago-checkout-pro`; Render crea la preferencia y verifica el resultado por webhook antes de activar beneficios. |
 | Flow directo | Pago mediante la API de Flow y su URL de checkout | Render firma solicitudes con `apiKey`/`secretKey`, crea la orden y redirige al usuario a la URL devuelta por Flow. |
 
 Para cobros recurrentes, Mercado Pago ofrece planes/suscripciones con frecuencia y monto; Flow documenta recursos de clientes, pagos y suscripciones. Antes de producción se verificará que cada cuenta comercial tenga habilitado el producto de suscripciones y los medios de pago requeridos.
