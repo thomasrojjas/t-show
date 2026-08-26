@@ -1,6 +1,6 @@
 -- SaaS decisions: atomic project quota and BaseAndes ownership bootstrap.
 create or replace function public.tshow_enforce_project_quota()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public, pg_temp as $$
 declare project_count integer;
 begin
   perform pg_advisory_xact_lock(hashtextextended('tshow-project-quota:' || new.owner_id::text, 0));
