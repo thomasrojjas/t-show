@@ -23,4 +23,8 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .field-error[data-status="warning"] { color:var(--warning); }
 .field-error[data-status="success"] { color:var(--success); }
 .auth-error[data-status="success"] { border-color:rgba(128,226,167,.55); color:var(--success); }
+.auth-error[data-status="warning"] { border-color:rgba(255,209,102,.55); color:var(--warning); }
+.form-note[data-status="error"] { color:var(--danger); }
+.form-note[data-status="warning"] { color:var(--warning); }
+.form-note[data-status="success"] { color:var(--success); }
 .form-note { margin:14px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }

@@ -52,7 +52,7 @@ const Auth = (() => {
     async function completeProfile(values) { return api('/api/profile', { method: 'POST', body: JSON.stringify(values) }); }
     async function currentUser() { const { data } = await (await client()).auth.getUser(); return data.user || null; }
     async function getProfile() { return (await api('/api/me')).data; }
-    async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login.html?reset=1` }); if (error) throw error; }
+    async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
