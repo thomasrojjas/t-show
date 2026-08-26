@@ -13,11 +13,18 @@ const Auth = (() => {
     }
     async function token() { const { data } = await (await client()).auth.getSession(); return data.session?.access_token || null; }
     async function api(path, options = {}) { const accessToken = await token(); const response = await fetch(`${window.SHOWTIME_API_URL || window.location.origin}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}), ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) } }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.message || 'No se pudo completar la solicitud.'); return body; }
+    function normalizeRut(value) {
+        const compact = String(value || '').replace(/[^0-9kK]/g, '').toUpperCase();
+        if (compact.length < 8 || compact.length > 9) return '';
+        return `${compact.slice(0, -1)}-${compact.slice(-1)}`;
+    }
     async function register({ email, password, firstName, lastName, rut, phone }) {
         if (!email || password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
-        const { data, error } = await (await client()).auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: String(rut).replace(/[.\s]/g, '').toUpperCase(), phone: String(phone).replace(/[\s()-]/g, '') } } });
+        const normalizedRut = normalizeRut(rut);
+        if (!/^[0-9]{7,8}-[0-9K]$/.test(normalizedRut)) throw new Error('Ingresa un RUT válido, por ejemplo 12345678-9.');
+        const { data, error } = await (await client()).auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: String(phone).replace(/[\s()-]/g, '') } } });
         if (error) throw error;
-        if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut, phone }) });
+        if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut: normalizedRut, phone }) });
         return data;
     }
     async function login(email, password) { const { data, error } = await (await client()).auth.signInWithPassword({ email, password }); if (error) throw error; return data.user; }
@@ -29,5 +36,5 @@ const Auth = (() => {
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
-    return { client, token, api, login, register, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
+    return { client, token, api, login, register, normalizeRut, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();

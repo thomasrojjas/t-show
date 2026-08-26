@@ -5,7 +5,10 @@ const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = 
 
 const router = express.Router();
 const validRut = rut => /^[0-9]{7,8}-[0-9K]$/.test(String(rut || '').replace(/\./g, '').toUpperCase());
-const normalizeRut = rut => String(rut || '').replace(/[.\s]/g, '').toUpperCase();
+const normalizeRut = rut => {
+  const compact = String(rut || '').replace(/[^0-9kK]/g, '').toUpperCase();
+  return compact.length >= 8 && compact.length <= 9 ? `${compact.slice(0, -1)}-${compact.slice(-1)}` : '';
+};
 const validPhone = phone => /^\+?[0-9]{8,15}$/.test(String(phone || '').replace(/[\s()-]/g, ''));
 const cleanPayload = body => ({ ...body, eventName: String(body.eventName || '').trim() });
 
