@@ -51,7 +51,7 @@
         </div>
     </header>
 
-    <!-- Barra Simplificada del Administrador General (PIN: 9999) -->
+    <!-- Barra del administrador -->
     <section id="adminToolbar" class="admin-toolbar" style="display: none;">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">👑 PANEL ADMINISTRADOR</span>
@@ -65,7 +65,7 @@
         </div>
     </section>
 
-    <!-- Barra Simplificada del Director de Escenario (PIN: 1234) -->
+    <!-- Barra del director de escenario -->
     <section id="directorToolbar" class="director-toolbar" style="display: none;">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; font-weight: 800; color: #c7d2fe;">🎬 CONTROL DIRECTOR</span>
@@ -194,22 +194,20 @@
     <div id="pinModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 400px; text-align: center;">
             <h2 style="font-size: 17px; margin-bottom: 6px;">🔑 Acceso a Roles</h2>
-            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">Selecciona el rol e ingresa el PIN correspondiente.</p>
+            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">Los permisos se asignan desde la cuenta y el proyecto.</p>
             
             <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
-                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director (1234)</button>
-                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador (9999)</button>
+                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director</button>
+                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador</button>
             </div>
 
             <div id="roleHintText" style="font-size: 11px; color: #38bdf8; margin-bottom: 10px; font-weight: 700;">
                 🎬 Director: Conducción con botón TAP, Extender tiempo y Silenciar bloques
             </div>
 
-            <input type="password" id="pinInput" class="form-control" placeholder="PIN de seguridad" style="text-align: center; font-size: 20px; letter-spacing: 6px; margin-bottom: 14px;" onkeydown="if(event.key==='Enter') liveApp.verifyPIN()">
-            
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">👁 Espectador</button>
-                <button class="btn btn-primary" onclick="liveApp.verifyPIN()">Ingresar</button>
+                <button class="btn btn-primary" onclick="liveApp.closeModal('pinModal')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -253,6 +251,7 @@
     </div>
 
     <!-- Application JavaScript Modules -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>

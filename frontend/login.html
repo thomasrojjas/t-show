@@ -14,16 +14,16 @@
             <div class="auth-brand-icon">⏱</div>
             <h1>T-Show</h1>
         </div>
-        <p class="auth-subtitle">Ingresa con tu usuario y PIN</p>
+        <p class="auth-subtitle">Ingresa con tu correo y contraseña</p>
 
         <form id="loginForm" class="auth-form" autocomplete="off">
             <div class="form-group">
-                <label class="form-label" for="username">Usuario</label>
-                <input type="text" id="username" class="form-control" autocomplete="username" required>
+                <label class="form-label" for="email">Correo</label>
+                <input type="email" id="email" class="form-control" autocomplete="email" required>
             </div>
             <div class="form-group">
-                <label class="form-label" for="pin">PIN</label>
-                <input type="password" id="pin" class="form-control" inputmode="numeric" pattern="\d{4,6}" maxlength="6" autocomplete="current-password" required>
+                <label class="form-label" for="password">Contraseña</label>
+                <input type="password" id="password" class="form-control" minlength="8" autocomplete="current-password" required>
             </div>
             <div id="loginError" class="auth-error" style="display:none;"></div>
             <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Ingresar</button>
@@ -31,7 +31,9 @@
     </div>
 </div>
 
-<script src="js/config.js"></script>
+    <p class="auth-subtitle"><a href="register.html">Crear cuenta</a> · <a href="#" id="resetLink">¿Olvidaste tu contraseña?</a></p>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
     const form = document.getElementById('loginForm');
@@ -39,9 +41,7 @@
     const btn = document.getElementById('loginBtn');
 
     // Si ya hay sesión, saltar directo a la app.
-    if (Auth.getToken()) {
-        window.location.href = 'index.html';
-    }
+    Auth.currentUser().then(user => { if (user) window.location.href = 'index.html'; });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -49,25 +49,22 @@
         btn.disabled = true;
         btn.textContent = 'Ingresando...';
 
-        const username = document.getElementById('username').value.trim();
-        const pin = document.getElementById('pin').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
 
         try {
-            const user = await Auth.login(username, pin);
+            await Auth.login(email, password);
             const params = new URLSearchParams(window.location.search);
             const redirect = params.get('redirect');
-            if (user.role === 'superadmin' && !redirect) {
-                window.location.href = 'admin.html';
-            } else {
-                window.location.href = redirect ? decodeURIComponent(redirect) : 'index.html';
-            }
+            window.location.href = redirect ? decodeURIComponent(redirect) : 'index.html';
         } catch (err) {
-            errorBox.textContent = err.message || 'Usuario o PIN incorrectos';
+            errorBox.textContent = err.message || 'Correo o contraseña incorrectos';
             errorBox.style.display = 'block';
             btn.disabled = false;
             btn.textContent = 'Ingresar';
         }
     });
+    document.getElementById('resetLink').addEventListener('click', async e => { e.preventDefault(); const email = document.getElementById('email').value.trim(); if (!email) return errorBox.textContent = 'Ingresa tu correo para recuperar la contraseña.', errorBox.style.display = 'block'; try { await Auth.forgotPassword(email); errorBox.textContent = 'Revisa tu correo para continuar.'; errorBox.style.display = 'block'; } catch (err) { errorBox.textContent = err.message; errorBox.style.display = 'block'; } });
 </script>
 </body>
 </html>

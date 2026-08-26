@@ -16,6 +16,7 @@ const initialDefaultBlocks = [
 class App {
     constructor() {
         this.blocksManager = null;
+        this.currentProjectId = null;
         this.init();
     }
 
@@ -154,14 +155,15 @@ class App {
     }
 
     async saveProject() {
-        const data = this.getFormData();
+        const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}) };
         const res = await ApiClient.saveProject(data);
+        this.currentProjectId = res.data?.id || this.currentProjectId;
         PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
         this.renderSavedProjects();
     }
 
-    async loadProject(name) {
-        const project = await ApiClient.getProject(name);
+    async loadProject(id) {
+        const project = await ApiClient.getProject(id);
         if (project) {
             document.getElementById('eventName').value = project.eventName || '';
             if (project.convocatoriaTime) document.getElementById('convocatoriaTime').value = project.convocatoriaTime;
@@ -173,13 +175,15 @@ class App {
 
             this.blocksManager.setBlocks(project.blocks || []);
             this.toggleShowStartMode();
-            PrintExportManager.showToast(`Proyecto "${name}" cargado`, 'info');
+            this.currentProjectId = project.id;
+            PrintExportManager.showToast(`Proyecto "${project.eventName}" cargado`, 'info');
         }
     }
 
-    async deleteProject(name) {
-        if (confirm(`¿Estás seguro de eliminar el proyecto "${name}"?`)) {
-            const res = await ApiClient.deleteProject(name);
+    async deleteProject(id) {
+        if (confirm('¿Estás seguro de eliminar este proyecto?')) {
+            const res = await ApiClient.deleteProject(id);
+            if (this.currentProjectId === id) this.currentProjectId = null;
             PrintExportManager.showToast(res.message || 'Proyecto eliminado', 'danger');
             this.renderSavedProjects();
         }
@@ -192,7 +196,7 @@ class App {
 
         const result = await ApiClient.getAllProjects();
         const projects = result.data || {};
-        const names = Object.keys(projects);
+        const ids = Object.keys(projects);
 
         if (badgeEl) {
             if (result.source === 'api') {
@@ -204,20 +208,21 @@ class App {
             }
         }
 
-        if (names.length === 0) {
+        if (ids.length === 0) {
             container.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px;">No hay proyectos guardados aún</div>';
             return;
         }
 
         container.innerHTML = '';
-        names.forEach(name => {
+        ids.forEach(id => {
+            const project = projects[id];
             const chip = document.createElement('div');
             chip.className = 'project-chip';
             chip.innerHTML = `
-                <span style="font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="app.loadProject('${name.replace(/'/g, "\\'")}')">📁 ${name}</span>
+                <span style="font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="app.loadProject('${id}')">📁 ${project.eventName}</span>
                 <div style="display: flex; gap: 4px;">
-                    <button class="btn-icon" title="Cargar proyecto" onclick="app.loadProject('${name.replace(/'/g, "\\'")}')">📂</button>
-                    <button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar proyecto" onclick="app.deleteProject('${name.replace(/'/g, "\\'")}')">🗑</button>
+                    <button class="btn-icon" title="Cargar proyecto" onclick="app.loadProject('${id}')">📂</button>
+                    ${project.permission === 'owner' ? `<button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar proyecto" onclick="app.deleteProject('${id}')">🗑</button>` : ''}
                 </div>
             `;
             container.appendChild(chip);
@@ -243,6 +248,11 @@ class App {
     exportCurrentProjectJSON() {
         const data = this.getFormData();
         PrintExportManager.exportJSON(data);
+    }
+
+    openLive() {
+        if (!this.currentProjectId) return PrintExportManager.showToast('Primero guarda el proyecto para abrir el modo en vivo.', 'warning');
+        window.location.href = `live.html?project=${encodeURIComponent(this.currentProjectId)}`;
     }
 
     print() {

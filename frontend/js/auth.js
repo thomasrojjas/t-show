@@ -1,111 +1,33 @@
-/**
- * T-Show - Cliente de sesión (usuario + PIN)
- * Todo el JWT es emitido y validado por el backend Express; este archivo solo
- * guarda/adjunta el token y redirige — nunca decide roles ni permisos por su cuenta.
- */
-const Auth = (function () {
-    const ACCESS_KEY = 'tshow_access_token';
-    const REFRESH_KEY = 'tshow_refresh_token';
-    const USER_KEY = 'tshow_user';
-
-    function baseUrl() {
-        return window.SHOWTIME_API_URL || window.location.origin;
+/* Supabase Auth client. Credentials are handled only by Supabase. */
+const Auth = (() => {
+    let clientPromise;
+    async function client() {
+        if (!clientPromise) clientPromise = (async () => {
+            const base = window.SHOWTIME_API_URL || window.location.origin;
+            const response = await fetch(`${base}/api/config`);
+            const config = await response.json();
+            if (!config.supabaseUrl || !config.supabaseAnonKey || !window.supabase) throw new Error('Autenticación no configurada.');
+            return window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+        })();
+        return clientPromise;
     }
-
-    function getToken() {
-        return localStorage.getItem(ACCESS_KEY);
+    async function token() { const { data } = await (await client()).auth.getSession(); return data.session?.access_token || null; }
+    async function api(path, options = {}) { const accessToken = await token(); const response = await fetch(`${window.SHOWTIME_API_URL || window.location.origin}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}), ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) } }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.message || 'No se pudo completar la solicitud.'); return body; }
+    async function register({ email, password, firstName, lastName, rut, phone }) {
+        if (!email || password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+        const { data, error } = await (await client()).auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: String(rut).replace(/[.\s]/g, '').toUpperCase(), phone: String(phone).replace(/[\s()-]/g, '') } } });
+        if (error) throw error;
+        if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut, phone }) });
+        return data;
     }
-
-    function getRefreshToken() {
-        return localStorage.getItem(REFRESH_KEY);
-    }
-
-    function getCurrentUser() {
-        try {
-            return JSON.parse(localStorage.getItem(USER_KEY) || 'null');
-        } catch {
-            return null;
-        }
-    }
-
-    function setSession({ accessToken, refreshToken, user }) {
-        localStorage.setItem(ACCESS_KEY, accessToken);
-        if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
-        if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-    }
-
-    function clearSession() {
-        localStorage.removeItem(ACCESS_KEY);
-        localStorage.removeItem(REFRESH_KEY);
-        localStorage.removeItem(USER_KEY);
-    }
-
-    async function login(username, pin) {
-        const res = await fetch(`${baseUrl()}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, pin })
-        });
-        const body = await res.json();
-        if (!res.ok || !body.success) {
-            throw new Error(body.message || 'No se pudo iniciar sesión');
-        }
-        setSession(body.data);
-        return body.data.user;
-    }
-
-    async function refreshAccessToken() {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) return false;
-        try {
-            const res = await fetch(`${baseUrl()}/api/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken })
-            });
-            const body = await res.json();
-            if (!res.ok || !body.success) return false;
-            localStorage.setItem(ACCESS_KEY, body.data.accessToken);
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
-    function logout(redirect = true) {
-        const token = getToken();
-        clearSession();
-        if (token) {
-            fetch(`${baseUrl()}/api/auth/logout`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            }).catch(() => {});
-        }
-        if (redirect) window.location.href = 'login.html';
-    }
-
-    /** Llamar al boot de cada página protegida. Redirige a login si no hay sesión. */
-    function requireSession() {
-        if (!getToken()) {
-            const next = encodeURIComponent(window.location.pathname + window.location.search);
-            window.location.href = `login.html?redirect=${next}`;
-            return null;
-        }
-        return getCurrentUser();
-    }
-
-    function requireGlobalRole(roles) {
-        const user = requireSession();
-        if (!user) return null;
-        if (!roles.includes(user.role)) {
-            window.location.href = 'index.html';
-            return null;
-        }
-        return user;
-    }
-
-    return {
-        login, logout, refreshAccessToken, requireSession, requireGlobalRole,
-        getToken, getCurrentUser, clearSession
-    };
+    async function login(email, password) { const { data, error } = await (await client()).auth.signInWithPassword({ email, password }); if (error) throw error; return data.user; }
+    async function completeProfile(values) { return api('/api/profile', { method: 'POST', body: JSON.stringify(values) }); }
+    async function currentUser() { const { data } = await (await client()).auth.getUser(); return data.user || null; }
+    async function getProfile() { return (await api('/api/me')).data; }
+    async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login.html?reset=1` }); if (error) throw error; }
+    async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
+    async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
+    async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
+    async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'index.html'; return null; } return profile; }
+    return { client, token, api, login, register, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();

@@ -15,7 +15,7 @@ const supabase = createClient(SUPABASE_URL || '', SUPABASE_SERVICE_ROLE_KEY || '
 
 async function checkDbConnection() {
     try {
-        const { error } = await supabase.from('users').select('id').limit(1);
+        const { error } = await supabase.from('profiles').select('id').limit(1);
         if (error) throw error;
         return true;
     } catch (err) {

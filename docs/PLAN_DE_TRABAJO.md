@@ -141,10 +141,9 @@ NODE_ENV=production
 CORS_ORIGIN=https://<frontend-produccion>.vercel.app
 SUPABASE_URL=https://<proyecto>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<secreto>
-JWT_SECRET=<secreto-largo-aleatorio>
-JWT_REFRESH_SECRET=<secreto-largo-aleatorio-distinto>
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_ANON_KEY=<publishable-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<server-secret-key>
 
 R2_ACCOUNT_ID=<id-cuenta>
 R2_ACCESS_KEY_ID=<secreto>

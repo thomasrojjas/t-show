@@ -7,12 +7,10 @@
 class LiveApp {
     constructor() {
         this.projectData = null;
-        this.projectName = '';
+        this.projectName = ''; // UUID del proyecto, se conserva por compatibilidad con UI
         this.role = 'viewer'; // 'viewer' | 'director' | 'admin'
         this.targetModalRole = 'director'; // 'director' | 'admin'
         
-        this.directorPIN = '1234';
-        this.adminPIN = '9999';
 
         this.liveState = {
             status: 'idle', // 'idle' | 'live' | 'paused' | 'finished'
@@ -58,12 +56,8 @@ class LiveApp {
         const urlParams = new URLSearchParams(window.location.search);
         this.projectName = urlParams.get('project') || '';
 
-        const roleParam = urlParams.get('role');
-        if (roleParam === 'admin') {
-            this.role = 'admin';
-        } else if (roleParam === 'director') {
-            this.role = 'director';
-        }
+        const profile = await Auth.getProfile().catch(() => null);
+        this.role = profile?.role === 'platform_admin' ? 'admin' : 'director';
 
         // Close dropdowns on outside click
         document.addEventListener('click', (e) => {
@@ -163,15 +157,7 @@ class LiveApp {
     }
 
     toggleRoleModal() {
-        this.setModalTargetRole(this.role === 'admin' ? 'admin' : 'director');
-        this.openModal('pinModal');
-        setTimeout(() => {
-            const pinInput = document.getElementById('pinInput');
-            if (pinInput) {
-                pinInput.value = '';
-                pinInput.focus();
-            }
-        }, 100);
+        this.setRoleAsViewer();
     }
 
     setModalTargetRole(targetRole) {
@@ -186,13 +172,13 @@ class LiveApp {
                 btnAdmin.classList.remove('btn-secondary');
                 btnDirector.classList.add('btn-secondary');
                 btnDirector.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> Inicio/Detención y Silenciado de Bloques (PIN: 9999)';
+                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> permisos asignados por tu cuenta.';
             } else {
                 btnDirector.classList.add('btn-primary');
                 btnDirector.classList.remove('btn-secondary');
                 btnAdmin.classList.add('btn-secondary');
                 btnAdmin.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> Botón TAP, Extender tiempo y Silenciar bloques (PIN: 1234)';
+                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> permisos asignados por tu membresía.';
             }
         }
     }
@@ -206,25 +192,7 @@ class LiveApp {
     }
 
     verifyPIN() {
-        const pinInput = document.getElementById('pinInput');
-        const pinVal = pinInput ? pinInput.value.trim() : '';
-
-        if (this.targetModalRole === 'admin' && (pinVal === this.adminPIN || pinVal === 'admin')) {
-            this.role = 'admin';
-            this.closeModal('pinModal');
-            this.updateRoleUI();
-            this.render();
-            PrintExportManager.showToast('¡Modo Administrador activado!', 'success');
-        } else if (this.targetModalRole === 'director' && pinVal === this.directorPIN) {
-            this.role = 'director';
-            this.closeModal('pinModal');
-            this.updateRoleUI();
-            this.render();
-            PrintExportManager.showToast('¡Modo Director de Escenario activado!', 'success');
-        } else {
-            alert(`PIN incorrecto para ${this.targetModalRole === 'admin' ? 'Administrador (9999)' : 'Director (1234)'}`);
-            if (pinInput) pinInput.focus();
-        }
+        PrintExportManager.showToast('Los permisos se administran desde la cuenta; no se usan PINes.', 'info');
     }
 
     openModal(id) {
