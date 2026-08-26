@@ -10,6 +10,40 @@ Rundown Studio es el competidor de referencia más directo para T-Show: ambos bu
 
 T-Show ya coincide con el núcleo de valor —bloques, cálculo de horarios, timeline, modo en vivo y exportación—, pero todavía debe estabilizar identidad, persistencia en nube, colaboración y monetización. La oportunidad no es copiar cada función: es competir con una experiencia más localizada para Chile/LatAm, cobro local, soporte en español y un flujo extremadamente simple para producciones de eventos.
 
+## Auditoría de T-Show — código revisado el 26 de agosto de 2026
+
+Esta sección separa con precisión lo que el repositorio implementa hoy de lo que existe solo como migración, interfaz o plan. No equivale a una prueba de producción.
+
+### Capacidades implementadas en el frontend
+
+| Área | T-Show hoy | Observación competitiva |
+| --- | --- | --- |
+| Planificación | Evento, convocatoria, apertura de puertas, inicio de show automático/manual, duración y bloques `show`, `animación`, `preparación` y `otro` | Muy alineado con eventos y conciertos; es más específico que un rundown genérico. |
+| Edición | Crear, eliminar, reordenar bloques y recalcular horarios | Paridad del núcleo de planificación, aunque aún no hay columnas/celdas libres como las de Rundown Studio. |
+| Timeline | Barra temporal y métricas de inicio, término y duración | Fortaleza visual que conviene mantener. |
+| Operación en vivo | Iniciar, pausar, detener, reiniciar, TAP para siguiente bloque, extender +2/+5/+10 min, omitir/silenciar, reajustar hora y ver balance | Es la capacidad diferencial más valiosa de T-Show hoy. |
+| Pantalla de escenario | Vista de confianza/fullscreen para tiempo y bloques | Base útil para evolucionar a outputs por rol. |
+| Entregables | Impresión mediante navegador/PDF y exportación JSON | Falta CSV de entrada/salida y PDFs con opciones por puesto. |
+| Resiliencia local | Fallback a `localStorage` para proyectos y sesión en vivo | Útil como contingencia, pero no reemplaza sincronización multiusuario fiable. |
+
+### Capacidades incompletas o no listas para producción
+
+| Área | Estado real | Riesgo / trabajo necesario |
+| --- | --- | --- |
+| Persistencia | Las rutas activas de proyectos y vivo continúan leyendo/escribiendo `backend/data/*.json`; las tablas Supabase existen como migración pero no son usadas por dichas rutas | En Render el filesystem no es persistencia de producción. Migrar CRUD y live state a Supabase es prioridad P0. |
+| Cuentas | Existe login JWT de `username` + PIN y un panel de superadministrador | No existe el registro requerido con nombre, apellido, RUT, correo, teléfono y contraseña. |
+| Seguridad de sesión | El frontend guarda access y refresh tokens en `localStorage` | Debe migrarse a refresh token rotativo en cookie `HttpOnly`; evitar exposición ante XSS. |
+| Autorización | Hay middleware de JWT/roles y tablas de miembros de proyecto, pero `/api/projects` y `/api/live` activos no los aplican | Los datos de proyectos/sesiones no están aislados por usuario. Debe corregirse antes de abrir cuentas. |
+| Roles en vivo | La interfaz muestra PINs de ejemplo para Director/Administrador | No usar PINs ni roles de interfaz como control de acceso real; deben venir del backend. |
+| Sincronización | `live-sync.js` hace polling y conserva fallback local; `socket.io` está instalado pero no se inicializa ni utiliza | Implementar Realtime de Supabase o Socket.IO real, con control de concurrencia y presencia. |
+| Fotos/archivos | Sin R2 ni modelo operativo de adjuntos | Implementar bucket R2 privado, metadata en Supabase y URLs prefirmadas. |
+| Pagos | Sin rutas, tablas operativas ni webhooks de Mercado Pago/Flow | Implementar catálogo, intentos, suscripciones y webhooks idempotentes. |
+| Calidad | No hay scripts de test ni lockfile versionado | Añadir pruebas de motor de tiempos, API, webhooks y flujo de autenticación; versionar lockfile. |
+
+### Conclusión del estado de producto
+
+T-Show **sí tiene un MVP funcional de escaleta y ejecución individual/local**, pero todavía **no es un SaaS comercialmente seguro**. El orden correcto es: persistencia y autorización → cuentas → colaboración → pagos → outputs/integraciones. Construir teleprompter o Stream Deck antes de eso ampliaría el producto sin resolver el riesgo de datos y acceso.
+
 ## 1. Qué vende Rundown Studio
 
 Su mensaje central es “mantener el show a tiempo” para show callers, productores y equipos de broadcast. Está diseñado para trabajo colaborativo online en producciones y eventos en vivo. Atiende broadcasting, conferencias, eventos corporativos, streaming, esports, iglesias, podcasts/radio y educación. [Producto](https://rundownstudio.app/) · [caso de eventos corporativos](https://rundownstudio.app/corporate-events/)
@@ -54,6 +88,19 @@ Fuentes de funcionalidades: [documentación](https://rundownstudio.app/docs/), [
 | Pagos | Por implementar; Mercado Pago Bricks + Checkout Pro + Flow | Suscripción/recibos visibles; pagos globales mediante Paddle según FAQ | Crítica para negocio local. |
 | Localización Chile | Por definir, pero contará con RUT, teléfono y pasarelas locales | Publicación global en USD, impuestos/VAT europeos visibles | Oportunidad estratégica. |
 | API/control de hardware | No existe aún | API, SSE, Companion, QLab | Fase posterior. |
+
+### Matriz de decisión: qué igualar, qué no y qué convertir en ventaja
+
+| Capacidad competidora | Decisión para T-Show | Razón |
+| --- | --- | --- |
+| Cues/columnas/celdas configurables | Igualar después del MVP comercial | Es esencial para broadcast avanzado, pero no para validar el flujo de evento/concierto. |
+| Temporización automática | Mantener y profundizar ya | T-Show ya posee la base y puede especializarla en convocatoria, puertas, artista y cambios. |
+| Teleprompter | Fase 3 | Necesario en algunos shows, no en todos; primero outputs de tiempo/estado para escenario. |
+| Invitados y permisos granulares | Igualar en Fase 1/2 | Es imprescindible para que una productora invite a cliente, técnico y operador sin compartir cuentas. |
+| API pública/WebSocket/Companion/QLab | Fase 3, guiada por entrevistas | Costosa de soportar; no construir integraciones sin demanda comprobada. |
+| CSV y plantillas | Fase 2, con foco local | Reduce fricción de adopción desde Excel y permite paquetes de plantillas por tipo de evento. |
+| Pago por evento | Validar como posible tercer modelo | El plan Event de Rundown Studio muestra que el segmento compra por proyecto; no reemplaza mensual/anual sin validar mercado. |
+| Pasarelas Chile | Convertir en ventaja de lanzamiento | Mercado Pago Bricks, Checkout Pro y Flow, más RUT/CLP, resuelven fricción local que una oferta USD no prioriza. |
 
 ## 4. Modelo comercial y referencia de precio
 
