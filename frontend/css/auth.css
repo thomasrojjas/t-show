@@ -1,4 +1,4 @@
-:root { --black:#000; --ink:#f5f5f2; --muted:#969696; --line:#272727; --accent:#b8d7ff; --danger:#ff9b9b; }
+:root { --black:#000; --ink:#f5f5f2; --muted:#969696; --line:#272727; --accent:#b8d7ff; --danger:#ff8e8e; --warning:#ffd166; --success:#80e2a7; }
 * { box-sizing:border-box; } html,body { min-height:100%; } body { margin:0; background:var(--black); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased; }
 a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
 .auth-shell { min-height:100vh; display:grid; grid-template-columns:minmax(260px,1fr) minmax(360px,540px); background:#000; }
@@ -15,6 +15,12 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 @media (max-width:480px) { .auth-panel { padding:38px 20px 50px; }.auth-intro h1 { font-size:41px; }.form-row { grid-template-columns:1fr; gap:0; }.auth-links { flex-direction:column; align-items:flex-start; gap:13px; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; } }
 
-.form-control[aria-invalid="true"] { color:var(--danger); }
-.field-error { display:block; min-height:16px; margin-top:6px; color:var(--danger); font-size:11px; line-height:1.35; }
+.form-control[data-validation-state="error"] { color:var(--danger); }
+.form-control[data-validation-state="warning"] { color:var(--warning); }
+.form-control[data-validation-state="success"] { color:var(--success); }
+.field-error { display:block; min-height:16px; margin-top:6px; color:var(--muted); font-size:11px; line-height:1.35; }
+.field-error[data-status="error"] { color:var(--danger); }
+.field-error[data-status="warning"] { color:var(--warning); }
+.field-error[data-status="success"] { color:var(--success); }
+.auth-error[data-status="success"] { border-color:rgba(128,226,167,.55); color:var(--success); }
 .form-note { margin:14px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
