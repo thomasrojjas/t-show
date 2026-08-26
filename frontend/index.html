@@ -17,6 +17,7 @@
         <a href="#equipos">Para equipos</a>
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#preguntas">Preguntas</a>
+        <a href="#contacto">Contacto</a>
       </div>
       <div class="nav-account">
         <a href="login.html">Iniciar sesión</a>
@@ -100,6 +101,19 @@
       </div>
     </section>
 
+    <section id="contacto" class="contact-section" aria-labelledby="contact-title">
+      <div class="section-heading"><p class="section-index">CONTACTO</p><h2 id="contact-title">Hablemos de tu próxima producción.</h2><p>Cuéntanos qué necesitas coordinar. BaseAndes responderá en contacto@baseandes.com.</p></div>
+      <form id="contactForm" class="contact-form" novalidate>
+        <label>Nombre<input name="name" required maxlength="120" autocomplete="name"></label>
+        <label>Correo<input name="email" type="email" required maxlength="180" autocomplete="email"></label>
+        <label>Organización <span>(opcional)</span><input name="organization" maxlength="180" autocomplete="organization"></label>
+        <label>Mensaje<textarea name="message" required minlength="10" maxlength="4000" rows="5"></textarea></label>
+        <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="contact-honeypot">
+        <p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p>
+        <button class="button button-light" type="submit">Enviar consulta</button>
+      </form>
+    </section>
+
     <section class="closing" aria-labelledby="closing-title">
       <p class="section-index">T-SHOW</p>
       <h2 id="closing-title">Todo el show.<br>En su momento.</h2>
@@ -108,5 +122,8 @@
   </main>
 
   <footer class="site-footer"><span>© T-Show · BaseAndes Software</span><span>Fotografía: <a href="https://unsplash.com/photos/Tu7U7uvazwY" target="_blank" rel="noopener noreferrer">Joy Real / Unsplash</a></span></footer>
+  <script>
+    (function () { var form = document.getElementById('contactForm'); var status = document.getElementById('contactStatus'); if (!form) return; form.addEventListener('submit', async function (event) { event.preventDefault(); var data = Object.fromEntries(new FormData(form)); status.dataset.status = 'warning'; status.textContent = 'Enviando…'; try { var response = await fetch((window.SHOWTIME_API_URL || 'https://t-show-api.onrender.com') + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); var body = await response.json(); if (!response.ok) throw new Error(body.message); status.dataset.status = 'success'; status.textContent = body.message || 'Mensaje enviado correctamente.'; form.reset(); } catch (error) { status.dataset.status = 'error'; status.textContent = error.message || 'No se pudo enviar. Escríbenos a contacto@baseandes.com.'; } }); }());
+  </script>
 </body>
 </html>

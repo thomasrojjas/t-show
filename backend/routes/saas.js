@@ -28,6 +28,13 @@ async function access(projectId, userId, edit = false) {
   if (!member || (edit && member.role !== 'editor')) return null;
   return { project, role: member.role };
 }
+async function accessForRequest(projectId, req, edit = false) {
+  if (req.user?.profile?.role === 'platform_admin') {
+    const { data: project } = await supabase.from('tshow_projects').select('*').eq('id', projectId).is('deleted_at', null).maybeSingle();
+    return project ? { project, role: 'admin' } : null;
+  }
+  return access(projectId, req.user.id, edit);
+}
 async function audit(projectId, actorId, action, metadata = {}) {
   await supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
 }
@@ -47,8 +54,10 @@ router.get('/me', requireSupabaseAuth, (req, res) => res.json({ success: true, d
 
 router.get('/projects', requireSupabaseAuth, async (req, res) => {
   const id = req.user.id;
-  const { data: owned, error } = await supabase.from('tshow_projects').select('*').eq('owner_id', id).is('deleted_at', null).order('updated_at', { ascending: false });
+  const isPlatformAdmin = req.user.profile?.role === 'platform_admin';
+  const { data: owned, error } = await supabase.from('tshow_projects').select('*').is('deleted_at', null).order('updated_at', { ascending: false }).then(result => isPlatformAdmin ? result : { ...result, data: (result.data || []).filter(project => project.owner_id === id) });
   if (error) return res.status(500).json({ success: false, message: error.message });
+  if (isPlatformAdmin) return res.json({ success: true, data: owned || [] });
   const { data: memberships } = await supabase.from('tshow_project_members').select('project_id,role,tshow_projects(*)').eq('user_id', id);
   const projects = [...owned, ...(memberships || []).map(m => ({ ...m.tshow_projects, member_role: m.role })).filter(Boolean)];
   res.json({ success: true, data: projects });
@@ -58,19 +67,19 @@ router.post('/projects', requireSupabaseAuth, async (req, res) => {
   const payload = cleanPayload(req.body);
   if (!payload.eventName) return res.status(400).json({ success: false, message: 'El nombre del evento es requerido.' });
   const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, event_name: payload.eventName, payload }).select().single();
-  if (error) return res.status(400).json({ success: false, message: error.message });
+  if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
   await audit(data.id, req.user.id, 'project.created');
   res.status(201).json({ success: true, data });
 });
 
 router.get('/projects/:id', requireSupabaseAuth, async (req, res) => {
-  const granted = await access(req.params.id, req.user.id);
+  const granted = await accessForRequest(req.params.id, req);
   if (!granted) return res.status(404).json({ success: false, message: 'Proyecto no encontrado.' });
   res.json({ success: true, data: { ...granted.project, payload: granted.project.payload, permission: granted.role } });
 });
 
 router.patch('/projects/:id', requireSupabaseAuth, async (req, res) => {
-  const granted = await access(req.params.id, req.user.id, true);
+  const granted = await accessForRequest(req.params.id, req, true);
   if (!granted) return res.status(403).json({ success: false, message: 'No puedes editar este proyecto.' });
   const payload = cleanPayload(req.body);
   if (!payload.eventName) return res.status(400).json({ success: false, message: 'El nombre del evento es requerido.' });
@@ -81,7 +90,7 @@ router.patch('/projects/:id', requireSupabaseAuth, async (req, res) => {
 });
 
 router.delete('/projects/:id', requireSupabaseAuth, async (req, res) => {
-  const granted = await access(req.params.id, req.user.id, true);
+  const granted = await accessForRequest(req.params.id, req, true);
   if (!granted || granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede eliminarlo.' });
   await supabase.from('tshow_projects').update({ deleted_at: new Date().toISOString() }).eq('id', req.params.id);
   await audit(req.params.id, req.user.id, 'project.deleted');
@@ -89,13 +98,13 @@ router.delete('/projects/:id', requireSupabaseAuth, async (req, res) => {
 });
 
 router.get('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
-  if (!await access(req.params.id, req.user.id)) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
+  if (!await accessForRequest(req.params.id, req)) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
   const { data, error } = await supabase.from('tshow_live_sessions').select('*').eq('project_id', req.params.id).maybeSingle();
   if (error) return res.status(400).json({ success: false, message: error.message });
   res.json({ success: true, data: data?.state || null });
 });
 router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
-  if (!await access(req.params.id, req.user.id, true)) return res.status(403).json({ success: false, message: 'Sin permiso para operar en vivo.' });
+  if (!await accessForRequest(req.params.id, req, true)) return res.status(403).json({ success: false, message: 'Sin permiso para operar en vivo.' });
   const state = req.body || {};
   const { data, error } = await supabase.from('tshow_live_sessions').upsert({ project_id: req.params.id, state, updated_by: req.user.id, last_updated: new Date().toISOString() }).select().single();
   if (error) return res.status(400).json({ success: false, message: error.message });
@@ -104,13 +113,19 @@ router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
 });
 
 router.get('/projects/:id/members', requireSupabaseAuth, async (req, res) => {
-  if (!await access(req.params.id, req.user.id)) return res.status(403).json({ success: false, message: 'Sin acceso.' });
+  if (!await accessForRequest(req.params.id, req)) return res.status(403).json({ success: false, message: 'Sin acceso.' });
   const { data, error } = await supabase.from('tshow_project_members').select('role,created_at,profiles(id,first_name,last_name,email)').eq('project_id', req.params.id);
   if (error) return res.status(400).json({ success: false, message: error.message });
   res.json({ success: true, data });
 });
+router.get('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Sin permiso.' });
+  const { data, error } = await supabase.from('tshow_invitations').select('id,email,role,status,expires_at,created_at').eq('project_id', req.params.id).order('created_at', { ascending: false });
+  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+});
 router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
-  const granted = await access(req.params.id, req.user.id, true);
+  const granted = await accessForRequest(req.params.id, req, true);
   if (!granted || granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede invitar.' });
   const email = String(req.body.email || '').trim().toLowerCase(); const role = req.body.role === 'editor' ? 'editor' : 'viewer';
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, message: 'Correo inválido.' });
@@ -119,7 +134,35 @@ router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =
   if (error) return res.status(400).json({ success: false, message: error.message });
   await audit(req.params.id, req.user.id, 'invitation.created', { email, role });
   // Email delivery is deliberately delegated to the configured transactional provider.
-  res.status(201).json({ success: true, data, invitationToken: token });
+  if (process.env.RESEND_API_KEY) {
+    const inviteUrl = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN}/register.html?invite=${encodeURIComponent(token)}`;
+    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: 'Invitación a colaborar en T-Show', html: `<p>Has sido invitado a colaborar en un proyecto de T-Show.</p><p><a href="${inviteUrl}">Aceptar invitación</a></p><p>El enlace vence en 7 días.</p>` }) }).catch(error => console.error('Invitation email failed:', error.message));
+  }
+  res.status(201).json({ success: true, data });
+});
+router.patch('/projects/:id/members/:userId', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede cambiar permisos.' });
+  const role = req.body.role === 'editor' ? 'editor' : 'viewer';
+  const { data, error } = await supabase.from('tshow_project_members').update({ role }).eq('project_id', req.params.id).eq('user_id', req.params.userId).select().single();
+  if (!error) await audit(req.params.id, req.user.id, 'member.role_changed', { userId: req.params.userId, role });
+  res.status(error ? 400 : 200).json({ success: !error, data, message: error?.message });
+});
+router.delete('/projects/:id/members/:userId', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede remover miembros.' });
+  const { error } = await supabase.from('tshow_project_members').delete().eq('project_id', req.params.id).eq('user_id', req.params.userId);
+  if (!error) await audit(req.params.id, req.user.id, 'member.removed', { userId: req.params.userId });
+  res.status(error ? 400 : 200).json({ success: !error, message: error?.message });
+});
+router.delete('/invitations/:id', requireSupabaseAuth, async (req, res) => {
+  const { data: invite } = await supabase.from('tshow_invitations').select('project_id').eq('id', req.params.id).maybeSingle();
+  if (!invite) return res.status(404).json({ success: false, message: 'Invitación no encontrada.' });
+  const granted = await accessForRequest(invite.project_id, req);
+  if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Sin permiso.' });
+  const { error } = await supabase.from('tshow_invitations').update({ status: 'revoked' }).eq('id', req.params.id);
+  if (!error) await audit(invite.project_id, req.user.id, 'invitation.revoked');
+  res.status(error ? 400 : 200).json({ success: !error, message: error?.message });
 });
 router.post('/invitations/:token/accept', requireSupabaseAuth, async (req, res) => {
   const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');

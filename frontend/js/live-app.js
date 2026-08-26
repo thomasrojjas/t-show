@@ -57,7 +57,7 @@ class LiveApp {
         this.projectName = urlParams.get('project') || '';
 
         const profile = await Auth.getProfile().catch(() => null);
-        this.role = profile?.role === 'platform_admin' ? 'admin' : 'director';
+        this.role = profile?.role === 'platform_admin' ? 'admin' : 'viewer';
 
         // Close dropdowns on outside click
         document.addEventListener('click', (e) => {
@@ -78,6 +78,9 @@ class LiveApp {
 
         // Load project from API / LocalStorage
         await this.loadProject();
+
+        // Project permissions are authoritative: editor can operate, viewer is read-only.
+        if (this.role !== 'admin' && this.projectData?.permission === 'editor') this.role = 'director';
 
         // Load initial live state & start listener
         await this.initLiveState();

@@ -155,11 +155,15 @@ class App {
     }
 
     async saveProject() {
-        const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}) };
-        const res = await ApiClient.saveProject(data);
-        this.currentProjectId = res.data?.id || this.currentProjectId;
-        PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
-        this.renderSavedProjects();
+        try {
+            const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}) };
+            const res = await ApiClient.saveProject(data);
+            this.currentProjectId = res.data?.id || this.currentProjectId;
+            PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
+            this.renderSavedProjects();
+        } catch (error) {
+            PrintExportManager.showToast(error.message || 'No se pudo guardar el proyecto.', 'danger');
+        }
     }
 
     async loadProject(id) {
