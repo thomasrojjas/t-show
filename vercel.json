@@ -1,7 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "show-time",
   "cleanUrls": true,
+  "outputDirectory": "frontend",
   "headers": [
     {
       "source": "/(.*)",
@@ -22,26 +24,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/frontend/index.html"
-    },
-    {
-      "source": "/live",
-      "destination": "/frontend/live.html"
-    },
-    {
-      "source": "/live.html",
-      "destination": "/frontend/live.html"
-    },
-    {
-      "source": "/css/:path*",
-      "destination": "/frontend/css/:path*"
-    },
-    {
-      "source": "/js/:path*",
-      "destination": "/frontend/js/:path*"
-    },
     {
       "source": "/api/:path*",
       "destination": "https://t-show-api.onrender.com/api/:path*"
