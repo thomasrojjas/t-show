@@ -26,7 +26,7 @@ router.post('/mercadopago/subscriptions', requireSupabaseAuth, async (req, res) 
   if (!plan) return res.status(400).json({ success: false, message: 'Plan no disponible.' });
   if (!process.env.MP_ACCESS_TOKEN) return res.status(503).json({ success: false, message: 'Mercado Pago no está configurado.' });
   const period = plan.interval === 'year' ? 12 : 1;
-  const response = await fetch(`${apiUrl}/preapproval`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: `T-Show ${plan.name}`, external_reference: `${req.user.id}:${plan.id}`, payer_email: req.user.email, auto_recurring: { frequency: period, frequency_type: 'months', transaction_amount: plan.amount_clp, currency_id: 'CLP' }, back_url: `${origin()}/index.html?billing=mercadopago`, status: 'pending' }) });
+  const response = await fetch(`${apiUrl}/preapproval`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: `T-Show ${plan.name}`, external_reference: `${req.user.id}:${plan.id}`, payer_email: req.user.email, auto_recurring: { frequency: period, frequency_type: 'months', transaction_amount: plan.amount_clp, currency_id: 'CLP' }, back_url: `${origin()}/app.html?billing=mercadopago`, status: 'pending' }) });
   const body = await response.json();
   if (!response.ok) return res.status(400).json({ success: false, message: body.message || 'No se pudo crear la suscripción.' });
   await saveSubscription(req.user.id, plan, 'mercadopago_subscription', body.id);
@@ -37,7 +37,7 @@ router.post('/mercadopago/subscriptions', requireSupabaseAuth, async (req, res) 
 router.post('/mercadopago/checkout-pro', requireSupabaseAuth, async (req, res) => {
   const plan = await activePlan(req.body.planId);
   if (!plan || !process.env.MP_ACCESS_TOKEN) return res.status(400).json({ success: false, message: 'Plan o Mercado Pago no disponible.' });
-  const response = await fetch(`${apiUrl}/checkout/preferences`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ items: [{ title: `T-Show ${plan.name}`, quantity: 1, currency_id: 'CLP', unit_price: plan.amount_clp }], external_reference: `${req.user.id}:${plan.id}:manual`, back_urls: { success: `${origin()}/index.html?billing=success`, failure: `${origin()}/index.html?billing=failure`, pending: `${origin()}/index.html?billing=pending` }, notification_url: `${process.env.PUBLIC_API_URL}/api/webhooks/mercadopago` }) });
+  const response = await fetch(`${apiUrl}/checkout/preferences`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ items: [{ title: `T-Show ${plan.name}`, quantity: 1, currency_id: 'CLP', unit_price: plan.amount_clp }], external_reference: `${req.user.id}:${plan.id}:manual`, back_urls: { success: `${origin()}/app.html?billing=success`, failure: `${origin()}/app.html?billing=failure`, pending: `${origin()}/app.html?billing=pending` }, notification_url: `${process.env.PUBLIC_API_URL}/api/webhooks/mercadopago` }) });
   const body = await response.json();
   if (!response.ok) return res.status(400).json({ success: false, message: body.message || 'No se pudo crear Checkout Pro.' });
   res.status(201).json({ success: true, initPoint: body.init_point, preferenceId: body.id });
@@ -48,7 +48,7 @@ router.post('/flow/subscriptions', requireSupabaseAuth, async (req, res) => {
   const plan = await activePlan(req.body.planId);
   if (!plan || !process.env.FLOW_API_KEY || !process.env.FLOW_SECRET_KEY) return res.status(400).json({ success: false, message: 'Plan o Flow no disponible.' });
   const commerceOrder = `tshow-${req.user.id}-${Date.now()}`;
-  const params = new URLSearchParams({ apiKey: process.env.FLOW_API_KEY, commerceOrder, subject: `T-Show ${plan.name}`, amount: String(plan.amount_clp), currency: 'CLP', email: req.user.email, urlConfirmation: `${process.env.PUBLIC_API_URL}/api/webhooks/flow`, urlReturn: `${origin()}/index.html?billing=flow`, optional: JSON.stringify({ accountId: req.user.id, planId: plan.id, interval: plan.interval }) });
+  const params = new URLSearchParams({ apiKey: process.env.FLOW_API_KEY, commerceOrder, subject: `T-Show ${plan.name}`, amount: String(plan.amount_clp), currency: 'CLP', email: req.user.email, urlConfirmation: `${process.env.PUBLIC_API_URL}/api/webhooks/flow`, urlReturn: `${origin()}/app.html?billing=flow`, optional: JSON.stringify({ accountId: req.user.id, planId: plan.id, interval: plan.interval }) });
   params.set('s', hmac(params.toString(), process.env.FLOW_SECRET_KEY));
   const response = await fetch(`${process.env.FLOW_API_URL || 'https://sandbox.flow.cl/api'}/payment/create`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
   const body = await response.json();

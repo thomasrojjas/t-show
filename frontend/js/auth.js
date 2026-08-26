@@ -28,6 +28,6 @@ const Auth = (() => {
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
-    async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'index.html'; return null; } return profile; }
+    async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
     return { client, token, api, login, register, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();

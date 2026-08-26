@@ -9,7 +9,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 // Cliente server-side únicamente. Usa la service role key, que bypassea RLS,
 // por eso este cliente NUNCA debe exponerse al frontend ni viajar en una respuesta HTTP.
-const supabase = createClient(SUPABASE_URL || '', SUPABASE_SERVICE_ROLE_KEY || '', {
+const supabase = createClient(SUPABASE_URL || 'http://127.0.0.1:54321', SUPABASE_SERVICE_ROLE_KEY || 'local-missing-service-role-key', {
     auth: { autoRefreshToken: false, persistSession: false }
 });
 

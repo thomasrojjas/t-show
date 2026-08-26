@@ -24,7 +24,8 @@ timming/
 │   └── data/
 │       └── projects.json       # Base de datos persistente en disco
 └── frontend/
-    ├── index.html              # Página principal SPA
+    ├── index.html              # Landing pública
+    ├── app.html                # Planificador protegido
     ├── css/
     │   ├── main.css            # Sistema de diseño, temas y controles
     │   ├── timeline.css        # Barra de cronograma interactiva y visual
@@ -82,7 +83,7 @@ timming/
 - Haz doble clic en `start.bat` o ejecuta `./start.ps1` en PowerShell.
 
 ### Opción 3: Navegador Directo (Modo Offline)
-- Simplemente abre el archivo `frontend/index.html` en cualquier navegador web.
+- Abre `frontend/index.html` para la presentación pública o `frontend/app.html` para el planificador.
 
 ---
 

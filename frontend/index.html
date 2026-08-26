@@ -1,234 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Time - Planificador Profesional de Timing</title>
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/timeline.css">
-    <link rel="stylesheet" href="css/print.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="T-Show unifica el timing, la escaleta y la operación de producciones en vivo.">
+  <title>T-Show — Todo el show, a tiempo</title>
+  <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
+  <a class="skip-link" href="#contenido">Ir al contenido</a>
+  <header class="site-header">
+    <nav class="site-nav" aria-label="Navegación principal">
+      <a class="wordmark" href="/" aria-label="T-Show, inicio"><span aria-hidden="true">T</span>SHOW</a>
+      <div class="nav-sections">
+        <a href="#producto">Producto</a>
+        <a href="#equipos">Para equipos</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#preguntas">Preguntas</a>
+      </div>
+      <div class="nav-account">
+        <a href="login.html">Iniciar sesión</a>
+        <a class="button button-light" href="register.html">Crear cuenta</a>
+      </div>
+    </nav>
+  </header>
 
-    <!-- Header Bar -->
-    <header class="header-bar">
-        <div class="brand">
-            <div class="brand-icon">⏱</div>
-            <div class="brand-text">
-                <h1>Show Time <span class="brand-badge">Pro</span></h1>
-                <p>Gestor Profesional de Timing & Escaleta • <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none;">BaseAndes Software</a></p>
-            </div>
+  <main id="contenido">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">T-SHOW / OPERACIÓN EN VIVO</p>
+        <h1 id="hero-title">Un minuto tarde<br>cambia todo el show.</h1>
+        <p class="hero-lede">T-Show reúne la escaleta, los horarios y la operación en vivo para que cada equipo llegue al siguiente momento con claridad.</p>
+        <div class="hero-actions">
+          <a class="button button-light" href="register.html">Crear cuenta</a>
+          <a class="text-action" href="login.html">Iniciar sesión <span aria-hidden="true">→</span></a>
         </div>
-        <div class="actions">
-            <button class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);" onclick="app.openLive()">🔴 Modo En Vivo</button>
-            <button class="btn btn-success" onclick="app.saveProject()">💾 Guardar Proyecto</button>
-            <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">📥 Exportar JSON</button>
-            <button class="btn btn-secondary" onclick="app.resetToDefaults()">🔄 Restablecer</button>
-            <button class="btn btn-primary" onclick="app.print()">🖨 Imprimir / Exportar PDF</button>
-            <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">🚪 Salir</button>
-        </div>
-    </header>
+      </div>
+      <figure class="hero-image">
+        <img src="assets/tshow-stage.webp" width="1920" height="1080" alt="Luces de escenario atravesando la neblina de un recinto de conciertos">
+        <figcaption>La operación empieza antes de que se encienda la primera luz.</figcaption>
+      </figure>
+    </section>
 
-    <div class="main-grid">
-        
-        <!-- Left Panel Controls (PÁGINA 1 EN IMPRESIÓN) -->
-        <section class="left-panel-print">
-            
-            <!-- Encabezado exclusivo de impresión para Hoja 1 -->
-            <div class="print-header" style="display: none;">
-                <h1>Pauta Técnica & Estructura de Evento</h1>
-                <p>EventTime Pro v4.0 - Hoja 1: Parámetros y Bloques del Espectáculo</p>
-            </div>
+    <section class="statement" aria-labelledby="problema-title">
+      <p class="section-index">01 — EL PROBLEMA</p>
+      <div>
+        <h2 id="problema-title">Cuando la pauta vive en muchas partes, el equipo deja de avanzar como uno solo.</h2>
+        <p>Planillas, mensajes y cambios de último minuto separan a producción, técnica y escenario. T-Show ordena el tiempo compartido del evento.</p>
+      </div>
+    </section>
 
-            <!-- Project Manager Panel -->
-            <div class="panel">
-                <div class="panel-title">
-                    <span>Proyectos Guardados</span>
-                    <span id="storageBadge" style="font-size: 11px; color: var(--accent-success); font-weight: bold;">Sincronizando...</span>
-                </div>
-                <div id="savedProjectsContainer" class="saved-projects-list">
-                    <!-- Dynamic Saved Projects -->
-                </div>
-            </div>
+    <section id="producto" class="product-section" aria-labelledby="producto-title">
+      <div class="section-heading">
+        <p class="section-index">02 — LA SOLUCIÓN</p>
+        <h2 id="producto-title">Una fuente de verdad para el ritmo de tu producción.</h2>
+      </div>
+      <div class="feature-list">
+        <article>
+          <span>01</span><div><h3>Timing preciso</h3><p>Construye convocatorias, aperturas, inicios y cierres con cálculos que se actualizan al cambiar la pauta.</p></div>
+        </article>
+        <article>
+          <span>02</span><div><h3>Escaleta clara</h3><p>Ordena cada bloque del show para que la información esencial se lea de inmediato.</p></div>
+        </article>
+        <article>
+          <span>03</span><div><h3>Operación en vivo</h3><p>Sigue el estado del show, mide desvíos y toma decisiones desde una misma referencia.</p></div>
+        </article>
+      </div>
+    </section>
 
-            <!-- Global Event Parameters Separated in Distinct Segments -->
-            <div class="panel">
-                <div class="panel-title">
-                    <span>Horarios Clave del Evento (Página 1: Estructura)</span>
-                </div>
+    <section id="equipos" class="audience-section" aria-labelledby="equipos-title">
+      <div class="section-heading">
+        <p class="section-index">03 — PARA QUIÉN</p>
+        <h2 id="equipos-title">Hecho para quienes sostienen el show detrás del escenario.</h2>
+      </div>
+      <ul class="audience-list">
+        <li>Dirección de producción</li><li>Stage managers</li><li>Equipos técnicos</li><li>Animación y talento</li><li>Eventos corporativos</li><li>Festivales y conciertos</li>
+      </ul>
+    </section>
 
-                <div class="form-group">
-                    <label class="form-label" for="eventName">Nombre del Evento</label>
-                    <input type="text" id="eventName" class="form-control" value="Gran Concierto & Show Estelar">
-                </div>
+    <section id="como-funciona" class="steps-section" aria-labelledby="pasos-title">
+      <div class="section-heading">
+        <p class="section-index">04 — EMPEZAR</p>
+        <h2 id="pasos-title">De una idea a una operación alineada.</h2>
+      </div>
+      <ol class="steps">
+        <li><strong>01</strong><span>Crea tu cuenta y abre un nuevo evento.</span></li>
+        <li><strong>02</strong><span>Define horarios, bloques y responsables.</span></li>
+        <li><strong>03</strong><span>Invita a tu equipo cuando la colaboración esté disponible.</span></li>
+        <li><strong>04</strong><span>Opera la pauta durante el show.</span></li>
+      </ol>
+    </section>
 
-                <!-- SEGMENTO 1: CONVOCATORIA DE COMISIONES -->
-                <div class="segment-card" style="border-left: 4px solid #c084fc;">
-                    <div class="segment-card-title" style="color: #c084fc;">
-                        <span>📋 Segmento 1: Convocatoria Comisiones</span>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="convocatoriaTime">Hora Convocatoria</label>
-                            <input type="time" id="convocatoriaTime" class="form-control" value="18:30">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="convocatoriaDuration">Duración Reunión (min)</label>
-                            <input type="number" id="convocatoriaDuration" class="form-control" value="30" min="0">
-                        </div>
-                    </div>
-                </div>
+    <section id="preguntas" class="faq-section" aria-labelledby="faq-title">
+      <div class="section-heading"><p class="section-index">PREGUNTAS</p><h2 id="faq-title">Lo esencial, sin rodeos.</h2></div>
+      <div class="faq-list">
+        <details><summary>¿Qué puedo hacer hoy con T-Show?</summary><p>Crear y ajustar un timing, organizar bloques y utilizar el modo en vivo para seguir una pauta.</p></details>
+        <details><summary>¿Necesito instalar algo?</summary><p>No. T-Show funciona desde el navegador.</p></details>
+        <details><summary>¿Puedo usarlo para eventos que no son conciertos?</summary><p>Sí. Está pensado para cualquier producción con una secuencia, horarios y un equipo que coordinar.</p></details>
+      </div>
+    </section>
 
-                <!-- SEGMENTO 2: APERTURA DE PUERTAS -->
-                <div class="segment-card" style="border-left: 4px solid #06b6d4;">
-                    <div class="segment-card-title" style="color: #06b6d4;">
-                        <span>🚪 Segmento 2: Apertura de Puertas</span>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="doorsTime">Hora Apertura Puertas</label>
-                            <input type="time" id="doorsTime" class="form-control" value="19:30">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="doorsDuration">DJ / Ambientación (min)</label>
-                            <input type="number" id="doorsDuration" class="form-control" value="60" min="0">
-                        </div>
-                    </div>
-                </div>
+    <section class="closing" aria-labelledby="closing-title">
+      <p class="section-index">T-SHOW</p>
+      <h2 id="closing-title">Todo el show.<br>En su momento.</h2>
+      <a class="button button-light" href="register.html">Crear cuenta</a>
+    </section>
+  </main>
 
-                <!-- SEGMENTO 3: INICIO DEL SHOW (AJUSTABLE DERECHO Y CALCULADO AUTO) -->
-                <div class="segment-card" style="border-left: 4px solid #818cf8;">
-                    <div class="segment-card-title" style="color: #818cf8;">
-                        <span>🎤 Segmento 3: Inicio del Show (Ajustable)</span>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="showStartMode">Modo Horario Show</label>
-                            <select id="showStartMode" class="form-control">
-                                <option value="auto">Automático (Post-Puertas)</option>
-                                <option value="manual">Manual (Personalizado)</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="showStartTimeInput">Hora Inicio del Show</label>
-                            <input type="time" id="showStartTimeInput" class="form-control" value="20:30">
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Block Manager Panel -->
-            <div class="panel">
-                <div class="panel-title">
-                    <span>Estructura & Bloques del Evento</span>
-                    <span style="font-size: 11px; color: var(--text-muted);">Reordena con ▲ ▼ o arrastra</span>
-                </div>
-
-                <div id="blocksContainer" class="blocks-list">
-                    <!-- Dynamic Blocks rendered by BlocksManager -->
-                </div>
-
-                <div class="grid-3 no-print" style="margin-top: 14px;">
-                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('show')">+ Show</button>
-                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('anim')">+ Animador</button>
-                    <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('other')">+ Bloque Libre</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Right Panel Output (PÁGINA 2 EN IMPRESIÓN) -->
-        <main class="right-panel-print">
-            
-            <!-- Encabezado exclusivo de impresión -->
-            <div class="print-header" style="display: none;">
-                <h1 id="printEventTitle">Gran Concierto & Show Estelar</h1>
-                <p>Pauta Oficial de Timing / Escaleta de Producción y Escenario</p>
-            </div>
-
-            <!-- Top Metric Cards -->
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Convocatoria</div>
-                    <div class="metric-value" id="metricConvTime" style="color: #c084fc;">18:30</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Apertura Puertas</div>
-                    <div class="metric-value" id="metricDoorsTime" style="color: #06b6d4;">19:30</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Inicio Show</div>
-                    <div class="metric-value" id="metricShowStartTime" style="color: #34d399;">20:30</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Hora Término</div>
-                    <div class="metric-value" id="metricEndTime" style="color: #f59e0b;">01:20</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Duración Total</div>
-                    <div class="metric-value" id="metricTotalDuration" style="color: #818cf8;">6h 50m</div>
-                </div>
-            </div>
-
-            <!-- Main Timing Table Panel -->
-            <div class="panel" style="padding: 18px;">
-                <div class="panel-title" style="border-bottom: none; margin-bottom: 12px;">
-                    <span id="displayEventTitle" style="font-size: 18px; font-weight: 800;">Gran Concierto & Show Estelar</span>
-                    <span style="font-size: 12px; color: var(--accent-success); font-weight: bold;">● Pauta de Timing Oficial</span>
-                </div>
-
-                <div class="table-container">
-                    <table class="timing-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px; text-align: center;">#</th>
-                                <th style="width: 130px;">Tipo</th>
-                                <th>Descripción / Nombre</th>
-                                <th style="width: 90px;">Inicio</th>
-                                <th style="width: 90px;">Duración</th>
-                                <th style="width: 90px;">Término</th>
-                            </tr>
-                        </thead>
-                        <tbody id="timingTableBody">
-                            <!-- Table rows generated dynamically by app.js -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Visual Timeline Footer -->
-                <div class="timeline-container">
-                    <div class="timeline-header">
-                        <span>Distribución Visual del Evento</span>
-                        <span id="timelineTotalSpan" style="color: #818cf8; font-weight: 800;">18:30 A 01:20 (6H 50M)</span>
-                    </div>
-                    <div class="timeline-bar" id="timelineBar">
-                        <!-- Visual segments rendered dynamically -->
-                    </div>
-                </div>
-            </div>
-        </main>
-
-    </div>
-
-    <!-- Footer Attribution -->
-    <footer style="text-align: center; padding: 12px; font-size: 12px; color: #9ca3af; border-top: 1px solid #1e293b; margin-top: 20px;">
-        Show Time • Desarrollado por <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none; font-weight: 700;">BaseAndes Software | Software a medida para empresas</a>
-    </footer>
-
-    <!-- Application JavaScript Modules -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        // Guard de sesión — si no hay token, Auth.requireSession() ya redirige a login.html.
-        Auth.requireSession();
-    </script>
-    <script src="js/timing-engine.js"></script>
-    <script src="js/blocks-manager.js"></script>
-    <script src="js/api-client.js"></script>
-    <script src="js/print-export.js"></script>
-    <script src="js/app.js"></script>
+  <footer class="site-footer"><span>© T-Show · BaseAndes Software</span><span>Fotografía: <a href="https://unsplash.com/photos/Tu7U7uvazwY" target="_blank" rel="noopener noreferrer">Joy Real / Unsplash</a></span></footer>
 </body>
 </html>

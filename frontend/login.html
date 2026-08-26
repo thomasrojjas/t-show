@@ -41,7 +41,7 @@
     const btn = document.getElementById('loginBtn');
 
     // Si ya hay sesión, saltar directo a la app.
-    Auth.currentUser().then(user => { if (user) window.location.href = 'index.html'; });
+    Auth.currentUser().then(user => { if (user) window.location.href = 'app.html'; });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -56,7 +56,7 @@
             await Auth.login(email, password);
             const params = new URLSearchParams(window.location.search);
             const redirect = params.get('redirect');
-            window.location.href = redirect ? decodeURIComponent(redirect) : 'index.html';
+            window.location.href = redirect ? decodeURIComponent(redirect) : 'app.html';
         } catch (err) {
             errorBox.textContent = err.message || 'Correo o contraseña incorrectos';
             errorBox.style.display = 'block';
