@@ -14,3 +14,7 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 @media (max-width:850px) { .auth-shell { display:block; }.auth-intro { min-height:250px; padding:25px; border-right:0; border-bottom:1px solid var(--line); }.auth-intro-copy { margin:48px 0 0; }.auth-intro h1 { font-size:48px; }.auth-intro-copy>p:last-child,.auth-intro-footer { display:none; }.auth-panel { padding:48px 24px 60px; }.auth-card { max-width:520px; } }
 @media (max-width:480px) { .auth-panel { padding:38px 20px 50px; }.auth-intro h1 { font-size:41px; }.form-row { grid-template-columns:1fr; gap:0; }.auth-links { flex-direction:column; align-items:flex-start; gap:13px; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; } }
+
+.form-control[aria-invalid="true"] { color:var(--danger); }
+.field-error { display:block; min-height:16px; margin-top:6px; color:var(--danger); font-size:11px; line-height:1.35; }
+.form-note { margin:14px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }

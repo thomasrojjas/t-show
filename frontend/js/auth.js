@@ -18,13 +18,34 @@ const Auth = (() => {
         if (compact.length < 8 || compact.length > 9) return '';
         return `${compact.slice(0, -1)}-${compact.slice(-1)}`;
     }
+    function isValidRut(value) {
+        const normalized = normalizeRut(value);
+        if (!/^[0-9]{7,8}-[0-9K]$/.test(normalized)) return false;
+        const [digits, verifier] = normalized.split('-');
+        let sum = 0; let multiplier = 2;
+        for (let index = digits.length - 1; index >= 0; index -= 1) { sum += Number(digits[index]) * multiplier; multiplier = multiplier === 7 ? 2 : multiplier + 1; }
+        const expected = 11 - (sum % 11);
+        return verifier === (expected === 11 ? '0' : expected === 10 ? 'K' : String(expected));
+    }
+    function normalizePhone(value) {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (/^9\d{8}$/.test(digits)) return `+56${digits}`;
+        if (/^569\d{8}$/.test(digits)) return `+${digits}`;
+        return '';
+    }
+    function isValidName(value) { const name = String(value || '').trim(); return name.length >= 2 && /^[A-Za-zÀ-ÖØ-öø-ÿÑñ]+(?:[ '\-][A-Za-zÀ-ÖØ-öø-ÿÑñ]+)*$/.test(name); }
+    function isStrongPassword(value) { return typeof value === 'string' && value.length >= 10 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value); }
     async function register({ email, password, firstName, lastName, rut, phone }) {
-        if (!email || password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+        if (!isValidName(firstName) || !isValidName(lastName)) throw new Error('Nombre y apellido deben contener solo letras y tener al menos 2 caracteres.');
+        if (!/^\S+@\S+\.\S+$/.test(String(email || '').trim())) throw new Error('Ingresa un correo válido.');
+        if (!isStrongPassword(password)) throw new Error('La contraseña debe tener al menos 10 caracteres, una mayúscula, una minúscula y un número.');
         const normalizedRut = normalizeRut(rut);
-        if (!/^[0-9]{7,8}-[0-9K]$/.test(normalizedRut)) throw new Error('Ingresa un RUT válido, por ejemplo 12345678-9.');
-        const { data, error } = await (await client()).auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: String(phone).replace(/[\s()-]/g, '') } } });
+        if (!isValidRut(normalizedRut)) throw new Error('Ingresa un RUT válido con dígito verificador, por ejemplo 12345678-9.');
+        const normalizedPhone = normalizePhone(phone);
+        if (!normalizedPhone) throw new Error('Ingresa un teléfono chileno válido, por ejemplo +56912345678.');
+        const { data, error } = await (await client()).auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: normalizedPhone } } });
         if (error) throw error;
-        if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut: normalizedRut, phone }) });
+        if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut: normalizedRut, phone: normalizedPhone }) });
         return data;
     }
     async function login(email, password) { const { data, error } = await (await client()).auth.signInWithPassword({ email, password }); if (error) throw error; return data.user; }
@@ -36,5 +57,5 @@ const Auth = (() => {
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
-    return { client, token, api, login, register, normalizeRut, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
+    return { client, token, api, login, register, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();

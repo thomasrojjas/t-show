@@ -4,12 +4,20 @@ const { supabase } = require('../supabaseClient');
 const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = require('../middleware/supabaseAuth');
 
 const router = express.Router();
-const validRut = rut => /^[0-9]{7,8}-[0-9K]$/.test(String(rut || '').replace(/\./g, '').toUpperCase());
 const normalizeRut = rut => {
   const compact = String(rut || '').replace(/[^0-9kK]/g, '').toUpperCase();
   return compact.length >= 8 && compact.length <= 9 ? `${compact.slice(0, -1)}-${compact.slice(-1)}` : '';
 };
-const validPhone = phone => /^\+?[0-9]{8,15}$/.test(String(phone || '').replace(/[\s()-]/g, ''));
+const validRut = rut => {
+  const normalized = normalizeRut(rut);
+  if (!/^[0-9]{7,8}-[0-9K]$/.test(normalized)) return false;
+  const [digits, verifier] = normalized.split('-');
+  let sum = 0; let multiplier = 2;
+  for (let index = digits.length - 1; index >= 0; index -= 1) { sum += Number(digits[index]) * multiplier; multiplier = multiplier === 7 ? 2 : multiplier + 1; }
+  const expected = 11 - (sum % 11);
+  return verifier === (expected === 11 ? '0' : expected === 10 ? 'K' : String(expected));
+};
+const validPhone = phone => /^\+569[0-9]{8}$/.test(String(phone || '').replace(/[\s()-]/g, ''));
 const cleanPayload = body => ({ ...body, eventName: String(body.eventName || '').trim() });
 
 async function access(projectId, userId, edit = false) {
