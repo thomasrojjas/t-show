@@ -21,7 +21,7 @@ create table if not exists public.profiles (
   last_name text not null check (char_length(trim(last_name)) between 2 and 80),
   rut text not null unique check (rut ~ '^[0-9]{7,8}-[0-9K]$'),
   email text not null unique,
-  phone text not null check (phone ~ '^\\+?[0-9]{8,15}$'),
+  phone text not null check (phone ~ '^\+?[0-9]{8,15}$'),
   role tshow_platform_role not null default 'account_owner',
   avatar_key text,
   created_at timestamptz not null default now(),
