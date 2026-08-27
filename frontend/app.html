@@ -22,12 +22,17 @@
             </div>
         </div>
         <div class="actions">
-            <button class="btn btn-primary" onclick="app.openLive()">Modo En Vivo</button>
-            <button class="btn btn-success" onclick="app.saveProject()">Guardar Proyecto</button>
-            <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">Exportar JSON</button>
-            <button class="btn btn-secondary" onclick="app.resetToDefaults()">Restablecer</button>
-            <button class="btn btn-primary" onclick="app.print()">Imprimir / Exportar PDF</button>
-            <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">Salir</button>
+            <button class="btn btn-primary action-primary" onclick="app.openLive()">Modo En Vivo</button>
+            <button class="btn btn-success action-primary" onclick="app.saveProject()">Guardar Proyecto</button>
+            <div class="action-secondary-group">
+                <button class="btn btn-secondary" type="button" aria-expanded="false" aria-controls="secondaryActions" onclick="app.toggleSecondaryActions(this)">Más acciones</button>
+                <div id="secondaryActions" class="secondary-actions" hidden>
+                    <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()">Exportar JSON</button>
+                    <button class="btn btn-secondary" onclick="app.resetToDefaults()">Restablecer</button>
+                    <button class="btn btn-secondary" onclick="app.print()">Imprimir / Exportar PDF</button>
+                    <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">Salir</button>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -155,6 +160,20 @@
             </div>
 
             <!-- Top Metric Cards -->
+            <section class="now-next-strip" aria-label="Resumen operativo">
+                <div class="now-next-card now-card">
+                    <span class="eyebrow">Ahora</span>
+                    <strong id="previewCurrentTitle">Listo para iniciar</strong>
+                    <span id="previewCurrentMeta" class="now-next-meta">Configura tu pauta para comenzar</span>
+                </div>
+                <div class="now-next-divider" aria-hidden="true"></div>
+                <div class="now-next-card next-card">
+                    <span class="eyebrow">Siguiente</span>
+                    <strong id="previewNextTitle">—</strong>
+                    <span id="previewNextMeta" class="now-next-meta">—</span>
+                </div>
+            </section>
+
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-label">Convocatoria</div>

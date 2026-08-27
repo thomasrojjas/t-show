@@ -776,3 +776,19 @@ body.live-body { background:#000; padding:max(10px, env(safe-area-inset-top)) ma
 @media (max-width:760px) { body.live-body { height:auto; min-height:100dvh; overflow:auto; } .live-header { display:grid; grid-template-columns:1fr; gap:12px; } .live-brand { min-width:0; flex-wrap:wrap; } .live-header-center,.live-header-actions { justify-content:flex-start; } .live-header-actions { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .live-header-actions > * { flex:0 0 auto; } .admin-toolbar,.director-toolbar { align-items:flex-start; flex-direction:column; } .toolbar-actions { width:100%; } .toolbar-actions > * { flex:1 1 140px; } .hero-timers-grid { grid-template-columns:1fr 1fr !important; } .timer-box-main { grid-column:1/-1; } .live-table-container { margin:0 -1px; } .live-table { min-width:680px; } }
 @media (max-width:420px) { .hero-timers-grid { grid-template-columns:1fr !important; } .timer-box-main { grid-column:auto; } .live-project-title { max-width:100%; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; } }
+
+/* Live console focus: make the current cue the visual anchor. */
+.active-hero-card { border-width: 1px 1px 1px 3px; border-left-color: #b8d7ff; }
+.hero-block-name { font-size: clamp(26px, 4vw, 58px); letter-spacing: -.04em; line-height: .98; max-width: 18ch; }
+.hero-up-next { border-left: 1px solid var(--live-border); padding-left: 18px; max-width: 32ch; }
+.hero-progress-track,.stage-conf-progress-track { background: #1a202c; height: 6px; }
+.hero-progress-fill,.stage-conf-progress-fill { background: #b8d7ff; }
+.live-table tbody tr { transition: background .2s ease, opacity .2s ease; }
+.live-table tbody tr.row-active { outline: 1px solid #b8d7ff; outline-offset: -1px; }
+.role-badge { letter-spacing: .16em; font-size: 10px; padding: 8px 10px; }
+@media (max-width:760px) {
+  .hero-top-row { display: grid; gap: 18px; }
+  .hero-up-next { border-left: 0; border-top: 1px solid var(--live-border); padding: 14px 0 0; max-width: none; }
+  .hero-block-name { max-width: none; }
+  .live-table-container { border-left: 0; border-right: 0; }
+}

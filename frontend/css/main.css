@@ -536,3 +536,26 @@ body { padding:clamp(12px,2vw,32px); background:#000; color:var(--text-main); }
 @media (max-width:1180px) { .main-grid { grid-template-columns:1fr; } }
 @media (max-width:640px) { body { padding:0; } .header-bar { align-items:flex-start; } .actions { width:100%; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .actions .btn { flex:0 0 auto; } .panel { padding:16px; margin-bottom:14px; } .grid-2,.form-row { grid-template-columns:1fr; gap:0; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; animation:none !important; } }
+
+/* Operational hierarchy: the next decision is always above the data table. */
+.actions { align-items: stretch; }
+.action-primary { min-width: 150px; }
+.action-secondary-group { position: relative; }
+.secondary-actions { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; display: grid; min-width: 210px; padding: 8px; gap: 6px; background: #080a0f; border: 1px solid var(--border-color); }
+.secondary-actions[hidden] { display: none; }
+.secondary-actions .btn { width: 100%; justify-content: flex-start; }
+.now-next-strip { display: grid; grid-template-columns: minmax(0,1fr) 1px minmax(0,1fr); gap: clamp(16px,3vw,32px); align-items: stretch; margin-bottom: clamp(14px,2vw,24px); padding: clamp(18px,3vw,30px); background: #080a0f; border: 1px solid var(--border-color); }
+.now-next-card { min-width: 0; display: grid; gap: 8px; align-content: center; }
+.now-next-card strong { font-size: clamp(18px,2.3vw,30px); line-height: 1.08; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.now-card strong { color: var(--accent-primary); }
+.next-card strong { color: #b9c3d2; }
+.eyebrow { color: var(--text-muted); font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+.now-next-meta { color: var(--text-muted); font-size: 12px; }
+.now-next-divider { background: var(--border-color); }
+.metric-card { transition: border-color .2s ease, background .2s ease; }
+.metric-card:hover { border-color: #60738f; background: #0d1017; }
+@media (max-width: 760px) {
+  .now-next-strip { grid-template-columns: 1fr; gap: 16px; }
+  .now-next-divider { width: 100%; height: 1px; }
+  .secondary-actions { position: fixed; right: 12px; top: auto; bottom: calc(12px + env(safe-area-inset-bottom)); }
+}

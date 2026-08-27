@@ -35,14 +35,14 @@
             
             <!-- Botón Maestro Play / Pausa (Solo visible para Director/Admin) -->
             <button id="btnHeaderPlay" class="btn-play-master" style="display: none;" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
-                <span id="btnHeaderPlayIcon">▶</span>
+                <span id="btnHeaderPlayIcon" aria-hidden="true">PLAY</span>
                 <span id="btnHeaderPlayText">PLAY / EN VIVO</span>
             </button>
         </div>
 
         <div class="live-header-actions">
             <!-- MODO 2: Pantalla Completa de la Aplicación General -->
-            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla Completa de toda la aplicación">⛶ Pantalla Completa</button>
+            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla Completa de toda la aplicación">Pantalla Completa</button>
             
             <!-- Botones Ocultos para Rol Espectador (Visibles solo para Director/Admin) -->
             <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">Compartir</button>
@@ -57,9 +57,9 @@
             <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">PANEL ADMINISTRADOR</span>
         </div>
         <div class="toolbar-actions">
-            <button class="btn-play-master" onclick="liveApp.startShow()">▶ Iniciar Show</button>
-            <button class="btn-stop-show" onclick="liveApp.stopShow()">⏹ Detener Show</button>
-            <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">⏸ Pausar / Reanudar</button>
+            <button class="btn-play-master" onclick="liveApp.startShow()">Iniciar Show</button>
+            <button class="btn-stop-show" onclick="liveApp.stopShow()">Detener Show</button>
+            <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">Pausar / Reanudar</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
             <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">Reiniciar</button>
         </div>
@@ -73,13 +73,13 @@
         <div class="toolbar-actions">
             <!-- Botón de TAP Directo para Siguiente Bloque -->
             <button class="btn-tap" onclick="liveApp.tapNextBlock()" title="Terminar el bloque actual y pasar de inmediato al siguiente">
-                TAP: SIGUIENTE BLOQUE
+                TAP · SIGUIENTE BLOQUE
             </button>
 
             <!-- Menú de Extensión de Tiempo de Este Módulo -->
             <div class="extend-menu-container">
-                <button class="btn-extend" onclick="liveApp.toggleExtendMenu()" title="Mantenerse en este bloque y extender duración">
-                    ➕ Extender Tiempo ▾
+                    <button class="btn-extend" onclick="liveApp.toggleExtendMenu()" title="Mantenerse en este bloque y extender duración">
+                        Extender Tiempo
                 </button>
                 <div id="extendDropdown" class="extend-dropdown">
                     <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">Extender +2 min</button>
@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">⏱ Reajustar Hora</button>
+            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">Reajustar Hora</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
         </div>
     </section>
@@ -110,7 +110,7 @@
         <div class="hero-timers-grid">
             <!-- MODO 1: Clic en el cuadro del reloj abre vista ampliada hiperreducida para artistas -->
             <div class="timer-box-main" id="heroTimerBoxMain" onclick="liveApp.openStageConfidenceDisplay()" title="Clic para Pantalla Completa de Escenario (Solo Tiempo & Bloques)">
-                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante ⛶</div>
+                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante</div>
                 <div id="heroRemainingTimer" class="timer-box-main-value">00:00</div>
             </div>
 
@@ -130,7 +130,7 @@
             </div>
 
             <!-- Botón Modo 1 de artistas -->
-            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Artistas en Escenario (Solo Tiempo)">⏱⛶</button>
+            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Artistas en Escenario (Solo Tiempo)">Pantalla de escenario</button>
         </div>
 
         <!-- Barra de Progreso Continua de Izquierda a Derecha -->

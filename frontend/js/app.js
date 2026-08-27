@@ -99,6 +99,18 @@ class App {
         // Run computation in Timing Engine
         const result = TimingEngine.computeSchedule(formData, formData.blocks);
 
+        // Keep the editor oriented around the next operational decision.
+        const currentTitle = document.getElementById('previewCurrentTitle');
+        const currentMeta = document.getElementById('previewCurrentMeta');
+        const nextTitle = document.getElementById('previewNextTitle');
+        const nextMeta = document.getElementById('previewNextMeta');
+        const first = result.tableRows[0];
+        const second = result.tableRows[1];
+        if (currentTitle) currentTitle.textContent = first ? first.title : 'Listo para iniciar';
+        if (currentMeta) currentMeta.textContent = first ? `${first.type} · ${first.start} · ${first.duration} min` : 'Añade un bloque a la pauta';
+        if (nextTitle) nextTitle.textContent = second ? second.title : 'Cierre del evento';
+        if (nextMeta) nextMeta.textContent = second ? `${second.type} · ${second.start} · ${second.duration} min` : 'Sin siguiente bloque';
+
         // If auto mode, sync input value
         if (formData.showStartMode === 'auto') {
             document.getElementById('showStartTimeInput').value = result.metrics.showStartTimeFormatted;
@@ -261,6 +273,14 @@ class App {
 
     print() {
         PrintExportManager.triggerPrint();
+    }
+
+    toggleSecondaryActions(trigger) {
+        const menu = document.getElementById('secondaryActions');
+        if (!menu) return;
+        const open = menu.hasAttribute('hidden');
+        if (open) menu.removeAttribute('hidden'); else menu.setAttribute('hidden', '');
+        if (trigger) trigger.setAttribute('aria-expanded', String(open));
     }
 }
 
