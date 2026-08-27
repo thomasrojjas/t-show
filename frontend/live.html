@@ -19,15 +19,15 @@
     <!-- Header Bar -->
     <header class="live-header">
         <div class="live-brand" id="appBrandLogo" ondblclick="liveApp.toggleRoleModal()" title="Show Time por BaseAndes Software">
-            <div class="brand-icon">⏱</div>
+            <div class="brand-icon" aria-hidden="true">TS</div>
             <div>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
                     <span style="font-size: 11px; font-weight: 800; color: #38bdf8; letter-spacing: 1px;">SHOW TIME</span>
                     <h1 id="liveProjectTitle" style="font-size: 16px; font-weight: 800; line-height: 1.2; display: inline;">Gran Concierto & Show Estelar</h1>
                 </div>
             </div>
-            <span id="liveStatusBadge" class="live-badge-status status-idle">⏸ EN ESPERA</span>
-            <span id="currentRoleBadge" class="role-badge role-viewer" style="display: none;">👁 ESPECTADOR</span>
+            <span id="liveStatusBadge" class="live-badge-status status-idle">EN ESPERA</span>
+            <span id="currentRoleBadge" class="role-badge role-viewer" style="display: none;">OBSERVADOR</span>
         </div>
 
         <div class="live-header-center">
@@ -45,35 +45,35 @@
             <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla Completa de toda la aplicación">⛶ Pantalla Completa</button>
             
             <!-- Botones Ocultos para Rol Espectador (Visibles solo para Director/Admin) -->
-            <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">🔗 Compartir</button>
-            <button class="btn btn-secondary" id="btnToggleRole" style="display: none;" onclick="liveApp.toggleRoleModal()">🔑 Cambiar Rol</button>
-            <a href="app.html" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">⚙ Planificación</a>
+            <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">Compartir</button>
+            <button class="btn btn-secondary" id="btnToggleRole" style="display: none;" onclick="liveApp.toggleRoleModal()">Cambiar Rol</button>
+            <a href="app.html" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">Planificación</a>
         </div>
     </header>
 
     <!-- Barra del administrador -->
     <section id="adminToolbar" class="admin-toolbar" style="display: none;">
         <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">👑 PANEL ADMINISTRADOR</span>
+            <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">PANEL ADMINISTRADOR</span>
         </div>
         <div class="toolbar-actions">
             <button class="btn-play-master" onclick="liveApp.startShow()">▶ Iniciar Show</button>
             <button class="btn-stop-show" onclick="liveApp.stopShow()">⏹ Detener Show</button>
             <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">⏸ Pausar / Reanudar</button>
-            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
-            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">🔄 Reiniciar</button>
+            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
+            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">Reiniciar</button>
         </div>
     </section>
 
     <!-- Barra del director de escenario -->
     <section id="directorToolbar" class="director-toolbar" style="display: none;">
         <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 12px; font-weight: 800; color: #c7d2fe;">🎬 CONTROL DIRECTOR</span>
+            <span style="font-size: 12px; font-weight: 800; color: #c7d2fe;">CONTROL DIRECTOR</span>
         </div>
         <div class="toolbar-actions">
             <!-- Botón de TAP Directo para Siguiente Bloque -->
             <button class="btn-tap" onclick="liveApp.tapNextBlock()" title="Terminar el bloque actual y pasar de inmediato al siguiente">
-                ⚡ TAP: SIGUIENTE BLOQUE
+                TAP: SIGUIENTE BLOQUE
             </button>
 
             <!-- Menú de Extensión de Tiempo de Este Módulo -->
@@ -82,15 +82,15 @@
                     ➕ Extender Tiempo ▾
                 </button>
                 <div id="extendDropdown" class="extend-dropdown">
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">➕ Extender +2 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(5)">➕ Extender +5 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(10)">➕ Extender +10 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(0)" style="color: #34d399;">⏱ Mantenerse en Curso</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">Extender +2 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(5)">Extender +5 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(10)">Extender +10 min</button>
+                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(0)" style="color: #34d399;">Mantenerse en Curso</button>
                 </div>
             </div>
 
             <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">⏱ Reajustar Hora</button>
-            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">📊 Ver Balance</button>
+            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
         </div>
     </section>
 
@@ -193,20 +193,20 @@
     <!-- Modal de Selección y Validación de Roles -->
     <div id="pinModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 400px; text-align: center;">
-            <h2 style="font-size: 17px; margin-bottom: 6px;">🔑 Acceso a Roles</h2>
+            <h2 style="font-size: 17px; margin-bottom: 6px;">Acceso a Roles</h2>
             <p style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">Los permisos se asignan desde la cuenta y el proyecto.</p>
             
             <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
-                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">🎬 Director</button>
-                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">👑 Administrador</button>
+                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">Director</button>
+                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">Administrador</button>
             </div>
 
             <div id="roleHintText" style="font-size: 11px; color: #38bdf8; margin-bottom: 10px; font-weight: 700;">
-                🎬 Director: Conducción con botón TAP, Extender tiempo y Silenciar bloques
+                Director: conducción con TAP, extensión de tiempo y silencio de bloques
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">👁 Espectador</button>
+            <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">Observador</button>
                 <button class="btn btn-primary" onclick="liveApp.closeModal('pinModal')">Cerrar</button>
             </div>
         </div>
@@ -216,7 +216,7 @@
     <div id="reportModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 750px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; padding-bottom: 10px; margin-bottom: 14px;">
-                <h2 style="font-size: 18px; color: #f9fafb;">📊 Balance Post-Evento: Planificado vs Real</h2>
+                <h2 style="font-size: 18px; color: #f9fafb;">Balance Post-Evento: Planificado vs Real</h2>
                 <button class="btn-icon" onclick="liveApp.closeModal('reportModal')">✕</button>
             </div>
 
@@ -226,7 +226,7 @@
                     <div id="reportTotalDiff" style="font-size: 18px; font-weight: 800;">0 min</div>
                 </div>
                 <div>
-                    <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir Informe</button>
+                    <button class="btn btn-primary" onclick="window.print()">Imprimir Informe</button>
                 </div>
             </div>
 

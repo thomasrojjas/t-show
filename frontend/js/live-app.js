@@ -147,8 +147,8 @@ class LiveApp {
 
         if (roleBadge) {
             roleBadge.className = `role-badge role-${this.role}`;
-            if (this.role === 'admin') roleBadge.innerText = '👑 ADMIN';
-            else if (this.role === 'director') roleBadge.innerText = '🎬 DIRECTOR';
+            if (this.role === 'admin') roleBadge.innerText = 'ADMINISTRADOR';
+            else if (this.role === 'director') roleBadge.innerText = 'DIRECTOR';
             else roleBadge.style.display = 'none';
         }
 
@@ -175,13 +175,13 @@ class LiveApp {
                 btnAdmin.classList.remove('btn-secondary');
                 btnDirector.classList.add('btn-secondary');
                 btnDirector.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '👑 <strong>Administrador:</strong> permisos asignados por tu cuenta.';
+                if (hintText) hintText.innerHTML = '<strong>Administrador:</strong> permisos asignados por tu cuenta.';
             } else {
                 btnDirector.classList.add('btn-primary');
                 btnDirector.classList.remove('btn-secondary');
                 btnAdmin.classList.add('btn-secondary');
                 btnAdmin.classList.remove('btn-primary');
-                if (hintText) hintText.innerHTML = '🎬 <strong>Director:</strong> permisos asignados por tu membresía.';
+                if (hintText) hintText.innerHTML = '<strong>Director:</strong> permisos asignados por tu membresía.';
             }
         }
     }
@@ -266,7 +266,7 @@ class LiveApp {
         if (mode === 'manual' && !this.liveState.currentBlockStartTime) {
             this.liveState.currentBlockStartTime = new Date().toISOString();
         }
-        await this.syncAndRender(`Modo: ${mode === 'schedule' ? '🕒 Según Horario' : '⚡ Conducción Manual'}`);
+        await this.syncAndRender(`Modo: ${mode === 'schedule' ? 'Según Horario' : 'Conducción Manual'}`);
     }
 
     // --- DIRECTOR & ADMIN ACTIONS ---
@@ -353,7 +353,7 @@ class LiveApp {
         const activeRemaining = snapshot ? snapshot.items.filter(i => !i.isMuted) : [];
         if (this.liveState.currentIndex >= activeRemaining.length) {
             this.liveState.status = 'finished';
-            await this.syncAndRender('🏁 ¡Evento Concluido!');
+        await this.syncAndRender('Evento concluido');
             this.openReportModal();
             return;
         }
@@ -371,7 +371,7 @@ class LiveApp {
             if (!this.liveState.mutedBlockNums.includes(itemNum)) {
                 this.liveState.mutedBlockNums.push(itemNum);
             }
-            await this.syncAndRender(`🔇 Bloque "${title}" silenciado.`);
+            await this.syncAndRender(`Bloque "${title}" silenciado.`);
         }
     }
 
@@ -382,7 +382,7 @@ class LiveApp {
         }
         if (!this.liveState.mutedBlockNums) this.liveState.mutedBlockNums = [];
         this.liveState.mutedBlockNums = this.liveState.mutedBlockNums.filter(n => n !== itemNum);
-        await this.syncAndRender(`🔊 Bloque "${title}" reactivado.`);
+        await this.syncAndRender(`Bloque "${title}" reactivado.`);
     }
 
     async resyncNow() {
@@ -431,9 +431,9 @@ class LiveApp {
         if (statusBadge) {
             statusBadge.className = `live-badge-status status-${snapshot.status}`;
             if (snapshot.status === 'idle') statusBadge.innerText = '⏸ EN ESPERA';
-            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? '🔴 EN VIVO' : '🔴 MANUAL';
+            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? 'EN VIVO' : 'MANUAL';
             if (snapshot.status === 'paused') statusBadge.innerText = '⏸ EN PAUSA';
-            if (snapshot.status === 'finished') statusBadge.innerText = '🏁 FINALIZADO';
+            if (snapshot.status === 'finished') statusBadge.innerText = 'FINALIZADO';
         }
 
         // Header Play Button
@@ -517,7 +517,7 @@ class LiveApp {
                 else if (snapshot.alertLevel === 'yellow') heroProgressFill.classList.add('fill-yellow');
             }
         } else if (snapshot.status === 'finished') {
-            if (heroBlockName) heroBlockName.innerText = '🏁 Evento Finalizado con Éxito';
+            if (heroBlockName) heroBlockName.innerText = 'Evento finalizado con éxito';
             if (heroRemainingTimer) { heroRemainingTimer.innerText = '00:00'; heroRemainingTimer.classList.remove('is-overtime'); heroRemainingTimer.style.color = '#10b981'; }
             if (heroProgressFill) heroProgressFill.style.width = '100%';
         } else if (snapshot.status === 'paused' && snapshot.currentItem) {
@@ -593,7 +593,7 @@ class LiveApp {
                 stageConfTimerValue.classList.remove('is-overtime');
                 stageConfTimerValue.style.color = '#f59e0b';
             } else if (snapshot.status === 'finished') {
-                if (stageConfTimerLabel) stageConfTimerLabel.innerText = '🏁 FINALIZADO';
+                if (stageConfTimerLabel) stageConfTimerLabel.innerText = 'FINALIZADO';
                 stageConfTimerValue.innerText = '00:00';
                 stageConfTimerValue.classList.remove('is-overtime');
                 stageConfTimerValue.style.color = '#10b981';
@@ -640,16 +640,16 @@ class LiveApp {
                 let actionsHtml = '';
                 if (isOperator) {
                     if (r.isMuted) {
-                        actionsHtml = `<button class="btn-action-unmute" onclick="liveApp.unmuteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Reactivar bloque">🔊 Activar</button>`;
+                        actionsHtml = `<button class="btn-action-unmute" onclick="liveApp.unmuteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Reactivar bloque">Activar</button>`;
                     } else if (r.rowState === 'active' || r.rowState === 'future') {
-                        actionsHtml = `<button class="btn-action-mute" onclick="liveApp.muteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Silenciar bloque sin contabilizar tiempo">🔇 Silenciar</button>`;
+                        actionsHtml = `<button class="btn-action-mute" onclick="liveApp.muteBlock(${r.num}, '${r.title.replace(/'/g, "\\'")}')" title="Silenciar bloque sin contabilizar tiempo">Silenciar</button>`;
                     } else {
                         actionsHtml = `<span style="color: #10b981; font-weight: 800; font-size: 10px;">✔ HECHO</span>`;
                     }
                 }
 
                 const badgeHtml = r.isMuted 
-                    ? `<span class="badge badge-muted">🔇 SILENCIADO</span>` 
+                    ? `<span class="badge badge-muted">SILENCIADO</span>`
                     : `<span class="badge ${r.badgeClass}">${r.type}</span>`;
 
                 const durationHtml = r.isMuted 

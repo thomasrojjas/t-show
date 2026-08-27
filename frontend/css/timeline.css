@@ -2,7 +2,7 @@
 .timeline-container {
     margin-top: 20px;
     background: var(--bg-secondary);
-    border-radius: var(--card-radius);
+    border-radius: 0;
     padding: 18px;
     border: 1px solid var(--border-color);
 }
@@ -22,7 +22,7 @@
 .timeline-bar {
     display: flex;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 0;
     overflow: hidden;
     background: var(--bg-input);
     border: 1px solid var(--border-color);
@@ -59,7 +59,7 @@
     background: #090d16;
     color: #fff;
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
@@ -75,3 +75,7 @@
     opacity: 1;
     transform: translateX(-50%) translateY(-4px);
 }
+
+.timeline-container { background:#080a0f; border:1px solid #272a32; border-radius: 0; box-shadow:none; }
+.timeline-bar { height:36px; border-radius: 0; background:#050609; box-shadow:none; }
+.timeline-segment::after { border-radius: 0; box-shadow:none; }

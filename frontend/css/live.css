@@ -39,7 +39,7 @@ body.live-body {
     align-items: center;
     background: var(--live-card-bg);
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 0;
     border: 1px solid var(--live-border);
     margin-bottom: 8px;
     flex-shrink: 0;
@@ -58,7 +58,7 @@ body.live-body {
 
 .live-badge-status {
     padding: 3px 8px;
-    border-radius: 16px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
@@ -75,7 +75,7 @@ body.live-body {
     width: 7px;
     height: 7px;
     background: #ef4444;
-    border-radius: 50%;
+    border-radius: 0;
     animation: pulseDot 1s infinite;
 }
 
@@ -100,7 +100,7 @@ body.live-body {
     color: #38bdf8;
     background: #030712;
     padding: 3px 10px;
-    border-radius: 6px;
+    border-radius: 0;
     border: 1px solid #1e293b;
     letter-spacing: 1px;
 }
@@ -113,7 +113,7 @@ body.live-body {
 
 .role-badge {
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
@@ -129,7 +129,7 @@ body.live-body {
     background: #3b0707;
     border: 1px solid #dc2626;
     padding: 8px 14px;
-    border-radius: 8px;
+    border-radius: 0;
     margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
@@ -142,7 +142,7 @@ body.live-body {
     background: #1e1b4b;
     border: 1px solid #4f46e5;
     padding: 8px 14px;
-    border-radius: 8px;
+    border-radius: 0;
     margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
@@ -165,7 +165,7 @@ body.live-body {
     font-size: 12px;
     font-weight: 800;
     padding: 6px 14px;
-    border-radius: 6px;
+    border-radius: 0;
     border: 1px solid #34d399;
     cursor: pointer;
     display: inline-flex;
@@ -187,7 +187,7 @@ body.live-body {
     font-size: 12px;
     font-weight: 800;
     padding: 6px 14px;
-    border-radius: 6px;
+    border-radius: 0;
     border: none;
     cursor: pointer;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
@@ -206,7 +206,7 @@ body.live-body {
     color: white;
     border: 1px solid #6366f1;
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
@@ -223,7 +223,7 @@ body.live-body {
     color: white;
     border: 1px solid #ef4444;
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
@@ -237,7 +237,7 @@ body.live-body {
     color: white;
     border: 1px solid #4b5563;
     padding: 6px 10px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 11px;
     font-weight: 700;
     cursor: pointer;
@@ -253,7 +253,7 @@ body.live-body {
 .active-hero-card {
     background: #0f172a;
     border: 2px solid #2563eb;
-    border-radius: 10px;
+    border-radius: 0;
     padding: 12px 18px;
     margin-bottom: 8px;
     position: relative;
@@ -277,7 +277,7 @@ body.live-body {
 
 .hero-type-badge {
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
@@ -298,7 +298,7 @@ body.live-body {
     color: #9ca3af;
     background: rgba(30, 41, 59, 0.6);
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: 0;
     border: 1px solid #334155;
 }
 
@@ -314,7 +314,7 @@ body.live-body {
 .timer-box-main {
     background: #030712;
     border: 1px solid #1e293b;
-    border-radius: 8px;
+    border-radius: 0;
     padding: 6px 14px;
     display: flex;
     align-items: baseline;
@@ -415,7 +415,7 @@ body.live-body {
     color: #9ca3af;
     border: 1px solid #334155;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 0;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -504,7 +504,7 @@ body.live-body {
 .timer-box-small {
     background: #030712;
     border: 1px solid #1e293b;
-    border-radius: 6px;
+    border-radius: 0;
     padding: 6px 10px;
     text-align: center;
 }
@@ -529,7 +529,7 @@ body.live-body {
     color: #38bdf8;
     border: 1px solid #334155;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 14px;
     font-weight: 800;
     cursor: pointer;
@@ -541,7 +541,7 @@ body.live-body {
 .hero-progress-track {
     height: 6px;
     background: #030712;
-    border-radius: 4px;
+    border-radius: 0;
     overflow: hidden;
     position: relative;
 }
@@ -568,7 +568,7 @@ body.live-body {
     overflow-y: auto;
     background: var(--live-card-bg);
     border: 1px solid var(--live-border);
-    border-radius: 8px;
+    border-radius: 0;
     position: relative;
     scroll-behavior: smooth;
 }
@@ -629,7 +629,7 @@ body.live-body {
 
 .badge {
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 700;
 }
@@ -662,7 +662,7 @@ body.live-body {
     color: #fca5a5;
     border: 1px solid #b91c1c;
     padding: 3px 7px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
@@ -675,7 +675,7 @@ body.live-body {
     color: #6ee7b7;
     border: 1px solid #059669;
     padding: 3px 7px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
@@ -702,7 +702,7 @@ body.live-body {
 .modal-card {
     background: #0f172a;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 0;
     padding: 20px;
     width: 90%;
     color: #f9fafb;
@@ -715,7 +715,7 @@ body.live-body {
     border: 1px solid #334155;
     color: white;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 0;
 }
 
 /* Extension Dropdown Menu */
@@ -730,7 +730,7 @@ body.live-body {
     left: 0;
     background: #0f172a;
     border: 1px solid #334155;
-    border-radius: 6px;
+    border-radius: 0;
     box-shadow: 0 8px 20px rgba(0,0,0,0.7);
     padding: 6px;
     display: none;
@@ -751,9 +751,28 @@ body.live-body {
     font-size: 11px;
     font-weight: 700;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 0;
     display: flex;
     justify-content: space-between;
 }
 
 .extend-option:hover { background: #1e293b; color: #38bdf8; }
+
+/* T-Show live console: flat, high-contrast and touch friendly */
+:root { --live-bg:#000; --live-card-bg:#080a0f; --live-active-bg:#10141c; --live-border:#272a32; --live-text-main:#f5f5f2; --live-text-muted:#9699a3; }
+body.live-body { background:#000; padding:max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); overflow-x:hidden; }
+.live-header,.admin-toolbar,.director-toolbar,.active-hero-card,.live-table-container,.modal-card { background:#080a0f; border:1px solid var(--live-border); border-radius: 0; box-shadow:none; }
+.live-header { flex-wrap:wrap; padding:12px 14px; }
+.live-header-actions,.toolbar-actions { flex-wrap:wrap; }
+.btn,.btn-fullscreen,.btn-live-sec,.btn-tap,.btn-extend,.btn-play-master,.btn-stop-show,.extend-dropdown,.extend-option,.role-badge,.live-badge-status,.clock-display,.timer-box-main,.timer-box-small,.stage-confidence-display { border-radius: 0; }
+.btn,.btn-fullscreen,.btn-live-sec,.btn-tap,.btn-extend,.btn-play-master,.btn-stop-show { min-height:44px; }
+.clock-display { background:#000; border-color:var(--live-border); }
+.active-hero-card { padding:clamp(16px,3vw,32px); }
+.timer-box-main,.timer-box-small { background:#050609; border:1px solid var(--live-border); }
+.live-table-container { overflow:auto; -webkit-overflow-scrolling:touch; }
+.live-table { min-width:760px; }
+.live-table th { background:#050609; position:sticky; top:0; z-index:1; }
+.modal-overlay { padding:16px; }
+@media (max-width:760px) { body.live-body { height:auto; min-height:100dvh; overflow:auto; } .live-header { display:grid; grid-template-columns:1fr; gap:12px; } .live-brand { min-width:0; flex-wrap:wrap; } .live-header-center,.live-header-actions { justify-content:flex-start; } .live-header-actions { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .live-header-actions > * { flex:0 0 auto; } .admin-toolbar,.director-toolbar { align-items:flex-start; flex-direction:column; } .toolbar-actions { width:100%; } .toolbar-actions > * { flex:1 1 140px; } .hero-timers-grid { grid-template-columns:1fr 1fr !important; } .timer-box-main { grid-column:1/-1; } .live-table-container { margin:0 -1px; } .live-table { min-width:680px; } }
+@media (max-width:420px) { .hero-timers-grid { grid-template-columns:1fr !important; } .timer-box-main { grid-column:auto; } .live-project-title { max-width:100%; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; } }

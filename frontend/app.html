@@ -15,19 +15,19 @@
     <!-- Header Bar -->
     <header class="header-bar">
         <div class="brand">
-            <div class="brand-icon">⏱</div>
+            <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" focusable="false"><path d="M12 3v2m-5.5.5 1.4 1.4M4 11h2m12 0h2m-3.9-4.1 1.4-1.4M12 8v4l2.5 2.5M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg></div>
             <div class="brand-text">
                 <h1>Show Time <span class="brand-badge">Pro</span></h1>
                 <p>Gestor Profesional de Timing & Escaleta • <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none;">BaseAndes Software</a></p>
             </div>
         </div>
         <div class="actions">
-            <button class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);" onclick="app.openLive()">🔴 Modo En Vivo</button>
-            <button class="btn btn-success" onclick="app.saveProject()">💾 Guardar Proyecto</button>
-            <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">📥 Exportar JSON</button>
-            <button class="btn btn-secondary" onclick="app.resetToDefaults()">🔄 Restablecer</button>
-            <button class="btn btn-primary" onclick="app.print()">🖨 Imprimir / Exportar PDF</button>
-            <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">🚪 Salir</button>
+            <button class="btn btn-primary" onclick="app.openLive()">Modo En Vivo</button>
+            <button class="btn btn-success" onclick="app.saveProject()">Guardar Proyecto</button>
+            <button class="btn btn-secondary" onclick="app.exportCurrentProjectJSON()" title="Descargar copia de seguridad en JSON">Exportar JSON</button>
+            <button class="btn btn-secondary" onclick="app.resetToDefaults()">Restablecer</button>
+            <button class="btn btn-primary" onclick="app.print()">Imprimir / Exportar PDF</button>
+            <button class="btn btn-secondary" onclick="Auth.logout()" title="Cerrar sesión">Salir</button>
         </div>
     </header>
 
@@ -73,7 +73,7 @@
                 <!-- SEGMENTO 1: CONVOCATORIA DE COMISIONES -->
                 <div class="segment-card" style="border-left: 4px solid #c084fc;">
                     <div class="segment-card-title" style="color: #c084fc;">
-                        <span>📋 Segmento 1: Convocatoria Comisiones</span>
+                        <span>Segmento 1: Convocatoria Comisiones</span>
                     </div>
                     <div class="grid-2">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -90,7 +90,7 @@
                 <!-- SEGMENTO 2: APERTURA DE PUERTAS -->
                 <div class="segment-card" style="border-left: 4px solid #06b6d4;">
                     <div class="segment-card-title" style="color: #06b6d4;">
-                        <span>🚪 Segmento 2: Apertura de Puertas</span>
+                        <span>Segmento 2: Apertura de Puertas</span>
                     </div>
                     <div class="grid-2">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -107,7 +107,7 @@
                 <!-- SEGMENTO 3: INICIO DEL SHOW (AJUSTABLE DERECHO Y CALCULADO AUTO) -->
                 <div class="segment-card" style="border-left: 4px solid #818cf8;">
                     <div class="segment-card-title" style="color: #818cf8;">
-                        <span>🎤 Segmento 3: Inicio del Show (Ajustable)</span>
+                        <span>Segmento 3: Inicio del Show (Ajustable)</span>
                     </div>
                     <div class="grid-2">
                         <div class="form-group" style="margin-bottom: 0;">

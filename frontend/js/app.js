@@ -223,10 +223,10 @@ class App {
             const chip = document.createElement('div');
             chip.className = 'project-chip';
             chip.innerHTML = `
-                <span style="font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="app.loadProject('${id}')">📁 ${project.eventName}</span>
+                <span style="font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="app.loadProject('${id}')">${project.eventName}</span>
                 <div style="display: flex; gap: 4px;">
-                    <button class="btn-icon" title="Cargar proyecto" onclick="app.loadProject('${id}')">📂</button>
-                    ${project.permission === 'owner' ? `<button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar proyecto" onclick="app.deleteProject('${id}')">🗑</button>` : ''}
+                    <button class="btn-icon" title="Cargar proyecto" onclick="app.loadProject('${id}')">Cargar</button>
+                    ${project.permission === 'owner' ? `<button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar proyecto" onclick="app.deleteProject('${id}')">Eliminar</button>` : ''}
                 </div>
             `;
             container.appendChild(chip);
