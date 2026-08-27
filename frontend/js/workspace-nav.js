@@ -24,13 +24,7 @@
   }
 
   function mountBackground(){
-    const bg=document.createElement('div'); bg.className='ambient-stage'; bg.setAttribute('aria-hidden','true');
-    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches||navigator.connection?.saveData;
-    if(!reduce) bg.innerHTML='<video class="ambient-video" muted loop autoplay playsinline preload="metadata" poster="assets/tshow-ambient-poster.webp"><source src="assets/tshow-ambient.webm" type="video/webm"></video><div class="ambient-shade"></div>';
-    else bg.innerHTML='<div class="ambient-shade"></div>';
-    document.body.prepend(bg);
-    const video=bg.querySelector('video');
-    document.addEventListener('visibilitychange',()=>{if(!video)return; if(document.hidden)video.pause();else video.play().catch(()=>{});});
+    window.AmbientBackground?.mount({mode:'workspace'});
   }
 
   function mountNav(){
