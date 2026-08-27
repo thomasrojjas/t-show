@@ -23,7 +23,34 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/summary.html", "destination": "/summary", "permanent": true },
+    { "source": "/schedule.html", "destination": "/schedule", "permanent": true },
+    { "source": "/team.html", "destination": "/team", "permanent": true },
+    { "source": "/files.html", "destination": "/files", "permanent": true },
+    { "source": "/settings.html", "destination": "/settings", "permanent": true }
+  ],
   "rewrites": [
+    {
+      "source": "/summary",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/schedule",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/team",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/files",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/app.html"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://t-show-api.onrender.com/api/:path*"

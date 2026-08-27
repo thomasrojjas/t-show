@@ -29,7 +29,10 @@ class App {
         this.bindEvents();
 
         // Check backend and render saved projects
-        this.renderSavedProjects();
+        this.renderSavedProjects().then(() => {
+            const requestedProject = new URLSearchParams(window.location.search).get('project');
+            if (requestedProject) this.loadProject(requestedProject).catch(() => {});
+        });
 
         // Initial Calculation
         this.toggleShowStartMode();
@@ -98,6 +101,7 @@ class App {
 
         // Run computation in Timing Engine
         const result = TimingEngine.computeSchedule(formData, formData.blocks);
+        window.WorkspaceShell?.setSchedulePreview(result.tableRows);
 
         // Keep the editor oriented around the next operational decision.
         const currentTitle = document.getElementById('previewCurrentTitle');
@@ -171,6 +175,7 @@ class App {
             const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}) };
             const res = await ApiClient.saveProject(data);
             this.currentProjectId = res.data?.id || this.currentProjectId;
+            window.WorkspaceShell?.setProject(this.currentProjectId, data.eventName);
             PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
             this.renderSavedProjects();
         } catch (error) {
@@ -192,6 +197,7 @@ class App {
             this.blocksManager.setBlocks(project.blocks || []);
             this.toggleShowStartMode();
             this.currentProjectId = project.id;
+            window.WorkspaceShell?.setProject(project.id, project.eventName || 'Proyecto activo');
             PrintExportManager.showToast(`Proyecto "${project.eventName}" cargado`, 'info');
         }
     }
