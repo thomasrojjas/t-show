@@ -54,7 +54,7 @@ const Auth = (() => {
     async function getProfile() { return (await api('/api/me')).data; }
     async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
-    async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = 'login.html'; }
+    async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
     return { client, token, api, login, register, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
