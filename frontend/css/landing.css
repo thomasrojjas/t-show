@@ -46,3 +46,10 @@ h1,h2,h3,p { margin-top:0; } h1 { max-width:900px; margin-bottom:30px; font-size
 .hero-copy .eyebrow,.hero-copy h1,.hero-copy .hero-lede,.hero-copy .hero-actions,.hero-image,.statement .section-index,.statement h2,.statement div>p,.section-heading .section-index,.section-heading h2,.feature-list article,.audience-list li,.steps li,.faq-list details,.closing .section-index,.closing h2,.closing .button,.site-footer span { animation:landing-reveal .8s cubic-bezier(.22,1,.36,1) both; }
 .hero-copy .eyebrow { animation-delay:.08s; }.hero-copy h1 { animation-delay:.18s; }.hero-copy .hero-lede { animation-delay:.32s; }.hero-copy .hero-actions { animation-delay:.44s; }.hero-image { animation-delay:.56s; }.feature-list article:nth-child(1),.audience-list li:nth-child(1),.steps li:nth-child(1),.faq-list details:nth-child(1) { animation-delay:.08s; }.feature-list article:nth-child(2),.audience-list li:nth-child(2),.steps li:nth-child(2),.faq-list details:nth-child(2) { animation-delay:.16s; }.feature-list article:nth-child(3),.audience-list li:nth-child(3),.steps li:nth-child(3),.faq-list details:nth-child(3) { animation-delay:.24s; }.audience-list li:nth-child(4),.steps li:nth-child(4) { animation-delay:.32s; }.audience-list li:nth-child(5) { animation-delay:.4s; }.audience-list li:nth-child(6) { animation-delay:.48s; }
 @keyframes landing-reveal { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+/* Fondo ambiental compartido con la aplicación */
+.landing-body .ambient-stage { --ambient-video-opacity:.62; }
+.landing-body .ambient-shade { background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.56) 52%,rgba(0,0,0,.78)); }
+.landing-body .site-header { background:rgba(0,0,0,.74); backdrop-filter:blur(18px) saturate(125%); }
+.landing-body .audience-section { background:rgba(5,5,8,.78); backdrop-filter:blur(14px) saturate(115%); }
+.landing-body .hero-image { background:rgba(3,4,10,.38); backdrop-filter:blur(8px); }

@@ -42,23 +42,23 @@
   "rewrites": [
     {
       "source": "/summary",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/schedule",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/team",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/files",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/settings",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/api/:path*",

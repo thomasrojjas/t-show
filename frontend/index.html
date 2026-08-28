@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="T-Show unifica el timing, la escaleta y la operación de producciones en vivo.">
   <title>T-Show — Todo el show, a tiempo</title>
+  <link rel="preload" as="image" href="assets/backgrounds/workspace-desktop-poster-v1.webp" media="(min-width: 768px)">
+  <link rel="preload" as="image" href="assets/backgrounds/workspace-mobile-poster-v1.webp" media="(max-width: 767px)">
   <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/glass-workspace.css">
 </head>
-<body>
+<body class="landing-body">
   <a class="skip-link" href="#contenido">Ir al contenido</a>
   <header class="site-header">
     <nav class="site-nav" aria-label="Navegación principal">
@@ -122,6 +125,8 @@
   </main>
 
   <footer class="site-footer"><span>© T-Show · BaseAndes Software</span><span>Fotografía: <a href="https://unsplash.com/photos/Tu7U7uvazwY" target="_blank" rel="noopener noreferrer">Joy Real / Unsplash</a></span></footer>
+  <script src="js/ambient-background.js"></script>
+  <script>window.AmbientBackground?.mount({ mode: 'workspace' });</script>
   <script>
     (function () { var form = document.getElementById('contactForm'); var status = document.getElementById('contactStatus'); if (!form) return; form.addEventListener('submit', async function (event) { event.preventDefault(); var data = Object.fromEntries(new FormData(form)); status.dataset.status = 'warning'; status.textContent = 'Enviando…'; try { var response = await fetch((window.SHOWTIME_API_URL || 'https://t-show-api.onrender.com') + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); var body = await response.json(); if (!response.ok) throw new Error(body.message); status.dataset.status = 'success'; status.textContent = body.message || 'Mensaje enviado correctamente.'; form.reset(); } catch (error) { status.dataset.status = 'error'; status.textContent = error.message || 'No se pudo enviar. Escríbenos a contacto@baseandes.com.'; } }); }());
   </script>
