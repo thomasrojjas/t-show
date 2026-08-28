@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const express = require('express');
 const { supabase } = require('../supabaseClient');
 const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = require('../middleware/supabaseAuth');
+const { deleteObject, duplicateProjectCover } = require('../r2');
 
 const router = express.Router();
 const normalizeRut = rut => {
@@ -19,6 +20,19 @@ const validRut = rut => {
 };
 const validPhone = phone => /^\+569[0-9]{8}$/.test(String(phone || '').replace(/[\s()-]/g, ''));
 const cleanPayload = body => ({ ...body, eventName: String(body.eventName || '').trim() });
+const projectTypes = new Set(['concert', 'festival', 'corporate', 'ceremony', 'broadcast', 'other']);
+const accentColors = new Set(['blue', 'violet', 'cyan', 'green', 'amber', 'rose']);
+const cleanIdentity = body => {
+  const eventName = String(body.eventName || '').trim();
+  const projectType = projectTypes.has(body.projectType) ? body.projectType : 'other';
+  const eventDate = String(body.eventDate || '').trim();
+  const location = String(body.location || '').trim();
+  const accentColor = accentColors.has(body.accentColor) ? body.accentColor : 'blue';
+  if (!eventName || eventName.length > 180) throw new Error('El nombre del proyecto es inválido.');
+  if (eventDate && (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate) || Number.isNaN(Date.parse(`${eventDate}T00:00:00Z`)))) throw new Error('La fecha del evento es inválida.');
+  if (location.length > 160) throw new Error('La ubicación no puede superar 160 caracteres.');
+  return { eventName, projectType, eventDate, location, accentColor };
+};
 
 async function access(projectId, userId, edit = false) {
   const { data: project } = await supabase.from('tshow_projects').select('*').eq('id', projectId).maybeSingle();
@@ -57,18 +71,37 @@ router.get('/projects', requireSupabaseAuth, async (req, res) => {
   const isPlatformAdmin = req.user.profile?.role === 'platform_admin';
   const { data: owned, error } = await supabase.from('tshow_projects').select('*').is('deleted_at', null).order('updated_at', { ascending: false }).then(result => isPlatformAdmin ? result : { ...result, data: (result.data || []).filter(project => project.owner_id === id) });
   if (error) return res.status(500).json({ success: false, message: error.message });
-  if (isPlatformAdmin) return res.json({ success: true, data: owned || [] });
+  const { count: ownedCount } = await supabase.from('tshow_projects').select('id', { count: 'exact', head: true }).eq('owner_id', id).is('deleted_at', null);
+  const meta = { ownedCount: ownedCount || 0, limit: 10, remaining: Math.max(0, 10 - (ownedCount || 0)) };
+  if (isPlatformAdmin) return res.json({ success: true, data: (owned || []).map(project => ({ ...project, member_role: project.owner_id === id ? 'owner' : 'admin' })), meta });
   const { data: memberships } = await supabase.from('tshow_project_members').select('project_id,role,tshow_projects(*)').eq('user_id', id);
-  const projects = [...owned, ...(memberships || []).map(m => ({ ...m.tshow_projects, member_role: m.role })).filter(Boolean)];
-  res.json({ success: true, data: projects });
+  const projects = [...owned, ...(memberships || []).map(m => ({ ...m.tshow_projects, member_role: m.role })).filter(project => project && !project.deleted_at)];
+  res.json({ success: true, data: projects, meta });
 });
 
 router.post('/projects', requireSupabaseAuth, async (req, res) => {
-  const payload = cleanPayload(req.body);
-  if (!payload.eventName) return res.status(400).json({ success: false, message: 'El nombre del evento es requerido.' });
+  let identity;
+  try { identity = cleanIdentity(req.body); } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+  const payload = cleanPayload({ ...req.body, ...identity });
   const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, event_name: payload.eventName, payload }).select().single();
   if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
   await audit(data.id, req.user.id, 'project.created');
+  res.status(201).json({ success: true, data });
+});
+
+router.post('/projects/:id/duplicate', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede duplicar este proyecto.' });
+  const payload = { ...granted.project.payload, eventName: `${granted.project.event_name} — Copia` };
+  const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, event_name: payload.eventName, payload }).select().single();
+  if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
+  if (granted.project.cover_key) {
+    try {
+      const coverKey = await duplicateProjectCover(granted.project.cover_key, data.id);
+      if (coverKey) { data.cover_key = coverKey; await supabase.from('tshow_projects').update({ cover_key: coverKey }).eq('id', data.id); }
+    } catch (coverError) { console.error('Project cover duplication failed:', coverError.message); }
+  }
+  await audit(data.id, req.user.id, 'project.duplicated', { sourceProjectId: req.params.id });
   res.status(201).json({ success: true, data });
 });
 
@@ -89,10 +122,27 @@ router.patch('/projects/:id', requireSupabaseAuth, async (req, res) => {
   res.json({ success: true, data });
 });
 
+router.patch('/projects/:id/identity', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede editar la identidad.' });
+  let identity;
+  try { identity = cleanIdentity(req.body); } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+  const coverKey = req.body.coverKey === null ? null : String(req.body.coverKey || granted.project.cover_key || '');
+  if (coverKey && !coverKey.startsWith(`projects/${req.params.id}/`)) return res.status(400).json({ success: false, message: 'La portada no pertenece al proyecto.' });
+  const payload = { ...(granted.project.payload || {}), ...identity };
+  const previousCover = granted.project.cover_key;
+  const { data, error } = await supabase.from('tshow_projects').update({ event_name: identity.eventName, payload, cover_key: coverKey || null }).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ success: false, message: error.message });
+  if (previousCover && previousCover !== coverKey) deleteObject(previousCover).catch(storageError => console.error('Old project cover cleanup failed:', storageError.message));
+  await audit(data.id, req.user.id, 'project.identity_updated');
+  res.json({ success: true, data });
+});
+
 router.delete('/projects/:id', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req, true);
-  if (!granted || granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede eliminarlo.' });
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede eliminarlo.' });
   await supabase.from('tshow_projects').update({ deleted_at: new Date().toISOString() }).eq('id', req.params.id);
+  if (granted.project.cover_key) deleteObject(granted.project.cover_key).catch(storageError => console.error('Deleted project cover cleanup failed:', storageError.message));
   await audit(req.params.id, req.user.id, 'project.deleted');
   res.json({ success: true });
 });
@@ -113,30 +163,43 @@ router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
 });
 
 router.get('/projects/:id/members', requireSupabaseAuth, async (req, res) => {
-  if (!await accessForRequest(req.params.id, req)) return res.status(403).json({ success: false, message: 'Sin acceso.' });
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted) return res.status(403).json({ success: false, message: 'Sin acceso.' });
   const { data, error } = await supabase.from('tshow_project_members').select('role,created_at,profiles(id,first_name,last_name,email)').eq('project_id', req.params.id);
   if (error) return res.status(400).json({ success: false, message: error.message });
-  res.json({ success: true, data });
+  const { data: owner } = await supabase.from('profiles').select('id,first_name,last_name,email').eq('id', granted.project.owner_id).maybeSingle();
+  const ownerEntry = owner ? [{ role: 'owner', created_at: granted.project.created_at, profiles: owner }] : [];
+  res.json({ success: true, data: [...ownerEntry, ...(data || [])], permission: granted.role });
 });
 router.get('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Sin permiso.' });
   const { data, error } = await supabase.from('tshow_invitations').select('id,email,role,status,expires_at,created_at').eq('project_id', req.params.id).order('created_at', { ascending: false });
-  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+  const invitations = (data || []).map(invite => ({ ...invite, effective_status: invite.status === 'pending' && new Date(invite.expires_at) < new Date() ? 'expired' : invite.status }));
+  res.status(error ? 400 : 200).json({ success: !error, data: invitations, message: error?.message });
 });
 router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req, true);
-  if (!granted || granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede invitar.' });
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede invitar.' });
   const email = String(req.body.email || '').trim().toLowerCase(); const role = req.body.role === 'editor' ? 'editor' : 'viewer';
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, message: 'Correo inválido.' });
+  const { data: memberProfile } = await supabase.from('profiles').select('id').eq('email', email).maybeSingle();
+  if (memberProfile) {
+    const { data: existingMember } = await supabase.from('tshow_project_members').select('user_id').eq('project_id', req.params.id).eq('user_id', memberProfile.id).maybeSingle();
+    if (existingMember) return res.status(409).json({ success: false, message: 'Esta persona ya pertenece al proyecto.' });
+  }
+  const { data: pendingInvite } = await supabase.from('tshow_invitations').select('id,expires_at').eq('project_id', req.params.id).ilike('email', email).eq('status', 'pending').gte('expires_at', new Date().toISOString()).maybeSingle();
+  if (pendingInvite) return res.status(409).json({ success: false, message: 'Ya existe una invitación pendiente para este correo.' });
   const token = crypto.randomBytes(32).toString('base64url'); const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   const { data, error } = await supabase.from('tshow_invitations').insert({ project_id: req.params.id, email, role, token_hash: tokenHash, invited_by: req.user.id }).select('id,email,role,expires_at').single();
   if (error) return res.status(400).json({ success: false, message: error.message });
   await audit(req.params.id, req.user.id, 'invitation.created', { email, role });
   // Email delivery is deliberately delegated to the configured transactional provider.
   if (process.env.RESEND_API_KEY) {
-    const inviteUrl = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN}/register.html?invite=${encodeURIComponent(token)}`;
-    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: 'Invitación a colaborar en T-Show', html: `<p>Has sido invitado a colaborar en un proyecto de T-Show.</p><p><a href="${inviteUrl}">Aceptar invitación</a></p><p>El enlace vence en 7 días.</p>` }) }).catch(error => console.error('Invitation email failed:', error.message));
+    const inviteUrl = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN}/register?invite=${encodeURIComponent(token)}`;
+    const projectName = granted.project.event_name.replace(/[<>&"]/g, '');
+    const html = `<!doctype html><html><body style="margin:0;background:#050609;color:#f5f5f2;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050609"><tr><td align="center" style="padding:48px 20px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #272a32;background:#080b13"><tr><td style="padding:36px"><p style="margin:0 0 52px;font-size:13px;font-weight:800;letter-spacing:.2em">T-SHOW</p><p style="margin:0 0 12px;color:#b8d7ff;font-size:11px;font-weight:700;letter-spacing:.16em">INVITACIÓN DE EQUIPO</p><h1 style="margin:0 0 20px;font-size:42px;line-height:1;letter-spacing:-.04em">Tu lugar en el show.</h1><p style="margin:0 0 30px;color:#b8bac2;font-size:16px;line-height:1.6">Te invitaron a colaborar en <strong style="color:#fff">${projectName}</strong> como ${role === 'editor' ? 'Director' : 'Observador'}.</p><a href="${inviteUrl}" style="display:inline-block;padding:15px 22px;background:#f5f5f2;color:#050609;text-decoration:none;font-weight:700">Aceptar invitación</a><p style="margin:30px 0 0;color:#777d89;font-size:12px;line-height:1.5">Este enlace vence en 7 días. Si no esperabas esta invitación, puedes ignorar el correo.</p></td></tr></table></td></tr></table></body></html>`;
+    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: `Invitación a ${projectName} en T-Show`, html }) }).catch(error => console.error('Invitation email failed:', error.message));
   }
   res.status(201).json({ success: true, data });
 });

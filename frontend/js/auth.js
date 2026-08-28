@@ -35,7 +35,7 @@ const Auth = (() => {
     }
     function isValidName(value) { const name = String(value || '').trim(); return name.length >= 2 && /^[A-Za-zÀ-ÖØ-öø-ÿÑñ]+(?:[ '\-][A-Za-zÀ-ÖØ-öø-ÿÑñ]+)*$/.test(name); }
     function isStrongPassword(value) { return typeof value === 'string' && value.length >= 10 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value); }
-    async function register({ email, password, firstName, lastName, rut, phone }) {
+    async function register({ email, password, firstName, lastName, rut, phone, invite }) {
         if (!isValidName(firstName) || !isValidName(lastName)) throw new Error('Nombre y apellido deben contener solo letras y tener al menos 2 caracteres.');
         if (!/^\S+@\S+\.\S+$/.test(String(email || '').trim())) throw new Error('Ingresa un correo válido.');
         if (!isStrongPassword(password)) throw new Error('La contraseña debe tener al menos 10 caracteres, una mayúscula, una minúscula y un número.');
@@ -43,7 +43,8 @@ const Auth = (() => {
         if (!isValidRut(normalizedRut)) throw new Error('Ingresa un RUT válido con dígito verificador, por ejemplo 12345678-9.');
         const normalizedPhone = normalizePhone(phone);
         if (!normalizedPhone) throw new Error('Ingresa un teléfono chileno válido, por ejemplo +56912345678.');
-        const { data, error } = await (await client()).auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: `${window.location.origin}/login.html`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: normalizedPhone } } });
+        const inviteQuery = invite ? `?invite=${encodeURIComponent(invite)}` : '';
+        const { data, error } = await (await client()).auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: `${window.location.origin}/login.html${inviteQuery}`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: normalizedPhone } } });
         if (error) throw error;
         if (data.session) await api('/api/profile', { method: 'POST', body: JSON.stringify({ firstName, lastName, rut: normalizedRut, phone: normalizedPhone }) });
         return data;
@@ -55,7 +56,8 @@ const Auth = (() => {
     async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
+    async function acceptInvitation(invite) { if (!invite) return null; return api(`/api/invitations/${encodeURIComponent(invite)}/accept`, { method: 'POST' }); }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
-    return { client, token, api, login, register, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
+    return { client, token, api, login, register, acceptInvitation, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();

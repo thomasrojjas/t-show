@@ -95,15 +95,14 @@ class LiveApp {
             const all = await ApiClient.getAllProjects();
             const projects = (all && all.data) ? all.data : {};
 
-            if (this.projectName && projects[this.projectName]) {
-                this.projectData = projects[this.projectName];
-            } else {
-                const names = Object.keys(projects);
-                if (names.length > 0) {
-                    this.projectName = names[0];
-                    this.projectData = projects[this.projectName];
-                }
+            // Live mode must always be opened for an explicitly selected project.
+            // Never silently fall back to the first project: that could expose or
+            // operate a different production than the one the user intended.
+            if (!this.projectName || !projects[this.projectName]) {
+                window.location.replace('/projects');
+                return;
             }
+            this.projectData = projects[this.projectName];
         } catch (e) {
             console.error('Error loading project data:', e);
         }

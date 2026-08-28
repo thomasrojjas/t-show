@@ -62,9 +62,8 @@
             </div>
 
             <div class="panel" id="teamPanel">
-                <div class="panel-title"><span>Equipo del proyecto</span><button class="btn btn-secondary" type="button" onclick="TeamManager.invite()">+ Invitar</button></div>
-                <div id="teamStatus" style="font-size:11px;color:var(--text-muted);">Guarda o carga un proyecto para gestionar su equipo.</div>
-                <div id="teamMembers"></div>
+                <div class="panel-title"><span>Equipo del proyecto</span><button class="btn btn-secondary" type="button" onclick="window.WorkspaceShell?.navigate('team',true)">Gestionar equipo</button></div>
+                <div style="font-size:11px;color:var(--text-muted);">Los accesos, invitaciones y permisos se administran en la vista Equipo.</div>
             </div>
 
             <!-- Global Event Parameters Separated in Distinct Segments -->
@@ -258,7 +257,6 @@
     <script src="js/api-client.js"></script>
     <script src="js/print-export.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/team.js"></script>
     <script src="js/ambient-background.js"></script>
     <script src="js/workspace-nav.js"></script>
 </body>

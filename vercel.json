@@ -41,6 +41,10 @@
   ],
   "rewrites": [
     {
+      "source": "/projects",
+      "destination": "/app"
+    },
+    {
       "source": "/summary",
       "destination": "/app"
     },
