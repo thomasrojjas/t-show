@@ -75,6 +75,14 @@ html{background:#03040a;color-scheme:dark}body{min-height:100dvh;background:#030
   background:#80e2a7!important;
   border-color:#80e2a7!important;
 }
+.notes-filter { max-width: 220px; }
+.notes-list { display: grid; gap: 14px; }
+.note-block { padding: 18px 0; border-top: 1px solid var(--glass-border, #2d3342); }
+.note-block-meta { display:flex; gap:16px; align-items:center; color:var(--text-muted,#9da5b7); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.note-block h3 { margin:10px 0 16px; font-size:clamp(20px,3vw,30px); }
+.note-copy { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.note-copy p { margin:8px 0 0; color:var(--text-muted,#b7bdca); white-space:pre-wrap; line-height:1.6; }
+@media (max-width:700px){.note-copy{grid-template-columns:1fr}.notes-filter{max-width:none;width:100%}}
 
 .workspace-shell {
   margin-top:clamp(30px,5vw,72px);

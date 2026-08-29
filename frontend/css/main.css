@@ -511,6 +511,10 @@ body {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+.block-notes { margin-top: 12px; border-top: 1px solid var(--border-color, #2d3342); padding-top: 10px; }
+.block-notes summary { cursor: pointer; color: var(--text-muted, #9da5b7); font-size: 12px; letter-spacing: .04em; }
+.block-notes-fields { display: grid; gap: 12px; margin-top: 12px; }
+.block-notes textarea { width: 100%; min-height: 64px; resize: vertical; }
 
 /* T-Show visual system: editorial dark workspace */
 :root { --bg-primary:#050609; --bg-secondary:#0b0d12; --bg-card:#0b0d12; --bg-input:#07090d; --accent-primary:#b8d7ff; --accent-hover:#d6e7ff; --accent-success:#80e2a7; --accent-warning:#ffd166; --accent-danger:#ff8e8e; --accent-info:#8bb8e8; --text-main:#f5f5f2; --text-muted:#9699a3; --border-color:#272a32; --border-focus:#b8d7ff; --card-radius:0; --shadow:none; --shadow-glow:none; }

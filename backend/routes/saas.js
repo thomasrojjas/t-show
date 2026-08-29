@@ -151,6 +151,43 @@ router.delete('/projects/:id', requireSupabaseAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// Block notes and animator script live inside the existing project payload so
+// legacy projects remain compatible without a second source of truth.
+function notesFromProject(project) {
+  return (Array.isArray(project.payload?.blocks) ? project.payload.blocks : []).map(block => ({
+    blockId: block.id,
+    title: block.title || '',
+    type: block.type || '',
+    start: block.start || block.startTime || null,
+    duration: Number(block.duration || 0),
+    notes: String(block.notes || ''),
+    animator_script: String(block.animator_script || '')
+  }));
+}
+router.get('/projects/:id/notes', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
+  res.json({ success: true, data: notesFromProject(granted.project) });
+});
+router.get('/projects/:id/animator-script', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
+  res.json({ success: true, data: notesFromProject(granted.project).filter(block => block.animator_script.trim()) });
+});
+router.patch('/projects/:id/blocks/:blockId/notes', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req, true);
+  if (!granted) return res.status(403).json({ success: false, message: 'No tienes permiso para editar notas.' });
+  const notes = String(req.body?.notes || '').trim();
+  const animatorScript = String(req.body?.animator_script || '').trim();
+  if (notes.length > 4000 || animatorScript.length > 8000) return res.status(400).json({ success: false, message: 'La nota o el guion supera el límite permitido.' });
+  const payload = { ...(granted.project.payload || {}), blocks: Array.isArray(granted.project.payload?.blocks) ? granted.project.payload.blocks.map(block => block.id === req.params.blockId ? { ...block, notes, animator_script: animatorScript, notes_updated_at: new Date().toISOString(), notes_updated_by: req.user.id } : block) : [] };
+  if (!payload.blocks.some(block => block.id === req.params.blockId)) return res.status(404).json({ success: false, message: 'Bloque no encontrado.' });
+  const { data, error } = await supabase.from('tshow_projects').update({ payload }).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ success: false, message: error.message });
+  await audit(req.params.id, req.user.id, 'block.notes_updated', { blockId: req.params.blockId, hasNotes: Boolean(notes), hasAnimatorScript: Boolean(animatorScript) });
+  res.json({ success: true, data: notesFromProject(data).find(block => block.blockId === req.params.blockId) });
+});
+
 router.get('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
   if (!await accessForRequest(req.params.id, req)) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
   const { data, error } = await supabase.from('tshow_live_sessions').select('*').eq('project_id', req.params.id).maybeSingle();

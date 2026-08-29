@@ -78,7 +78,7 @@ class BlocksManager {
     updateBlock(index, field, value) {
         if (!this.blocks[index]) return;
 
-        if (field === 'title' || field === 'type') {
+        if (field === 'title' || field === 'type' || field === 'notes' || field === 'animator_script') {
             this.blocks[index][field] = value;
             if (field === 'type') {
                 this.render();
@@ -147,6 +147,17 @@ class BlocksManager {
                     </div>
                     ` : ''}
                 </div>
+                <details class="block-notes" ${block.notes || block.animator_script ? 'open' : ''}>
+                    <summary>Notas y guion del animador</summary>
+                    <div class="block-notes-fields">
+                        <label class="form-label">Notas operativas
+                            <textarea class="form-control" maxlength="4000" rows="2" oninput="app.blocksManager.updateBlock(${index}, 'notes', this.value)" placeholder="Indicaciones para producción, técnica o dirección">${this.escapeHtml(block.notes || '')}</textarea>
+                        </label>
+                        <label class="form-label">Guion del animador
+                            <textarea class="form-control" maxlength="8000" rows="3" oninput="app.blocksManager.updateBlock(${index}, 'animator_script', this.value)" placeholder="Texto que debe decir el animador">${this.escapeHtml(block.animator_script || '')}</textarea>
+                        </label>
+                    </div>
+                </details>
             `;
 
             // Drag and drop listeners
