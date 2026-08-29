@@ -1,10 +1,14 @@
 const crypto = require('crypto');
 const express = require('express');
+const { createClient } = require('@supabase/supabase-js');
 const { supabase } = require('../supabaseClient');
 const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = require('../middleware/supabaseAuth');
 const { deleteObject, duplicateProjectCover } = require('../r2');
 
 const router = express.Router();
+const passwordResetRequests = new Map();
+const PASSWORD_RESET_COOLDOWN_MS = 15 * 60 * 1000;
+const publicAuthClient = process.env.SUPABASE_ANON_KEY ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { autoRefreshToken: false, persistSession: false } }) : null;
 const normalizeRut = rut => {
   const compact = String(rut || '').replace(/[^0-9kK]/g, '').toUpperCase();
   return compact.length >= 8 && compact.length <= 9 ? `${compact.slice(0, -1)}-${compact.slice(-1)}` : '';
@@ -213,7 +217,7 @@ router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =
     }
   }
   await supabase.from('tshow_invitations').update({ delivery_status: deliveryStatus }).eq('id', data.id);
-  res.status(201).json({ success: true, data: { ...data, delivery_status: deliveryStatus }, message: deliveryStatus === 'sent' ? 'Invitación enviada.' : deliveryStatus === 'not_configured' ? 'Invitación creada; el correo aún no está configurado.' : 'Invitación creada, pero no se pudo enviar el correo.' });
+  res.status(201).json({ success: true, data: { ...data, delivery_status: deliveryStatus }, message: deliveryStatus === 'sent' ? `Invitación enviada a ${email}.` : deliveryStatus === 'not_configured' ? 'La invitación quedó guardada, pero el correo está pendiente de entrega.' : 'No pudimos enviar la invitación. Puedes intentarlo nuevamente.' });
 });
 router.patch('/projects/:id/members/:userId', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
@@ -229,6 +233,24 @@ router.delete('/projects/:id/members/:userId', requireSupabaseAuth, async (req, 
   const { error } = await supabase.from('tshow_project_members').delete().eq('project_id', req.params.id).eq('user_id', req.params.userId);
   if (!error) await audit(req.params.id, req.user.id, 'member.removed', { userId: req.params.userId });
   res.status(error ? 400 : 200).json({ success: !error, message: error?.message });
+});
+router.post('/projects/:id/members/:userId/password-reset', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'No tienes permisos para solicitar restablecimientos.' });
+  const { data: targetMember } = await supabase.from('tshow_project_members').select('user_id').eq('project_id', req.params.id).eq('user_id', req.params.userId).maybeSingle();
+  if (!targetMember || targetMember.user_id === granted.project.owner_id) return res.status(404).json({ success: false, message: 'Miembro no encontrado.' });
+  const key = `${req.params.id}:${req.params.userId}`;
+  const lastRequest = passwordResetRequests.get(key) || 0;
+  if (Date.now() - lastRequest < PASSWORD_RESET_COOLDOWN_MS) return res.status(429).json({ success: false, message: 'Debes esperar antes de solicitar otro restablecimiento.' });
+  const { data: profile } = await supabase.from('profiles').select('email').eq('id', req.params.userId).maybeSingle();
+  if (!profile?.email) return res.status(404).json({ success: false, message: 'El miembro no tiene un correo válido.' });
+  const redirectTo = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN || ''}/reset-password.html`;
+  if (!publicAuthClient) return res.status(503).json({ success: false, message: 'El servicio de restablecimiento no está configurado.' });
+  const { error } = await publicAuthClient.auth.resetPasswordForEmail(profile.email, { redirectTo });
+  if (error) return res.status(502).json({ success: false, message: 'No se pudo enviar la solicitud de restablecimiento.' });
+  passwordResetRequests.set(key, Date.now());
+  await audit(req.params.id, req.user.id, 'member.password_reset_requested', { userId: req.params.userId });
+  res.json({ success: true, message: 'Solicitud enviada al correo del miembro.' });
 });
 router.delete('/invitations/:id', requireSupabaseAuth, async (req, res) => {
   const { data: invite } = await supabase.from('tshow_invitations').select('project_id').eq('id', req.params.id).maybeSingle();
