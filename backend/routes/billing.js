@@ -8,7 +8,7 @@ const apiUrl = 'https://api.mercadopago.com';
 const origin = () => process.env.FRONTEND_URL || process.env.CORS_ORIGIN;
 const hmac = (value, secret) => crypto.createHmac('sha256', secret || '').update(value).digest('hex');
 // Only checkout creation endpoints need JSON. Webhook handlers below retain their raw/form body.
-router.use(['/mercadopago/subscriptions', '/mercadopago/checkout-pro', '/flow/subscriptions'], express.json({ limit: '100kb' }));
+router.use(['/mercadopago/subscriptions', '/mercadopago/bricks', '/mercadopago/checkout-pro', '/flow/subscriptions'], express.json({ limit: '100kb' }));
 
 async function activePlan(planId) {
   const { data } = await supabase.from('tshow_plans').select('*').eq('id', planId).eq('active', true).maybeSingle();
@@ -18,6 +18,23 @@ async function saveSubscription(accountId, plan, provider, providerId, status = 
   const { data, error } = await supabase.from('tshow_subscriptions').upsert({ account_id: accountId, plan_id: plan.id, provider, provider_subscription_id: String(providerId), status }, { onConflict: 'account_id' }).select().single();
   if (error) throw new Error(error.message); return data;
 }
+
+// Card details are tokenized by Mercado Pago Bricks in the browser. The API
+// receives only the one-time token and never handles PAN/CVV data.
+router.post('/mercadopago/bricks', requireSupabaseAuth, async (req, res) => {
+  if (process.env.PAYMENTS_ENABLED !== 'true') return res.status(503).json({ success: false, message: 'Los pagos aún no están habilitados.' });
+  const plan = await activePlan(req.body.planId);
+  const { token, paymentMethodId, installments = 1, issuerId } = req.body;
+  if (!plan || !process.env.MP_ACCESS_TOKEN || !token || !paymentMethodId) return res.status(400).json({ success: false, message: 'Plan o datos de pago incompletos.' });
+  const paymentBody = { transaction_amount: Number(plan.amount_clp), token: String(token), description: `T-Show ${plan.name}`, installments: Number(installments), payment_method_id: String(paymentMethodId), payer: { email: req.user.email }, external_reference: `${req.user.id}:${plan.id}:bricks` };
+  if (issuerId) paymentBody.issuer_id = String(issuerId);
+  const response = await fetch(`${apiUrl}/v1/payments`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'X-Idempotency-Key': String(req.body.idempotencyKey || crypto.randomUUID()) }, body: JSON.stringify(paymentBody) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) return res.status(400).json({ success: false, message: body.message || 'No se pudo procesar el pago.' });
+  const { error: paymentError } = await supabase.from('tshow_payments').upsert({ account_id: req.user.id, provider: 'mercadopago_bricks', provider_payment_id: String(body.id), status: body.status || 'pending', amount_clp: Number(plan.amount_clp), raw_event: { status: body.status, status_detail: body.status_detail, plan_id: plan.id } }, { onConflict: 'provider,provider_payment_id' });
+  if (paymentError) console.error('Payment record failed:', paymentError.message);
+  res.status(201).json({ success: true, paymentId: body.id, status: body.status, statusDetail: body.status_detail });
+});
 
 // Automatic Mercado Pago renewal. Checkout Pro/Bricks are intentionally not used here:
 // Mercado Pago's subscription endpoint performs the recurring authorization.
