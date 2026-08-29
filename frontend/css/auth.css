@@ -27,6 +27,7 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .field-error[data-status="success"] { color:var(--success); }
 .auth-error[data-status="success"] { border-color:rgba(128,226,167,.55); color:var(--success); }
 .auth-error[data-status="warning"] { border-color:rgba(255,209,102,.55); color:var(--warning); }
+.auth-hint { display:block; margin-top:8px; color:var(--accent); font-size:12px; line-height:1.4; }
 .form-note[data-status="error"] { color:var(--danger); }
 .form-note[data-status="warning"] { color:var(--warning); }
 .form-note[data-status="success"] { color:var(--success); }

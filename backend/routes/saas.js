@@ -165,7 +165,10 @@ router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
 router.get('/projects/:id/members', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
   if (!granted) return res.status(403).json({ success: false, message: 'Sin acceso.' });
-  const { data, error } = await supabase.from('tshow_project_members').select('role,created_at,profiles(id,first_name,last_name,email)').eq('project_id', req.params.id);
+  // `tshow_project_members` has two foreign keys to profiles (user_id and
+  // invited_by). Disambiguate the embedded relation so PostgREST does not
+  // reject the request with "more than one relationship was found".
+  const { data, error } = await supabase.from('tshow_project_members').select('role,created_at,profiles!tshow_project_members_user_id_fkey(id,first_name,last_name,email)').eq('project_id', req.params.id);
   if (error) return res.status(400).json({ success: false, message: error.message });
   const { data: owner } = await supabase.from('profiles').select('id,first_name,last_name,email').eq('id', granted.project.owner_id).maybeSingle();
   const ownerEntry = owner ? [{ role: 'owner', created_at: granted.project.created_at, profiles: owner }] : [];
@@ -174,7 +177,7 @@ router.get('/projects/:id/members', requireSupabaseAuth, async (req, res) => {
 router.get('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Sin permiso.' });
-  const { data, error } = await supabase.from('tshow_invitations').select('id,email,role,status,expires_at,created_at').eq('project_id', req.params.id).order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('tshow_invitations').select('id,email,role,status,delivery_status,expires_at,created_at').eq('project_id', req.params.id).order('created_at', { ascending: false });
   const invitations = (data || []).map(invite => ({ ...invite, effective_status: invite.status === 'pending' && new Date(invite.expires_at) < new Date() ? 'expired' : invite.status }));
   res.status(error ? 400 : 200).json({ success: !error, data: invitations, message: error?.message });
 });
@@ -191,17 +194,26 @@ router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =
   const { data: pendingInvite } = await supabase.from('tshow_invitations').select('id,expires_at').eq('project_id', req.params.id).ilike('email', email).eq('status', 'pending').gte('expires_at', new Date().toISOString()).maybeSingle();
   if (pendingInvite) return res.status(409).json({ success: false, message: 'Ya existe una invitación pendiente para este correo.' });
   const token = crypto.randomBytes(32).toString('base64url'); const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const { data, error } = await supabase.from('tshow_invitations').insert({ project_id: req.params.id, email, role, token_hash: tokenHash, invited_by: req.user.id }).select('id,email,role,expires_at').single();
+  const { data, error } = await supabase.from('tshow_invitations').insert({ project_id: req.params.id, email, role, token_hash: tokenHash, invited_by: req.user.id }).select('id,email,role,expires_at,delivery_status').single();
   if (error) return res.status(400).json({ success: false, message: error.message });
   await audit(req.params.id, req.user.id, 'invitation.created', { email, role });
   // Email delivery is deliberately delegated to the configured transactional provider.
+  let deliveryStatus = process.env.RESEND_API_KEY ? 'pending' : 'not_configured';
   if (process.env.RESEND_API_KEY) {
     const inviteUrl = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN}/register?invite=${encodeURIComponent(token)}`;
     const projectName = granted.project.event_name.replace(/[<>&"]/g, '');
     const html = `<!doctype html><html><body style="margin:0;background:#050609;color:#f5f5f2;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050609"><tr><td align="center" style="padding:48px 20px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #272a32;background:#080b13"><tr><td style="padding:36px"><p style="margin:0 0 52px;font-size:13px;font-weight:800;letter-spacing:.2em">T-SHOW</p><p style="margin:0 0 12px;color:#b8d7ff;font-size:11px;font-weight:700;letter-spacing:.16em">INVITACIÓN DE EQUIPO</p><h1 style="margin:0 0 20px;font-size:42px;line-height:1;letter-spacing:-.04em">Tu lugar en el show.</h1><p style="margin:0 0 30px;color:#b8bac2;font-size:16px;line-height:1.6">Te invitaron a colaborar en <strong style="color:#fff">${projectName}</strong> como ${role === 'editor' ? 'Director' : 'Observador'}.</p><a href="${inviteUrl}" style="display:inline-block;padding:15px 22px;background:#f5f5f2;color:#050609;text-decoration:none;font-weight:700">Aceptar invitación</a><p style="margin:30px 0 0;color:#777d89;font-size:12px;line-height:1.5">Este enlace vence en 7 días. Si no esperabas esta invitación, puedes ignorar el correo.</p></td></tr></table></td></tr></table></body></html>`;
-    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: `Invitación a ${projectName} en T-Show`, html }) }).catch(error => console.error('Invitation email failed:', error.message));
+    try {
+      const emailResponse = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: `Invitación a ${projectName} en T-Show`, html }) });
+      deliveryStatus = emailResponse.ok ? 'sent' : 'failed';
+      if (!emailResponse.ok) console.error('Invitation email failed:', await emailResponse.text());
+    } catch (error) {
+      deliveryStatus = 'failed';
+      console.error('Invitation email failed:', error.message);
+    }
   }
-  res.status(201).json({ success: true, data });
+  await supabase.from('tshow_invitations').update({ delivery_status: deliveryStatus }).eq('id', data.id);
+  res.status(201).json({ success: true, data: { ...data, delivery_status: deliveryStatus }, message: deliveryStatus === 'sent' ? 'Invitación enviada.' : deliveryStatus === 'not_configured' ? 'Invitación creada; el correo aún no está configurado.' : 'Invitación creada, pero no se pudo enviar el correo.' });
 });
 router.patch('/projects/:id/members/:userId', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
@@ -226,6 +238,12 @@ router.delete('/invitations/:id', requireSupabaseAuth, async (req, res) => {
   const { error } = await supabase.from('tshow_invitations').update({ status: 'revoked' }).eq('id', req.params.id);
   if (!error) await audit(invite.project_id, req.user.id, 'invitation.revoked');
   res.status(error ? 400 : 200).json({ success: !error, message: error?.message });
+});
+router.get('/invitations/:token', async (req, res) => {
+  const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  const { data: invite, error } = await supabase.from('tshow_invitations').select('email,role,expires_at,status,tshow_projects(event_name)').eq('token_hash', hash).maybeSingle();
+  if (error || !invite || invite.status !== 'pending' || new Date(invite.expires_at) < new Date()) return res.status(404).json({ success: false, message: 'La invitación no es válida o ya expiró.' });
+  res.json({ success: true, data: { email: invite.email, role: invite.role, expires_at: invite.expires_at, project_name: invite.tshow_projects?.event_name || 'este proyecto' } });
 });
 router.post('/invitations/:token/accept', requireSupabaseAuth, async (req, res) => {
   const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
