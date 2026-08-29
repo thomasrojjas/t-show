@@ -16,7 +16,7 @@ app.use('/api', billingRoutes);
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', async (_req, res) => res.json({ status: 'ok', app: 'T-Show API', timestamp: new Date().toISOString(), env: process.env.NODE_ENV || 'development', db: await checkDbConnection() ? 'ok' : 'unreachable' }));
-app.get('/api/config', (_req, res) => res.json({ supabaseUrl: process.env.SUPABASE_URL || null, supabaseAnonKey: process.env.SUPABASE_ANON_KEY || null }));
+app.get('/api/config', (_req, res) => res.json({ supabaseUrl: process.env.SUPABASE_URL || null, supabaseAnonKey: process.env.SUPABASE_ANON_KEY || null, mercadoPagoPublicKey: process.env.MP_PUBLIC_KEY || null, paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true' }));
 app.use('/api', saasRoutes);
 app.use('/api', contactRoutes);
 app.use('/api', storageRoutes);
