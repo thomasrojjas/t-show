@@ -79,9 +79,16 @@ async function recordWebhook(provider, eventKey, payload) {
 }
 router.post('/webhooks/mercadopago', express.raw({ type: '*/*' }), async (req, res) => {
   const raw = Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body || {});
-  const signature = req.get('x-signature') || '';
-  if (process.env.MP_WEBHOOK_SECRET && !signature.includes(hmac(raw, process.env.MP_WEBHOOK_SECRET))) return res.status(401).send('invalid signature');
   let payload; try { payload = JSON.parse(raw); } catch { return res.status(400).send('invalid json'); }
+  const signature = req.get('x-signature') || '';
+  const requestId = req.get('x-request-id') || '';
+  if (process.env.MP_WEBHOOK_SECRET) {
+    const parts = Object.fromEntries(signature.split(',').map(part => part.trim().split('=')));
+    const dataId = String(payload.data?.id || payload.id || '').toLowerCase();
+    const manifest = `id:${dataId};request-id:${requestId};ts:${parts.ts || ''};`;
+    const expected = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET).update(manifest).digest('hex');
+    if (!parts.v1 || parts.v1.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(parts.v1), Buffer.from(expected))) return res.status(401).send('invalid signature');
+  }
   const eventKey = `${payload.type || payload.action || 'event'}:${payload.data?.id || payload.id || crypto.createHash('sha256').update(raw).digest('hex')}`;
   await recordWebhook('mercadopago', eventKey, payload);
   res.sendStatus(200); // provider API reconciliation is intentionally asynchronous/idempotent.
