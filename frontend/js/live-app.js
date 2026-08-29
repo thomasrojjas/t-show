@@ -7,7 +7,7 @@
 class LiveApp {
     constructor() {
         this.projectData = null;
-        this.projectName = ''; // UUID del proyecto, se conserva por compatibilidad con UI
+        this.projectName = ''; // Identificador interno, nunca se muestra en pantalla
         this.role = 'viewer'; // 'viewer' | 'director' | 'admin'
         this.targetModalRole = 'director'; // 'director' | 'admin'
         
@@ -148,7 +148,7 @@ class LiveApp {
             roleBadge.className = `role-badge role-${this.role}`;
             if (this.role === 'admin') roleBadge.innerText = 'ADMINISTRADOR';
             else if (this.role === 'director') roleBadge.innerText = 'DIRECTOR';
-            else roleBadge.style.display = 'none';
+            else { roleBadge.innerText = 'OBSERVADOR'; roleBadge.style.display = 'inline-flex'; }
         }
 
         // Hide privileged controls from Viewer
@@ -249,7 +249,7 @@ class LiveApp {
     async togglePlayPause() {
         if (this.liveState.status === 'live') {
             this.liveState.status = 'paused';
-            await this.syncAndRender('⏸ Show Pausado');
+            await this.syncAndRender('Evento pausado');
         } else {
             this.liveState.status = 'live';
             if (!this.liveState.currentBlockStartTime) {
@@ -280,10 +280,10 @@ class LiveApp {
 
     async stopShow() {
         if (this.role !== 'admin') {
-            alert('Solo el Administrador puede detener el show.');
+            alert('Solo el Administrador puede finalizar el evento.');
             return;
         }
-        if (confirm('¿Detener el programa/show en vivo? El cronómetro se pausará y los tiempos quedarán registrados.')) {
+        if (confirm('¿Finalizar el evento en vivo? El cronómetro se pausará y los tiempos quedarán registrados.')) {
             this.liveState.status = 'paused';
             await this.syncAndRender('⏹ Show detenido');
         }
@@ -421,7 +421,8 @@ class LiveApp {
 
         // 1. Title & Status
         const titleEl = document.getElementById('liveProjectTitle');
-        if (titleEl) titleEl.innerText = this.projectName;
+        const displayName = this.projectData?.name || this.projectData?.payload?.name || this.projectData?.payload?.eventName || 'Evento activo';
+        if (titleEl) titleEl.innerText = displayName;
 
         const isLive = snapshot.status === 'live';
         const isSchedule = (this.liveState.trackingMode || 'schedule') === 'schedule';
@@ -429,9 +430,9 @@ class LiveApp {
         const statusBadge = document.getElementById('liveStatusBadge');
         if (statusBadge) {
             statusBadge.className = `live-badge-status status-${snapshot.status}`;
-            if (snapshot.status === 'idle') statusBadge.innerText = '⏸ EN ESPERA';
-            if (snapshot.status === 'live') statusBadge.innerText = isSchedule ? 'EN VIVO' : 'MANUAL';
-            if (snapshot.status === 'paused') statusBadge.innerText = '⏸ EN PAUSA';
+            if (snapshot.status === 'idle') statusBadge.innerText = 'EN ESPERA';
+            if (snapshot.status === 'live') statusBadge.innerText = 'EN VIVO';
+            if (snapshot.status === 'paused') statusBadge.innerText = 'PAUSADO';
             if (snapshot.status === 'finished') statusBadge.innerText = 'FINALIZADO';
         }
 
@@ -443,12 +444,12 @@ class LiveApp {
         if (btnHeaderPlay && btnHeaderPlayIcon && btnHeaderPlayText) {
             if (isLive) {
                 btnHeaderPlay.classList.add('is-playing');
-                btnHeaderPlayIcon.innerText = '⏸';
-                btnHeaderPlayText.innerText = 'PAUSAR';
+                btnHeaderPlayIcon.innerText = 'Ⅱ';
+                btnHeaderPlayText.innerText = 'Pausar evento';
             } else {
                 btnHeaderPlay.classList.remove('is-playing');
                 btnHeaderPlayIcon.innerText = '▶';
-                btnHeaderPlayText.innerText = 'PLAY / EN VIVO';
+                btnHeaderPlayText.innerText = 'Iniciar evento';
             }
         }
 
@@ -473,7 +474,7 @@ class LiveApp {
         const heroNextBlockName = document.getElementById('heroNextBlockName');
 
         if (heroNextBlockName) {
-            heroNextBlockName.innerText = snapshot.nextItem ? `${snapshot.nextItem.title} (${snapshot.nextItem.effectiveDuration}m)` : 'Cierre del Show';
+            heroNextBlockName.innerText = snapshot.nextItem ? `${snapshot.nextItem.title} (${snapshot.nextItem.effectiveDuration} min)` : 'Cierre del evento';
         }
 
         if (snapshot.currentItem && snapshot.status === 'live') {
@@ -520,7 +521,7 @@ class LiveApp {
             if (heroRemainingTimer) { heroRemainingTimer.innerText = '00:00'; heroRemainingTimer.classList.remove('is-overtime'); heroRemainingTimer.style.color = '#10b981'; }
             if (heroProgressFill) heroProgressFill.style.width = '100%';
         } else if (snapshot.status === 'paused' && snapshot.currentItem) {
-            if (heroBlockName) heroBlockName.innerText = `⏸ ${snapshot.currentItem.title} (En Pausa)`;
+            if (heroBlockName) heroBlockName.innerText = `${snapshot.currentItem.title} · Pausado`;
             if (heroTypeBadge) {
                 heroTypeBadge.innerText = snapshot.currentItem.type;
                 heroTypeBadge.className = `hero-type-badge ${snapshot.currentItem.badgeClass}`;
@@ -568,7 +569,7 @@ class LiveApp {
 
         if (stageConfModal && stageConfCurrentTitle && stageConfTimerValue) {
             const currentTitle = snapshot.currentItem ? snapshot.currentItem.title : (snapshot.items && snapshot.items[0] ? snapshot.items[0].title : 'Listo para Iniciar Pauta');
-            const currentBadge = snapshot.currentItem ? snapshot.currentItem.type : 'SHOW';
+            const currentBadge = snapshot.currentItem ? snapshot.currentItem.type : 'EVENTO';
             const nextTitle = snapshot.nextItem ? `${snapshot.nextItem.title} (${snapshot.nextItem.effectiveDuration}m)` : 'Cierre del Evento';
 
             stageConfCurrentTitle.innerText = currentTitle;
@@ -577,7 +578,7 @@ class LiveApp {
 
             if (snapshot.status === 'live' && snapshot.currentItem) {
                 if (snapshot.isOvertime) {
-                    if (stageConfTimerLabel) stageConfTimerLabel.innerText = '⚠️ TIEMPO EN CONTRA';
+                    if (stageConfTimerLabel) stageConfTimerLabel.innerText = 'TIEMPO EN CONTRA';
                     stageConfTimerValue.innerText = `+${LiveEngine.formatDurationSeconds(snapshot.overtimeSeconds)}`;
                     stageConfTimerValue.classList.add('is-overtime');
                 } else {
@@ -587,7 +588,7 @@ class LiveApp {
                     stageConfTimerValue.style.color = snapshot.alertLevel === 'red' ? '#ef4444' : (snapshot.alertLevel === 'yellow' ? '#f59e0b' : '#34d399');
                 }
             } else if (snapshot.status === 'paused') {
-                if (stageConfTimerLabel) stageConfTimerLabel.innerText = '⏸ PAUSADO';
+                    if (stageConfTimerLabel) stageConfTimerLabel.innerText = 'PAUSADO';
                 stageConfTimerValue.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
                 stageConfTimerValue.classList.remove('is-overtime');
                 stageConfTimerValue.style.color = '#f59e0b';
@@ -667,8 +668,13 @@ class LiveApp {
                     <td class="time-cell" style="position: relative; z-index: 1;">${r.liveEnd}</td>
                     ${isOperator ? `<td style="text-align: right; position: relative; z-index: 1;">${actionsHtml}</td>` : ''}
                 `;
+                tr.dataset.blockNum = String(r.num);
+                tr.addEventListener('click', () => this.updateNotesPanel(r));
                 tbody.appendChild(tr);
             });
+
+            const selected = snapshot.currentItem || snapshot.items[0];
+            if (selected) this.updateNotesPanel(selected);
 
             // 5. Automatic Smooth Scroll into Active Block View
             if (activeRowElement && snapshot.currentIndex !== this.lastScrolledIndex) {
@@ -676,6 +682,16 @@ class LiveApp {
                 activeRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
+    }
+
+    updateNotesPanel(block) {
+        const scriptEl = document.getElementById('liveAnimatorScript');
+        const notesEl = document.getElementById('liveOperationalNotes');
+        const source = block?.raw || block?.payload || block || {};
+        const script = source.animator_script || source.animatorScript || '';
+        const notes = source.notes || '';
+        if (scriptEl) scriptEl.textContent = script.trim() || 'Este bloque no tiene texto de animación definido.';
+        if (notesEl) notesEl.textContent = notes.trim() || 'No hay notas operativas para este bloque.';
     }
 
     // --- REPORT POST-SHOW ---

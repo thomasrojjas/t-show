@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Time Live - Control en Tiempo Real</title>
+    <title>T-Show · Operación en vivo</title>
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
@@ -21,16 +21,14 @@
 
     <!-- Header Bar -->
     <header class="live-header">
-        <div class="live-brand" id="appBrandLogo" ondblclick="liveApp.toggleRoleModal()" title="Show Time por BaseAndes Software">
+        <div class="live-brand" id="appBrandLogo" title="T-Show · Operación en vivo">
             <div class="brand-icon" aria-hidden="true">TS</div>
-            <div>
-                <div style="display: flex; align-items: baseline; gap: 8px;">
-                    <span style="font-size: 11px; font-weight: 800; color: #38bdf8; letter-spacing: 1px;">SHOW TIME</span>
-                    <h1 id="liveProjectTitle" style="font-size: 16px; font-weight: 800; line-height: 1.2; display: inline;">Gran Concierto & Show Estelar</h1>
-                </div>
+            <div class="live-brand-copy">
+                <span class="live-brand-mark">T-SHOW</span>
+                <h1 id="liveProjectTitle">Evento activo</h1>
             </div>
             <span id="liveStatusBadge" class="live-badge-status status-idle">EN ESPERA</span>
-            <span id="currentRoleBadge" class="role-badge role-viewer" style="display: none;">OBSERVADOR</span>
+            <span id="currentRoleBadge" class="role-badge role-viewer">OBSERVADOR</span>
         </div>
 
         <div class="live-header-center">
@@ -38,19 +36,18 @@
             
             <!-- Botón Maestro Play / Pausa (Solo visible para Director/Admin) -->
             <button id="btnHeaderPlay" class="btn-play-master" style="display: none;" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
-                <span id="btnHeaderPlayIcon" aria-hidden="true">PLAY</span>
-                <span id="btnHeaderPlayText">PLAY / EN VIVO</span>
+                <span id="btnHeaderPlayIcon" aria-hidden="true">▶</span>
+                <span id="btnHeaderPlayText">Iniciar evento</span>
             </button>
         </div>
 
         <div class="live-header-actions">
             <!-- MODO 2: Pantalla Completa de la Aplicación General -->
-            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla Completa de toda la aplicación">Pantalla Completa</button>
+            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla completa">Pantalla completa</button>
             
             <!-- Botones Ocultos para Rol Espectador (Visibles solo para Director/Admin) -->
             <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">Compartir</button>
-            <button class="btn btn-secondary" id="btnToggleRole" style="display: none;" onclick="liveApp.toggleRoleModal()">Cambiar Rol</button>
-            <a href="app.html" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">Planificación</a>
+            <a href="/summary" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">Planificación</a>
         </div>
     </header>
 
@@ -60,8 +57,8 @@
             <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">PANEL ADMINISTRADOR</span>
         </div>
         <div class="toolbar-actions">
-            <button class="btn-play-master" onclick="liveApp.startShow()">Iniciar Show</button>
-            <button class="btn-stop-show" onclick="liveApp.stopShow()">Detener Show</button>
+            <button class="btn-play-master" onclick="liveApp.startShow()">Iniciar evento</button>
+            <button class="btn-stop-show" onclick="liveApp.stopShow()">Finalizar evento</button>
             <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">Pausar / Reanudar</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
             <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">Reiniciar</button>
@@ -82,7 +79,7 @@
             <!-- Menú de Extensión de Tiempo de Este Módulo -->
             <div class="extend-menu-container">
                     <button class="btn-extend" onclick="liveApp.toggleExtendMenu()" title="Mantenerse en este bloque y extender duración">
-                        Extender Tiempo
+                        Extender tiempo
                 </button>
                 <div id="extendDropdown" class="extend-dropdown">
                     <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">Extender +2 min</button>
@@ -92,7 +89,7 @@
                 </div>
             </div>
 
-            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">Reajustar Hora</button>
+            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">Reajustar hora</button>
             <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
         </div>
     </section>
@@ -101,11 +98,11 @@
     <section class="active-hero-card" id="stageHeroCard">
         <div class="hero-top-row">
             <div class="hero-title-group">
-                <span id="heroTypeBadge" class="hero-type-badge badge-show">SHOW</span>
+                <span id="heroTypeBadge" class="hero-type-badge badge-show">EVENTO</span>
                 <h2 id="heroBlockName" class="hero-block-name">Listo para Iniciar Pauta en Vivo</h2>
             </div>
             <div id="heroUpNextContainer" class="hero-up-next">
-                <span>PRÓXIMO: </span>
+                <span>PRÓXIMO BLOQUE: </span>
                 <strong id="heroNextBlockName" style="color: #38bdf8;">--</strong>
             </div>
         </div>
@@ -133,7 +130,7 @@
             </div>
 
             <!-- Botón Modo 1 de artistas -->
-            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Modo Artistas en Escenario (Solo Tiempo)">Pantalla de escenario</button>
+            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Vista de escenario">Vista de escenario</button>
         </div>
 
         <!-- Barra de Progreso Continua de Izquierda a Derecha -->
@@ -148,7 +145,7 @@
             <div class="stage-conf-header-left">
                 <span class="stage-conf-label">EN CURSO:</span>
                 <h1 id="stageConfCurrentTitle" class="stage-conf-title">Listo para Iniciar Pauta</h1>
-                <span id="stageConfBadge" class="badge badge-show">SHOW</span>
+                <span id="stageConfBadge" class="badge badge-show">EVENTO</span>
             </div>
             <button class="btn-exit-stage" onclick="liveApp.closeStageConfidenceDisplay()">✕ Salir (ESC)</button>
         </div>
@@ -159,7 +156,7 @@
         </div>
 
         <div class="stage-conf-bottom">
-            <span class="stage-conf-label" style="color: #64748b;">PRÓXIMO MÓDULO:</span>
+            <span class="stage-conf-label" style="color: #64748b;">PRÓXIMO BLOQUE:</span>
             <h2 id="stageConfNextTitle" class="stage-conf-next-title">--</h2>
         </div>
 
@@ -168,18 +165,35 @@
         </div>
     </div>
 
+    <aside class="live-notes-panel" id="liveNotesPanel" aria-live="polite">
+        <div class="live-notes-heading">
+            <span class="eyebrow">CONTEXTO DEL BLOQUE</span>
+            <h2>Guion y notas</h2>
+        </div>
+        <div class="live-notes-content">
+            <div>
+                <span class="live-notes-label">GUION DEL ANIMADOR</span>
+                <p id="liveAnimatorScript">Selecciona un bloque para ver su guion.</p>
+            </div>
+            <div>
+                <span class="live-notes-label">NOTAS OPERATIVAS</span>
+                <p id="liveOperationalNotes">Las notas del bloque aparecerán aquí.</p>
+            </div>
+        </div>
+    </aside>
+
     <!-- Contenedor con Autodesplazamiento de la Escaleta en Vivo -->
     <main class="live-table-container" id="scheduleTableContainer">
         <table class="live-table">
             <thead>
                 <tr>
-                    <th style="width: 45px; text-align: center;">#</th>
+                    <th style="width: 45px; text-align: center;">Nº</th>
                     <th style="width: 120px;">Tipo</th>
-                    <th>Descripción / Nombre del Bloque</th>
+                    <th>Bloque</th>
                     <th style="width: 90px;">Inicio</th>
                     <th style="width: 100px;">Duración</th>
-                    <th style="width: 90px;">Fin</th>
-                    <th style="width: 120px; text-align: right;" id="thActions">Gestión</th>
+                    <th style="width: 90px;">Término</th>
+                    <th style="width: 120px; text-align: right;" id="thActions">Acciones</th>
                 </tr>
             </thead>
             <tbody id="liveTableBody">
@@ -190,28 +204,15 @@
 
     <!-- Footer Attribution -->
     <footer style="text-align: center; padding: 4px; font-size: 11px; color: #6b7280; flex-shrink: 0;">
-        Show Time • Desarrollado por <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none; font-weight: 700;">BaseAndes Software | Software a medida para empresas</a>
+        T-Show · Desarrollado por <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none; font-weight: 700;">BaseAndes Software</a>
     </footer>
 
-    <!-- Modal de Selección y Validación de Roles -->
+    <!-- Modal de compatibilidad (los roles provienen de Supabase) -->
     <div id="pinModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 400px; text-align: center;">
-            <h2 style="font-size: 17px; margin-bottom: 6px;">Acceso a Roles</h2>
-            <p style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">Los permisos se asignan desde la cuenta y el proyecto.</p>
-            
-            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
-                <button type="button" id="btnSelectRoleDirector" class="btn btn-primary" style="flex: 1;" onclick="liveApp.setModalTargetRole('director')">Director</button>
-                <button type="button" id="btnSelectRoleAdmin" class="btn btn-secondary" style="flex: 1;" onclick="liveApp.setModalTargetRole('admin')">Administrador</button>
-            </div>
-
-            <div id="roleHintText" style="font-size: 11px; color: #38bdf8; margin-bottom: 10px; font-weight: 700;">
-                Director: conducción con TAP, extensión de tiempo y silencio de bloques
-            </div>
-
-            <div style="display: flex; gap: 10px; justify-content: center;">
-            <button class="btn btn-secondary" onclick="liveApp.setRoleAsViewer()">Observador</button>
-                <button class="btn btn-primary" onclick="liveApp.closeModal('pinModal')">Cerrar</button>
-            </div>
+            <h2 style="font-size: 17px; margin-bottom: 8px;">Rol del proyecto</h2>
+            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 16px;">Tu rol se determina por tu membresía en Supabase. Solicita cambios al propietario del evento.</p>
+            <button class="btn btn-primary" onclick="liveApp.closeModal('pinModal')">Cerrar</button>
         </div>
     </div>
 
