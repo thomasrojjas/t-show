@@ -32,3 +32,8 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .form-note[data-status="warning"] { color:var(--warning); }
 .form-note[data-status="success"] { color:var(--success); }
 .form-note { margin:14px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
+.password-control { display:flex; align-items:stretch; gap:8px; }
+.password-control .form-control { flex:1; min-width:0; }
+.password-toggle { min-width:76px; min-height:48px; padding:0 12px; border:1px solid rgba(184,215,255,.35); border-radius:6px; background:rgba(12,18,31,.9); color:var(--accent); cursor:pointer; font:inherit; font-size:12px; font-weight:700; }
+.password-toggle:hover { border-color:var(--accent); background:rgba(25,35,56,.95); }
+.password-toggle:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }

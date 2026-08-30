@@ -6,7 +6,7 @@ const RegistrationValidation = (() => {
         rut: { valid: value => Auth.isValidRut(value), pending: 'Atención: ingresa tu RUT.', warning: 'Atención: completa el RUT y su dígito verificador.', error: 'Error: el RUT o su dígito verificador no es válido.' },
         email: { valid: value => /^\S+@\S+\.\S+$/.test(value.trim()), pending: 'Atención: ingresa tu correo.', error: 'Error: ingresa un correo con formato válido.' },
         phone: { valid: value => Boolean(Auth.normalizePhone(value)), pending: 'Atención: ingresa tu celular.', warning: 'Atención: completa los 9 dígitos del celular.', error: 'Error: usa un celular chileno, por ejemplo +56912345678.' },
-        password: { valid: value => Auth.isStrongPassword(value), pending: 'Atención: crea una contraseña segura.', warning: 'Atención: faltan requisitos de seguridad.', error: 'Error: usa mínimo 10 caracteres, mayúscula, minúscula y número.' },
+        password: { valid: value => Auth.isStrongPassword(value), pending: 'Atención: crea una contraseña segura.', warning: 'Atención: faltan requisitos de seguridad.', error: 'Error: usa mínimo 8 caracteres, una letra y un número.' },
         passwordConfirm: { valid: value => value.length > 0 && value === document.getElementById('password').value, pending: 'Atención: repite tu contraseña.', error: 'Error: las contraseñas no coinciden.' }
     };
 
