@@ -336,3 +336,50 @@ html{background:#03040a;color-scheme:dark}body{min-height:100dvh;background:#030
 @media(max-width:800px){.project-selector-head{width:calc(100% - 32px)}.project-selector-head h1{font-size:clamp(58px,17vw,92px)}.project-carousel{padding-inline:12vw}.project-card{flex-basis:min(78vw,380px)}.carousel-arrow{display:none}.summary-identity{grid-template-columns:1fr 1fr}.team-row{grid-template-columns:46px minmax(0,1fr) auto}.team-row .member-date{display:none}.team-row .team-role-select,.team-row .team-remove{grid-column:2 / -1}.project-selector-active .workspace-nav-tabs{display:none}}
 @media(max-width:480px){.project-card{flex-basis:82vw}.project-card-art{border-radius:22px}.summary-identity{grid-template-columns:1fr}.shell-modal{padding:0}.shell-modal-card{max-height:100dvh;min-height:100dvh;border-radius:0}.team-row{gap:10px}}
 @media(prefers-reduced-motion:reduce){.project-card,.project-card-art::after,.shell-modal-card{transition:none!important;animation:none!important}}
+
+/* Narrow viewport safeguards: preserve readable titles and keep controls reachable. */
+html,body{max-width:100%;overflow-x:hidden}
+.workspace-shell,.workspace-view,.workspace-view>*{min-width:0;max-width:100%}
+.workspace-nav-project{max-width:min(42vw,520px);overflow-wrap:anywhere;white-space:normal;line-height:1.25}
+.shell-page-head h1,.shell-hero h1,.shell-status-panel h2,.project-selector-head h1,.project-card-copy h2,.now-next-card strong{overflow-wrap:anywhere;word-break:break-word}
+.workspace-shell .form-control,.workspace-shell textarea,.workspace-shell select{max-width:100%;min-width:0}
+.table-container{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+@media(max-width:700px){
+  .workspace-nav{width:100%;min-height:0;padding:10px 12px 8px;gap:8px}
+  .workspace-nav-brand{flex:0 0 auto}
+  .workspace-nav-project{order:2;flex:1 1 auto;width:auto;max-width:calc(100vw - 108px);white-space:normal}
+  .workspace-nav-account-wrap{order:3;flex:0 0 auto}
+  .workspace-nav-tabs{order:4;flex:1 1 100%;width:100%;max-width:100%;margin-left:0;padding-bottom:2px;overflow-x:auto;overscroll-behavior-x:contain}
+  .workspace-nav-tabs a{flex:0 0 auto;min-width:max-content;min-height:44px}
+  .workspace-shell{width:100%;max-width:100%;margin:18px auto 40px;padding:132px 12px 40px;overflow:visible}
+  .shell-hero,.summary-identity,.note-copy,.grid-2,.grid-3,.form-row{grid-template-columns:1fr!important}
+  .shell-hero h1,.shell-page-head h1,.project-selector-head h1{font-size:clamp(42px,14vw,72px);line-height:.94}
+  .shell-hero .glass-panel,.shell-projects,.shell-page-head{padding-left:18px;padding-right:18px}
+  .glass-panel,.panel,.header-bar,.main-grid,.timing-table,.timeline-container{min-width:0;max-width:100%}
+  .header-bar{width:100%!important;position:relative!important;top:auto!important;overflow:visible;padding:16px!important}
+  .header-bar .actions{display:flex;flex-wrap:nowrap;max-width:100%;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .header-bar .actions>*{flex:0 0 auto;min-height:44px}
+  .main-grid{display:block!important;width:100%!important}
+  .main-grid>*{width:100%;max-width:100%;min-width:0}
+  .blocks-list{max-height:none!important;overflow:visible!important;padding-right:0}
+  .block-item,.block-header,.block-controls{min-width:0;max-width:100%}
+  .timing-table{table-layout:fixed;font-size:12px}
+  .timing-table th,.timing-table td{padding:10px 8px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+  .timing-table th:nth-child(1),.timing-table td:nth-child(1){width:10%}
+  .timing-table th:nth-child(2),.timing-table td:nth-child(2){width:24%}
+  .timing-table th:nth-child(3),.timing-table td:nth-child(3){width:40%}
+  .timing-table th:nth-child(4),.timing-table td:nth-child(4),.timing-table th:nth-child(5),.timing-table td:nth-child(5){width:13%}
+  .shell-form-panel .form-group{width:100%;min-width:0}
+  .project-card-copy h2{font-size:clamp(28px,8vw,42px)}
+  .shell-modal{padding:12px}
+  .shell-modal-card{width:100%;max-width:100%;max-height:calc(100dvh - 24px);padding:24px 18px}
+}
+
+/* Optional landscape operating canvas for compact Escaleta/Live devices. */
+@media (orientation:landscape) and (min-width:520px) and (max-width:900px){
+  .workspace-shell{padding-top:96px}
+  .workspace-view[data-route="schedule"] .main-grid{display:grid!important;grid-template-columns:minmax(220px,34%) minmax(0,1fr)!important;align-items:start}
+  .workspace-view[data-route="schedule"] .header-bar{overflow-x:auto}
+  .workspace-view[data-route="schedule"] .header-bar .actions{flex-wrap:nowrap;overflow-x:auto}
+}
