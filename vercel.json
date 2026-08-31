@@ -65,6 +65,22 @@
       "destination": "/app"
     },
     {
+      "source": "/command-center",
+      "destination": "/command-center.html"
+    },
+    {
+      "source": "/incidents",
+      "destination": "/incidents.html"
+    },
+    {
+      "source": "/teleprompter",
+      "destination": "/teleprompter.html"
+    },
+    {
+      "source": "/guest",
+      "destination": "/guest.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://t-show-api.onrender.com/api/:path*"
     }
