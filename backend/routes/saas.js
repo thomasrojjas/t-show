@@ -4,6 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { supabase } = require('../supabaseClient');
 const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = require('../middleware/supabaseAuth');
 const { deleteObject, duplicateProjectCover } = require('../r2');
+const { getEntitlement, PLAN_LIMITS } = require('../services/entitlements');
 
 const router = express.Router();
 const passwordResetRequests = new Map();
@@ -76,7 +77,9 @@ router.get('/projects', requireSupabaseAuth, async (req, res) => {
   const { data: owned, error } = await supabase.from('tshow_projects').select('*').is('deleted_at', null).order('updated_at', { ascending: false }).then(result => isPlatformAdmin ? result : { ...result, data: (result.data || []).filter(project => project.owner_id === id) });
   if (error) return res.status(500).json({ success: false, message: error.message });
   const { count: ownedCount } = await supabase.from('tshow_projects').select('id', { count: 'exact', head: true }).eq('owner_id', id).is('deleted_at', null);
-  const meta = { ownedCount: ownedCount || 0, limit: 10, remaining: Math.max(0, 10 - (ownedCount || 0)) };
+  let entitlement;
+  try { entitlement = await getEntitlement(id, req.user.profile?.role); } catch (entitlementError) { return res.status(500).json({ success: false, message: 'No se pudo calcular el cupo de proyectos.' }); }
+  const meta = { ownedCount: ownedCount || 0, limit: entitlement.limit, remaining: entitlement.remaining, plan: entitlement.plan, subscriptionStatus: entitlement.status };
   if (isPlatformAdmin) return res.json({ success: true, data: (owned || []).map(project => ({ ...project, member_role: project.owner_id === id ? 'owner' : 'admin' })), meta });
   const { data: memberships } = await supabase.from('tshow_project_members').select('project_id,role,tshow_projects(*)').eq('user_id', id);
   const projects = [...owned, ...(memberships || []).map(m => ({ ...m.tshow_projects, member_role: m.role })).filter(project => project && !project.deleted_at)];
@@ -316,16 +319,62 @@ router.post('/invitations/:token/accept', requireSupabaseAuth, async (req, res) 
 
 router.get('/billing/plans', requireSupabaseAuth, async (req, res) => {
   const { data, error } = await supabase.from('tshow_plans').select('*').eq('active', true).order('interval');
-  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+  const plans = (data || []).map(plan => ({ ...plan, annual_original_clp: plan.interval === 'year' && plan.discount_percent ? Math.round(Number(plan.amount_clp) / (1 - Number(plan.discount_percent) / 100)) : null, annual_offer_clp: plan.interval === 'year' ? plan.amount_clp : null }));
+  res.status(error ? 400 : 200).json({ success: !error, data: plans, message: error?.message });
 });
 router.get('/billing/subscription', requireSupabaseAuth, async (req, res) => {
   const { data, error } = await supabase.from('tshow_subscriptions').select('*,tshow_plans(*)').eq('account_id', req.user.id).maybeSingle();
   res.status(error ? 400 : 200).json({ success: !error, data, message: error?.message });
 });
-router.put('/admin/plans/:id', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
-  const { name, amount_clp, active, benefits } = req.body;
-  const { data, error } = await supabase.from('tshow_plans').update({ name, amount_clp, active, benefits }).eq('id', req.params.id).select().single();
+router.get('/admin/plans', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const { data, error } = await supabase.from('tshow_plans').select('*').order('name').order('interval');
+  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+});
+async function updatePlan(req, res) {
+  const { name, amount_clp, active, benefits, interval, project_limit, discount_percent } = req.body;
+  const patch = { name, amount_clp, active, benefits, interval, project_limit, discount_percent };
+  Object.keys(patch).forEach(key => patch[key] === undefined && delete patch[key]);
+  const { data, error } = await supabase.from('tshow_plans').update(patch).eq('id', req.params.id).select().single();
   res.status(error ? 400 : 200).json({ success: !error, data, message: error?.message });
+}
+router.put('/admin/plans/:id', requireSupabaseAuth, requirePlatformAdmin, updatePlan);
+router.patch('/admin/plans/:id', requireSupabaseAuth, requirePlatformAdmin, updatePlan);
+
+// Superadmin account entitlement management. All writes are audited.
+router.get('/admin/accounts', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const query = String(req.query.q || '').trim().toLowerCase();
+  const { data: profiles, error } = await supabase.from('profiles').select('id,first_name,last_name,email,role,account_plan,custom_project_limit,commercial_status,created_at,entitlement_updated_at').order('created_at', { ascending: false });
+  if (error) return res.status(400).json({ success: false, message: error.message });
+  const rows = [];
+  for (const profile of profiles || []) {
+    if (query && !`${profile.first_name} ${profile.last_name} ${profile.email}`.toLowerCase().includes(query)) continue;
+    const entitlement = await getEntitlement(profile.id, profile.role);
+    rows.push({ ...profile, ...entitlement });
+  }
+  res.json({ success: true, data: rows });
+});
+router.get('/admin/accounts/:id', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const { data: profile, error } = await supabase.from('profiles').select('id,first_name,last_name,email,role,account_plan,custom_project_limit,commercial_status,created_at,entitlement_updated_at').eq('id', req.params.id).maybeSingle();
+  if (error || !profile) return res.status(404).json({ success: false, message: 'Cuenta no encontrada.' });
+  const entitlement = await getEntitlement(profile.id, profile.role);
+  res.json({ success: true, data: { ...profile, ...entitlement } });
+});
+router.get('/admin/accounts/:id/history', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const { data, error } = await supabase.from('tshow_account_entitlement_history').select('*').eq('account_id', req.params.id).order('created_at', { ascending: false });
+  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+});
+router.patch('/admin/accounts/:id/entitlement', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const plan = ['free', 'pro', 'max', 'enterprise'].includes(req.body.plan) ? req.body.plan : null;
+  if (!plan) return res.status(400).json({ success: false, message: 'Nivel de cuenta inválido.' });
+  const customLimit = req.body.customLimit === null || req.body.customLimit === '' || req.body.customLimit === undefined ? null : Number(req.body.customLimit);
+  if (customLimit !== null && (!Number.isInteger(customLimit) || customLimit < 1)) return res.status(400).json({ success: false, message: 'El límite personalizado debe ser un entero mayor que cero.' });
+  const status = ['free', 'active', 'expired', 'cancelled', 'read_only'].includes(req.body.status) ? req.body.status : (plan === 'free' ? 'free' : 'active');
+  const { data: current } = await supabase.from('profiles').select('id,account_plan,custom_project_limit,commercial_status').eq('id', req.params.id).maybeSingle();
+  if (!current) return res.status(404).json({ success: false, message: 'Cuenta no encontrada.' });
+  const { data, error } = await supabase.from('profiles').update({ account_plan: plan, custom_project_limit: customLimit, commercial_status: status, entitlement_updated_at: new Date().toISOString(), entitlement_updated_by: req.user.id }).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ success: false, message: error.message });
+  await supabase.from('tshow_account_entitlement_history').insert({ account_id: req.params.id, changed_by: req.user.id, old_plan: current.account_plan, new_plan: plan, old_limit: current.custom_project_limit, new_limit: customLimit, old_status: current.commercial_status, new_status: status, reason: String(req.body.reason || '').slice(0, 500) });
+  res.json({ success: true, data, message: 'Nivel y cupo actualizados.' });
 });
 
 module.exports = router;

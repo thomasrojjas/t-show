@@ -12,7 +12,12 @@ router.use(['/mercadopago/subscriptions', '/mercadopago/bricks', '/mercadopago/c
 
 async function activePlan(planId) {
   const { data } = await supabase.from('tshow_plans').select('*').eq('id', planId).eq('active', true).maybeSingle();
-  return data;
+  return data && Number.isInteger(data.amount_clp) && data.amount_clp > 0 ? data : null;
+}
+async function activateAccountPlan(accountId, plan) {
+  const accountPlan = String(plan.code || '').startsWith('max') ? 'max' : String(plan.code || '').startsWith('pro') ? 'pro' : null;
+  if (!accountPlan) return;
+  await supabase.from('profiles').update({ account_plan: accountPlan, commercial_status: 'active', entitlement_updated_at: new Date().toISOString() }).eq('id', accountId);
 }
 async function saveSubscription(accountId, plan, provider, providerId, status = 'pending') {
   const { data, error } = await supabase.from('tshow_subscriptions').upsert({ account_id: accountId, plan_id: plan.id, provider, provider_subscription_id: String(providerId), status }, { onConflict: 'account_id' }).select().single();
@@ -33,6 +38,7 @@ router.post('/mercadopago/bricks', requireSupabaseAuth, async (req, res) => {
   if (!response.ok) return res.status(400).json({ success: false, message: body.message || 'No se pudo procesar el pago.' });
   const { error: paymentError } = await supabase.from('tshow_payments').upsert({ account_id: req.user.id, provider: 'mercadopago_bricks', provider_payment_id: String(body.id), status: body.status || 'pending', amount_clp: Number(plan.amount_clp), raw_event: { status: body.status, status_detail: body.status_detail, plan_id: plan.id } }, { onConflict: 'provider,provider_payment_id' });
   if (paymentError) console.error('Payment record failed:', paymentError.message);
+  if (body.status === 'approved') await activateAccountPlan(req.user.id, plan);
   res.status(201).json({ success: true, paymentId: body.id, status: body.status, statusDetail: body.status_detail });
 });
 

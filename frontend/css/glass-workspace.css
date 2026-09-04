@@ -383,3 +383,114 @@ html,body{max-width:100%;overflow-x:hidden}
   .workspace-view[data-route="schedule"] .header-bar{overflow-x:auto}
   .workspace-view[data-route="schedule"] .header-bar .actions{flex-wrap:nowrap;overflow-x:auto}
 }
+
+/* Compact hierarchy and interaction feedback (2026-09). */
+:root {
+  --workspace-page-title: clamp(32px, 4vw, 52px);
+  --workspace-page-title-mobile: clamp(28px, 8vw, 40px);
+  --workspace-section-title: clamp(20px, 2.2vw, 30px);
+  --workspace-space: clamp(14px, 2vw, 24px);
+}
+
+.workspace-shell { padding-top: 78px; }
+.shell-page-head { padding-block: clamp(12px, 2vw, 24px) !important; margin-bottom: var(--workspace-space) !important; }
+.workspace-view .header-bar .brand-text h1 { font-size: clamp(20px, 2.2vw, 30px) !important; line-height: 1.08 !important; margin: 0 !important; }
+.workspace-view .panel-title > span:first-child { font-size: clamp(16px, 1.8vw, 22px); line-height: 1.2; overflow-wrap: anywhere; }
+.shell-page-head h1 { font-size: var(--workspace-page-title) !important; line-height: 1.02 !important; margin: 8px 0 12px !important; text-wrap: balance; }
+.shell-page-head p { max-width: 66ch; margin: 0; }
+.shell-hero .glass-panel { padding: clamp(22px, 3vw, 38px) !important; }
+.shell-hero h1 { font-size: clamp(38px, 5vw, 66px) !important; line-height: .98 !important; margin: 8px 0 16px !important; text-wrap: balance; }
+.shell-status-panel h2, .panel-title h2, .shell-projects h2 { font-size: var(--workspace-section-title) !important; line-height: 1.1 !important; text-wrap: balance; }
+.project-selector-head h1 { font-size: clamp(44px, 7vw, 78px) !important; line-height: .96 !important; }
+.shell-page-head h1, .shell-hero h1, .shell-status-panel h2, .project-selector-head h1, .project-card-copy h2, .now-next-card strong { overflow-wrap: anywhere; word-break: normal; }
+
+.workspace-nav { min-height: 62px !important; padding-block: 7px !important; }
+.workspace-nav-tabs a, .workspace-nav-account { min-height: 44px !important; display: inline-flex; align-items: center; }
+.workspace-nav-tabs a[aria-current="page"] { position: relative; background: rgba(184,215,255,.14); color: #f7f9ff; }
+.workspace-nav-tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; background: var(--glass-blue, #b8d7ff); }
+.workspace-nav-project { text-overflow: ellipsis; }
+.workspace-nav a:focus-visible, .workspace-nav button:focus-visible, .btn:focus-visible, .form-control:focus-visible { outline: 2px solid #b8d7ff; outline-offset: 2px; }
+
+.workspace-view[aria-busy="true"] { cursor: progress; }
+.workspace-view[aria-busy="true"]::before { content: ""; display: block; height: 3px; margin: -8px 0 12px; background: linear-gradient(90deg, transparent, #9fc9ff, #a78bfa, transparent); background-size: 220% 100%; animation: workspaceProgress 1.2s linear infinite; }
+.workspace-view[aria-busy="true"]::after { content: attr(data-loading-label); display: block; margin: -2px 0 12px; color: #aebfe0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.workspace-view .shell-message[data-status="loading"] { display: flex; align-items: center; gap: 10px; color: #c8d8f6; }
+.workspace-view .shell-message[data-status="loading"]::before { content: ""; width: 12px; height: 12px; border: 2px solid rgba(200,216,246,.28); border-top-color: #b8d7ff; border-radius: 50%; animation: workspaceSpin .8s linear infinite; }
+.btn[aria-busy="true"] { pointer-events: none; opacity: .7; }
+.btn[aria-busy="true"]::after { content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 8px; vertical-align: -2px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: workspaceSpin .8s linear infinite; }
+
+.shell-actions { gap: 12px !important; }
+.shell-message { margin-block: 12px; overflow-wrap: anywhere; }
+.panel-title { gap: 14px; }
+.timing-table th, .timing-table td { overflow-wrap: anywhere; }
+
+@keyframes workspaceProgress { to { background-position: -220% 0; } }
+@keyframes workspaceSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 700px) {
+  .workspace-shell { padding-top: 118px; margin-top: 10px; }
+  .shell-page-head h1, .workspace-view .shell-page-head h1 { font-size: var(--workspace-page-title-mobile) !important; line-height: 1.06 !important; }
+  .shell-hero h1 { font-size: clamp(34px, 10vw, 52px) !important; }
+  .project-selector-head h1 { font-size: clamp(40px, 13vw, 64px) !important; }
+  .shell-page-head { padding-block: 8px !important; }
+  .shell-page-head p { font-size: 14px; line-height: 1.45; }
+  .workspace-nav { padding-top: max(7px, env(safe-area-inset-top)); }
+  .workspace-nav-project { max-width: min(48vw, 320px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .workspace-nav-tabs a[aria-current="page"]::after { left: 8px; right: 8px; }
+  .panel-title { align-items: flex-start; flex-wrap: wrap; }
+  .shell-actions { width: 100%; }
+  .shell-actions .btn { flex: 1 1 auto; min-width: 0; }
+  .timing-table { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-view[aria-busy="true"]::before, .workspace-view .shell-message[data-status="loading"]::before, .btn[aria-busy="true"]::after { animation: none; }
+}
+
+/* Mobile schedule: keep operational fields compact and readable without zoom. */
+@media (max-width: 700px) {
+  .workspace-view[data-route="schedule"] .shell-page-head h1 {
+    font-size: clamp(34px, 10vw, 52px) !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+  .workspace-view[data-route="schedule"] .shell-page-head p {
+    max-width: 48ch;
+    overflow-wrap: anywhere;
+  }
+  .workspace-view[data-route="schedule"] .segment-card .grid-2,
+  .workspace-view[data-route="schedule"] .block-item .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .workspace-view[data-route="schedule"] .block-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .workspace-view[data-route="schedule"] .block-header > div[style*="flex: 1"] {
+    flex: 1 1 150px !important;
+    min-width: 0;
+    margin-inline: 0 !important;
+  }
+  .workspace-view[data-route="schedule"] .block-controls {
+    flex: 0 0 auto;
+  }
+  .workspace-view[data-route="schedule"] .block-item input,
+  .workspace-view[data-route="schedule"] .block-item select,
+  .workspace-view[data-route="schedule"] .segment-card input,
+  .workspace-view[data-route="schedule"] .segment-card select {
+    min-width: 0;
+    font-size: 14px;
+  }
+  .workspace-view[data-route="schedule"] .block-notes-fields {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .workspace-view[data-route="schedule"] .segment-card .grid-2,
+  .workspace-view[data-route="schedule"] .block-item .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+}

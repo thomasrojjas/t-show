@@ -848,3 +848,21 @@ body.live-body { background: #02040c; }
 @media (orientation:landscape) and (max-width:900px) {
   .live-header-actions { flex-wrap:nowrap; }.hero-timers-grid { grid-template-columns:2fr 1fr 1fr 1fr !important; }
 }
+/* Compact operational hierarchy and responsive readability (2026-09). */
+.live-body h1,
+.live-body .live-page-title { font-size: clamp(30px, 4vw, 56px); line-height: 1.02; text-wrap: balance; overflow-wrap: anywhere; }
+.live-body .active-hero-card h1,
+.live-body .active-hero-card .block-title { font-size: clamp(34px, 5vw, 68px); line-height: .98; text-wrap: balance; overflow-wrap: anywhere; }
+.live-body .live-header { min-height: 64px; padding-block: 8px; }
+.live-body .live-header .event-name { overflow-wrap: anywhere; }
+.live-body .live-table-container { max-width: 100%; overflow-x: auto; }
+@media (max-width: 700px) {
+  .live-body h1,
+  .live-body .live-page-title { font-size: clamp(28px, 8vw, 42px); }
+  .live-body .active-hero-card h1,
+  .live-body .active-hero-card .block-title { font-size: clamp(30px, 10vw, 48px); }
+  .live-body .live-header { padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-body *, .live-body *::before, .live-body *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
