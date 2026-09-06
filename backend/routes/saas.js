@@ -5,6 +5,7 @@ const { supabase } = require('../supabaseClient');
 const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = require('../middleware/supabaseAuth');
 const { deleteObject, duplicateProjectCover } = require('../r2');
 const { getEntitlement, PLAN_LIMITS } = require('../services/entitlements');
+const { resolveWritableOrganization } = require('../services/organizations');
 
 const router = express.Router();
 const passwordResetRequests = new Map();
@@ -90,7 +91,10 @@ router.post('/projects', requireSupabaseAuth, async (req, res) => {
   let identity;
   try { identity = cleanIdentity(req.body); } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
   const payload = cleanPayload({ ...req.body, ...identity });
-  const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, event_name: payload.eventName, payload }).select().single();
+  let organizationId;
+  try { organizationId = await resolveWritableOrganization(req.user.profile, req.body.organizationId); }
+  catch (error) { return res.status(error.status || 500).json({ success: false, message: error.message }); }
+  const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, organization_id: organizationId, event_name: payload.eventName, payload }).select().single();
   if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
   await audit(data.id, req.user.id, 'project.created');
   res.status(201).json({ success: true, data });
@@ -100,7 +104,7 @@ router.post('/projects/:id/duplicate', requireSupabaseAuth, async (req, res) => 
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede duplicar este proyecto.' });
   const payload = { ...granted.project.payload, eventName: `${granted.project.event_name} — Copia` };
-  const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, event_name: payload.eventName, payload }).select().single();
+  const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, organization_id: granted.project.organization_id || req.user.profile.default_organization_id, event_name: payload.eventName, payload }).select().single();
   if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
   if (granted.project.cover_key) {
     try {
@@ -123,8 +127,12 @@ router.patch('/projects/:id', requireSupabaseAuth, async (req, res) => {
   if (!granted) return res.status(403).json({ success: false, message: 'No puedes editar este proyecto.' });
   const payload = cleanPayload(req.body);
   if (!payload.eventName) return res.status(400).json({ success: false, message: 'El nombre del evento es requerido.' });
-  const { data, error } = await supabase.from('tshow_projects').update({ event_name: payload.eventName, payload }).eq('id', req.params.id).select().single();
+  const expectedVersion = req.body.documentVersion === undefined ? null : Number(req.body.documentVersion);
+  let query = supabase.from('tshow_projects').update({ event_name: payload.eventName, payload }).eq('id', req.params.id);
+  if (expectedVersion !== null && Number.isSafeInteger(expectedVersion)) query = query.eq('document_version', expectedVersion);
+  const { data, error } = await query.select().maybeSingle();
   if (error) return res.status(400).json({ success: false, message: error.message });
+  if (!data) return res.status(409).json({ success: false, code: 'VERSION_CONFLICT', message: 'El evento cambió en otro dispositivo. Recarga para revisar los cambios antes de guardar.' });
   await audit(data.id, req.user.id, 'project.updated');
   res.json({ success: true, data });
 });

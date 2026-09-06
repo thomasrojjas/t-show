@@ -35,11 +35,35 @@ router.get('/organizations', requireSupabaseAuth, async (req, res) => {
   if (error) return fail(res, 500, error.message);
   res.json({ success: true, data: (data || []).map(row => ({ ...row.tshow_organizations, role: row.role })) });
 });
+router.post('/organizations', requireSupabaseAuth, async (req, res) => {
+  const name = clean(req.body.name, 160);
+  const kind = ['municipal','producer','other'].includes(req.body.kind) ? req.body.kind : 'producer';
+  if (name.length < 2) return fail(res, 400, 'El nombre de la organización es obligatorio.');
+  const slugBase = clean(req.body.slug || name, 80).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = `${slugBase || 'organizacion'}-${crypto.randomBytes(3).toString('hex')}`;
+  const { data: organization, error } = await supabase.from('tshow_organizations').insert({
+    name, kind, slug, created_by: req.user.id, billing_owner_id: req.user.id, is_personal: false
+  }).select().single();
+  if (error) return fail(res, 400, error.message);
+  const membership = await supabase.from('tshow_organization_members').insert({ organization_id: organization.id, user_id: req.user.id, role: 'owner' });
+  if (membership.error) {
+    await supabase.from('tshow_organizations').delete().eq('id', organization.id);
+    return fail(res, 400, membership.error.message);
+  }
+  res.status(201).json({ success: true, data: { ...organization, role: 'owner' } });
+});
 async function orgAccess(req, id) {
   if (req.user.profile?.role === 'platform_admin') return true;
   const { data } = await supabase.from('tshow_organization_members').select('role').eq('organization_id', id).eq('user_id', req.user.id).maybeSingle();
   return Boolean(data);
 }
+router.get('/organizations/:id/members', requireSupabaseAuth, async (req, res) => {
+  if (!await orgAccess(req, req.params.id)) return fail(res, 403, 'No tienes acceso a esta organización.');
+  const { data, error } = await supabase.from('tshow_organization_members')
+    .select('role,created_at,profiles!tshow_organization_members_user_id_fkey(id,first_name,last_name,email)')
+    .eq('organization_id', req.params.id).order('created_at');
+  return error ? fail(res, 500, error.message) : res.json({ success: true, data: data || [] });
+});
 router.get('/organizations/:id/events', requireSupabaseAuth, async (req, res) => {
   if (!await orgAccess(req, req.params.id)) return fail(res, 403, 'No tienes acceso a esta organización.');
   const { data, error } = await supabase.from('tshow_projects').select('id,event_name,payload,owner_id,updated_at').eq('organization_id', req.params.id).is('deleted_at', null).order('updated_at', { ascending: false });
