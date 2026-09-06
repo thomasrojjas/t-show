@@ -72,7 +72,13 @@ La migración 014 materializa los bloques actuales y crea un punto de recuperaci
 - `GET /api/projects/:id/sync/conflicts`
 - `POST /api/projects/:id/sync/conflicts/:conflictId/resolve`
 
-## Siguiente fase de producto
+## Fase inmediata antes de continuar
+
+Antes de construir nuevas funciones se ejecutará la [Fase inmediata - Estabilización UX de Escaleta y Operación](./FASE_PRIORITARIA_ESTABILIZACION_UX.md), derivada del documento de modificaciones revisado. Incluye densidad de las vistas, tabla de Escaleta, reordenamiento, textos editables, impresión de alto contraste, Control de Escenas para tablet, Vista de Escenario, reloj ampliado y la corrección del control `Extender tiempo`.
+
+Esta fase tiene prioridad sobre el ERP visual y las integraciones porque corrige problemas de uso en las funciones que ya están disponibles.
+
+## Segunda fase de producto
 
 Queda por construir la interfaz visual de ERP, el almacenamiento IndexedDB del navegador, la cola de sincronización en el frontend, los conectores OAuth reales, exportadores contables por formato, plantillas sectoriales, onboarding y telemetría de producto. Estas piezas ya cuentan con una base de datos y contratos API compatibles.
 

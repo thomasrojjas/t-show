@@ -241,7 +241,7 @@ class App {
             const chip = document.createElement('div');
             chip.className = 'project-chip';
             chip.innerHTML = `
-                <span style="font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="app.loadProject('${id}')">${project.eventName}</span>
+                <span class="project-name" style="font-weight: 600; cursor: pointer; overflow-wrap: anywhere;" onclick="app.loadProject('${id}')">${project.eventName}</span>
                 <div style="display: flex; gap: 4px;">
                     <button class="btn-icon" title="Cargar proyecto" onclick="app.loadProject('${id}')">Cargar</button>
                     ${project.permission === 'owner' ? `<button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar proyecto" onclick="app.deleteProject('${id}')">Eliminar</button>` : ''}
@@ -253,7 +253,7 @@ class App {
 
     resetToDefaults() {
         if (confirm('¿Restablecer todos los campos a la configuración inicial por defecto?')) {
-            document.getElementById('eventName').value = 'Gran Concierto & Show Estelar';
+            document.getElementById('eventName').value = 'Gran Evento Estelar';
             document.getElementById('convocatoriaTime').value = '18:30';
             document.getElementById('convocatoriaDuration').value = '30';
             document.getElementById('doorsTime').value = '19:30';

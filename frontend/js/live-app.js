@@ -9,7 +9,7 @@ class LiveApp {
         this.projectData = null;
         this.projectName = ''; // Identificador interno, nunca se muestra en pantalla
         this.role = 'viewer'; // 'viewer' | 'director' | 'admin'
-        this.targetModalRole = 'director'; // 'director' | 'admin'
+        this.targetModalRole = 'director'; // compatibilidad interna; el rol real proviene de Supabase
         
 
         this.liveState = {
@@ -75,6 +75,9 @@ class LiveApp {
                 this.closeModal('reportModal');
             }
         });
+
+        const stageTimer = document.getElementById('heroTimerBoxMain');
+        if (stageTimer) stageTimer.addEventListener('dblclick', () => this.openStageConfidenceDisplay());
 
         // Load project from API / LocalStorage
         await this.loadProject();
@@ -147,7 +150,7 @@ class LiveApp {
         if (roleBadge) {
             roleBadge.className = `role-badge role-${this.role}`;
             if (this.role === 'admin') roleBadge.innerText = 'ADMINISTRADOR';
-            else if (this.role === 'director') roleBadge.innerText = 'DIRECTOR';
+            else if (this.role === 'director') roleBadge.innerText = 'CONTROL DE ESCENAS';
             else { roleBadge.innerText = 'OBSERVADOR'; roleBadge.style.display = 'inline-flex'; }
         }
 
@@ -421,7 +424,7 @@ class LiveApp {
 
         // 1. Title & Status
         const titleEl = document.getElementById('liveProjectTitle');
-        const displayName = this.projectData?.name || this.projectData?.payload?.name || this.projectData?.payload?.eventName || 'Evento activo';
+        const displayName = this.projectData?.payload?.eventName || this.projectData?.payload?.name || this.projectData?.eventName || this.projectData?.name || 'Evento activo';
         if (titleEl) titleEl.innerText = displayName;
 
         const isLive = snapshot.status === 'live';
@@ -486,11 +489,11 @@ class LiveApp {
 
             if (heroRemainingTimer && heroTimerLabel) {
                 if (snapshot.isOvertime) {
-                    heroTimerLabel.innerText = 'TIEMPO EN CONTRA ⛶';
+                    heroTimerLabel.innerText = 'TIEMPO EN CONTRA';
                     heroRemainingTimer.innerText = `+${LiveEngine.formatDurationSeconds(snapshot.overtimeSeconds)}`;
                     heroRemainingTimer.classList.add('is-overtime');
                 } else {
-                    heroTimerLabel.innerText = 'TIEMPO RESTANTE ⛶';
+                    heroTimerLabel.innerText = 'TIEMPO RESTANTE';
                     heroRemainingTimer.innerText = LiveEngine.formatDurationSeconds(snapshot.remainingSeconds);
                     heroRemainingTimer.classList.remove('is-overtime');
                     heroRemainingTimer.style.color = snapshot.alertLevel === 'red' ? '#ef4444' : (snapshot.alertLevel === 'yellow' ? '#f59e0b' : '#34d399');
@@ -547,7 +550,7 @@ class LiveApp {
                 heroTypeBadge.className = `hero-type-badge ${firstItem.badgeClass}`;
             }
             if (heroRemainingTimer && heroTimerLabel) {
-                heroTimerLabel.innerText = 'TIEMPO RESTANTE ⛶';
+                heroTimerLabel.innerText = 'TIEMPO RESTANTE · EN ESPERA';
                 heroRemainingTimer.innerText = firstItem ? LiveEngine.formatDurationSeconds(firstItem.duration * 60) : '00:00';
                 heroRemainingTimer.classList.remove('is-overtime');
                 heroRemainingTimer.style.color = '#38bdf8';

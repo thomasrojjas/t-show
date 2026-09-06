@@ -175,3 +175,20 @@
         font-family: 'Segoe UI', monospace;
     }
 }
+
+/* Plantilla oficial compacta para pauta impresa. */
+@media print {
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+  html,body { background:#fff!important; color:#000!important; min-height:0!important; }
+  body * { box-shadow:none!important; text-shadow:none!important; }
+  .print-header { display:block!important; color:#000!important; background:#fff!important; border-bottom:2px solid #000!important; }
+  .print-header h1,.print-header p { color:#000!important; }
+  .timing-table { table-layout:auto!important; width:100%!important; font-size:8.5pt!important; }
+  .timing-table th,.timing-table td { color:#000!important; background:#fff!important; padding:4px 6px!important; white-space:normal!important; overflow-wrap:anywhere!important; }
+  .timing-table th:first-child,.timing-table td:first-child { width:4ch!important; white-space:nowrap!important; }
+  .timing-table th:nth-child(4),.timing-table td:nth-child(4),.timing-table th:nth-child(5),.timing-table td:nth-child(5),.timing-table th:nth-child(6),.timing-table td:nth-child(6) { width:9ch!important; white-space:nowrap!important; }
+  .timing-table tr { break-inside:avoid; }
+  .metric-card { background:#fff!important; border:1px solid #000!important; border-radius:0!important; padding:4px!important; }
+  .metric-label,.metric-value { color:#000!important; }
+  .right-panel-print { break-inside:auto!important; }
+}

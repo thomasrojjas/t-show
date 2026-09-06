@@ -16,6 +16,14 @@ class BlocksManager {
         this.onChange();
     }
 
+    canEdit() {
+        return window.WorkspaceShell?.canEdit !== false;
+    }
+
+    canReorder() {
+        return window.WorkspaceShell?.canReorder !== false;
+    }
+
     getBlocks() {
         return this.blocks;
     }
@@ -57,6 +65,7 @@ class BlocksManager {
     }
 
     removeBlock(index) {
+        if (!this.canEdit()) return;
         if (index >= 0 && index < this.blocks.length) {
             this.blocks.splice(index, 1);
             this.render();
@@ -65,6 +74,7 @@ class BlocksManager {
     }
 
     moveBlock(index, direction) {
+        if (!this.canEdit() || !this.canReorder()) return;
         const newIndex = index + direction;
         if (newIndex >= 0 && newIndex < this.blocks.length) {
             const temp = this.blocks[index];
@@ -76,6 +86,7 @@ class BlocksManager {
     }
 
     updateBlock(index, field, value) {
+        if (!this.canEdit()) return;
         if (!this.blocks[index]) return;
 
         if (field === 'title' || field === 'type' || field === 'notes' || field === 'animator_script') {
@@ -105,7 +116,9 @@ class BlocksManager {
         this.blocks.forEach((block, index) => {
             const item = document.createElement('div');
             item.className = 'block-item';
-            item.draggable = true;
+            const editable = this.canEdit();
+            const reorderable = editable && this.canReorder();
+            item.draggable = reorderable;
             item.setAttribute('data-index', index);
 
             const isShow = block.type === 'SHOW';
@@ -117,7 +130,7 @@ class BlocksManager {
                         <span>#${index + 1}</span>
                     </div>
                     <div style="flex: 1; margin: 0 8px;">
-                        <select class="form-control" style="padding: 4px 8px; font-size: 11px; font-weight: bold;" onchange="app.blocksManager.updateBlock(${index}, 'type', this.value)">
+                        <select class="form-control" ${editable ? '' : 'disabled'} style="padding: 4px 8px; font-size: 11px; font-weight: bold;" onchange="app.blocksManager.updateBlock(${index}, 'type', this.value)">
                             <option value="SHOW" ${block.type === 'SHOW' ? 'selected' : ''}>SHOW</option>
                             <option value="ANIMACIÓN" ${block.type === 'ANIMACIÓN' ? 'selected' : ''}>ANIMACIÓN</option>
                             <option value="PREPARACIÓN" ${block.type === 'PREPARACIÓN' ? 'selected' : ''}>PREPARACIÓN</option>
@@ -125,25 +138,25 @@ class BlocksManager {
                         </select>
                     </div>
                     <div class="block-controls">
-                        <button class="btn-icon" title="Mover arriba" onclick="app.blocksManager.moveBlock(${index}, -1)">▲</button>
-                        <button class="btn-icon" title="Mover abajo" onclick="app.blocksManager.moveBlock(${index}, 1)">▼</button>
-                        <button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar bloque" onclick="app.blocksManager.removeBlock(${index})">✕</button>
+                        ${reorderable ? `<button class="btn-icon" title="Subir bloque" aria-label="Subir bloque" onclick="app.blocksManager.moveBlock(${index}, -1)">↑</button>
+                        <button class="btn-icon" title="Bajar bloque" aria-label="Bajar bloque" onclick="app.blocksManager.moveBlock(${index}, 1)">↓</button>
+                        <button class="btn-icon" style="color: var(--accent-danger);" title="Eliminar bloque" aria-label="Eliminar bloque" onclick="app.blocksManager.removeBlock(${index})">×</button>` : ''}
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" class="form-control" value="${this.escapeHtml(block.title || '')}" oninput="app.blocksManager.updateBlock(${index}, 'title', this.value)" placeholder="Descripción o Nombre del Show">
+                    <input type="text" class="form-control" ${editable ? '' : 'readonly'} value="${this.escapeHtml(block.title || '')}" oninput="app.blocksManager.updateBlock(${index}, 'title', this.value)" placeholder="Descripción o nombre del evento">
                 </div>
 
                 <div class="${isShow ? 'grid-2' : ''}">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Duración (min)</label>
-                        <input type="number" class="form-control" value="${block.duration || 0}" min="1" oninput="app.blocksManager.updateBlock(${index}, 'duration', this.value)">
+                        <input type="number" class="form-control" ${editable ? '' : 'readonly'} value="${block.duration || 0}" min="1" oninput="app.blocksManager.updateBlock(${index}, 'duration', this.value)">
                     </div>
                     ${isShow ? `
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Bis / Encore (min)</label>
-                        <input type="number" class="form-control" value="${block.bis || 0}" min="0" oninput="app.blocksManager.updateBlock(${index}, 'bis', this.value)">
+                        <input type="number" class="form-control" ${editable ? '' : 'readonly'} value="${block.bis || 0}" min="0" oninput="app.blocksManager.updateBlock(${index}, 'bis', this.value)">
                     </div>
                     ` : ''}
                 </div>
@@ -151,10 +164,10 @@ class BlocksManager {
                     <summary>Notas y guion del animador</summary>
                     <div class="block-notes-fields">
                         <label class="form-label">Notas operativas
-                            <textarea class="form-control" maxlength="4000" rows="2" oninput="app.blocksManager.updateBlock(${index}, 'notes', this.value)" placeholder="Indicaciones para producción, técnica o dirección">${this.escapeHtml(block.notes || '')}</textarea>
+                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="4000" rows="2" oninput="app.blocksManager.updateBlock(${index}, 'notes', this.value)" placeholder="Indicaciones para producción, técnica o dirección">${this.escapeHtml(block.notes || '')}</textarea>
                         </label>
                         <label class="form-label">Guion del animador
-                            <textarea class="form-control" maxlength="8000" rows="3" oninput="app.blocksManager.updateBlock(${index}, 'animator_script', this.value)" placeholder="Texto que debe decir el animador">${this.escapeHtml(block.animator_script || '')}</textarea>
+                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="8000" rows="3" oninput="app.blocksManager.updateBlock(${index}, 'animator_script', this.value)" placeholder="Texto que debe decir el animador">${this.escapeHtml(block.animator_script || '')}</textarea>
                         </label>
                     </div>
                 </details>
@@ -162,6 +175,7 @@ class BlocksManager {
 
             // Drag and drop listeners
             item.addEventListener('dragstart', (e) => {
+                if (!reorderable) { e.preventDefault(); return; }
                 this.draggedIndex = index;
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
@@ -179,6 +193,7 @@ class BlocksManager {
 
             item.addEventListener('drop', (e) => {
                 e.preventDefault();
+                if (!reorderable) return;
                 if (this.draggedIndex !== null && this.draggedIndex !== index) {
                     const moved = this.blocks.splice(this.draggedIndex, 1)[0];
                     this.blocks.splice(index, 0, moved);

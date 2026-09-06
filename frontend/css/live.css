@@ -289,7 +289,7 @@ body.live-body {
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
     max-width: 550px;
 }
 
@@ -406,7 +406,7 @@ body.live-body {
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
     max-width: 65vw;
 }
 
@@ -481,7 +481,7 @@ body.live-body {
     color: #38bdf8;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
     max-width: 70vw;
 }
 
@@ -865,4 +865,35 @@ body.live-body { background: #02040c; }
 }
 @media (prefers-reduced-motion: reduce) {
   .live-body *, .live-body *::before, .live-body *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* Fase prioritaria: consola legible, sin truncamientos ni capas ocultas. */
+.live-body{overflow-x:hidden;overflow-y:auto}
+.live-header{z-index:100;min-height:64px}
+.live-brand-copy,.live-brand-copy h1{min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.live-body *{text-overflow:clip}
+.live-brand-copy h1{line-height:1.15}
+.live-table-container{position:relative;z-index:2;overflow-x:auto;overflow-y:visible}
+.live-table{table-layout:auto;min-width:760px}
+.live-table th:first-child,.live-table td:first-child{min-width:4ch;white-space:nowrap}
+.live-table th:nth-child(4),.live-table td:nth-child(4),.live-table th:nth-child(5),.live-table td:nth-child(5),.live-table th:nth-child(6),.live-table td:nth-child(6){min-width:8ch;white-space:nowrap}
+.live-table td:nth-child(3){min-width:22ch;white-space:normal;overflow-wrap:anywhere}
+.extend-menu-container{position:relative;z-index:300}
+.extend-dropdown{z-index:1000!important;max-width:min(92vw,280px);max-height:calc(100dvh - 100px);overflow:auto}
+.stage-confidence-display{z-index:10000!important;touch-action:manipulation}
+.stage-conf-title,.stage-conf-next-title{overflow-wrap:anywhere;white-space:normal;text-overflow:clip}
+.stage-confidence-display::after{content:'T-Show desarrollado por BaseAndes.com';position:absolute;right:24px;bottom:18px;color:rgba(220,230,250,.58);font-size:11px;letter-spacing:.08em}
+@media (min-width:768px) and (max-width:1100px) and (orientation:landscape){
+  .live-body{height:100dvh;overflow:hidden}
+  .live-header{padding:8px 12px}
+  .admin-toolbar,.director-toolbar{padding:8px 12px}
+  .active-hero-card{padding:14px 18px}
+  .hero-timers-grid{grid-template-columns:2fr 1fr 1fr 1fr!important}
+  .timer-box-main-value{font-size:clamp(44px,7vw,76px)}
+  .live-table-container{max-height:42dvh;overflow:auto}
+}
+@media (max-width:700px){
+  .live-brand-copy h1{max-width:none}
+  .live-table{min-width:720px}
+  .stage-confidence-display::after{right:12px;bottom:10px;font-size:9px}
 }
