@@ -159,7 +159,20 @@ router.patch('/projects/:id/identity', requireSupabaseAuth, async (req, res) => 
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede editar la identidad.' });
   let identity;
-  try { identity = cleanIdentity(req.body); } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+  try {
+    // Identity updates are partial (for example, changing only the theme).
+    // Reuse the persisted values so legacy payloads are not accidentally
+    // replaced with defaults or rejected by validation.
+    const existing = granted.project.payload || {};
+    identity = cleanIdentity({
+      eventName: req.body.eventName ?? granted.project.event_name ?? existing.eventName,
+      projectType: req.body.projectType ?? existing.projectType,
+      eventDate: req.body.eventDate ?? existing.eventDate,
+      location: req.body.location ?? existing.location,
+      accentColor: req.body.accentColor ?? existing.accentColor,
+      visualTheme: req.body.visualTheme ?? existing.visualTheme
+    });
+  } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
   const coverKey = req.body.coverKey === null ? null : String(req.body.coverKey || granted.project.cover_key || '');
   if (coverKey && !coverKey.startsWith(`projects/${req.params.id}/`)) return res.status(400).json({ success: false, message: 'La portada no pertenece al proyecto.' });
   const payload = { ...(granted.project.payload || {}), ...identity };
