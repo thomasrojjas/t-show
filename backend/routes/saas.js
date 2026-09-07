@@ -28,16 +28,18 @@ const validPhone = phone => /^\+569[0-9]{8}$/.test(String(phone || '').replace(/
 const cleanPayload = body => ({ ...body, eventName: String(body.eventName || '').trim() });
 const projectTypes = new Set(['concert', 'festival', 'corporate', 'ceremony', 'broadcast', 'other']);
 const accentColors = new Set(['blue', 'violet', 'cyan', 'green', 'amber', 'rose']);
+const visualThemes = new Set(['nocturne', 'violet', 'cobalt', 'ember']);
 const cleanIdentity = body => {
   const eventName = String(body.eventName || '').trim();
   const projectType = projectTypes.has(body.projectType) ? body.projectType : 'other';
   const eventDate = String(body.eventDate || '').trim();
   const location = String(body.location || '').trim();
   const accentColor = accentColors.has(body.accentColor) ? body.accentColor : 'blue';
+  const visualTheme = visualThemes.has(body.visualTheme) ? body.visualTheme : 'nocturne';
   if (!eventName || eventName.length > 180) throw new Error('El nombre del proyecto es inválido.');
   if (eventDate && (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate) || Number.isNaN(Date.parse(`${eventDate}T00:00:00Z`)))) throw new Error('La fecha del evento es inválida.');
   if (location.length > 160) throw new Error('La ubicación no puede superar 160 caracteres.');
-  return { eventName, projectType, eventDate, location, accentColor };
+  return { eventName, projectType, eventDate, location, accentColor, visualTheme };
 };
 
 async function access(projectId, userId, edit = false) {

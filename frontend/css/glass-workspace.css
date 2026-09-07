@@ -519,3 +519,35 @@ html,body{max-width:100%;overflow-x:hidden}
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Curated workspace themes.  Scoped to authenticated pages so the public
+   landing keeps its own art direction. */
+.workspace-surface {
+  --workspace-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  --workspace-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --workspace-glow-a: rgba(70, 110, 210, .16);
+  --workspace-glow-b: rgba(120, 70, 220, .14);
+  font-family: var(--workspace-body);
+  background:
+    radial-gradient(70% 80% at 8% 12%, var(--workspace-glow-a), transparent 68%),
+    radial-gradient(65% 75% at 92% 18%, var(--workspace-glow-b), transparent 70%),
+    #03050d;
+}
+.workspace-surface h1,
+.workspace-surface h2,
+.workspace-surface h3,
+.workspace-surface .workspace-nav-brand { font-family: var(--workspace-display); }
+.workspace-surface[data-visual-theme="violet"] { --workspace-glow-a: rgba(90, 80, 220, .22); --workspace-glow-b: rgba(170, 70, 240, .18); --project-accent: #b49bff; }
+.workspace-surface[data-visual-theme="cobalt"] { --workspace-glow-a: rgba(30, 120, 245, .22); --workspace-glow-b: rgba(25, 210, 235, .12); --project-accent: #79b8ff; }
+.workspace-surface[data-visual-theme="ember"] { --workspace-glow-a: rgba(180, 80, 30, .16); --workspace-glow-b: rgba(240, 165, 45, .14); --project-accent: #f3b35b; }
+.workspace-surface .glass-panel,
+.workspace-surface .workspace-nav { background-color: color-mix(in srgb, #090d1d 78%, transparent); }
+.workspace-surface .theme-control-group { grid-column: 1 / -1; max-width: 720px; }
+.workspace-surface .theme-control-group small { display:block; margin-top:8px; line-height:1.45; }
+@supports not (background: color-mix(in srgb, #000 50%, transparent)) {
+  .workspace-surface .glass-panel,
+  .workspace-surface .workspace-nav { background-color: rgba(9, 13, 29, .82); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-surface { background-attachment: initial; }
+}
