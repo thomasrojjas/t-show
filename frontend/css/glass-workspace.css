@@ -551,3 +551,122 @@ html,body{max-width:100%;overflow-x:hidden}
 @media (prefers-reduced-motion: reduce) {
   .workspace-surface { background-attachment: initial; }
 }
+
+/* Full visual themes: each preset changes the complete authenticated workspace,
+   while the public landing keeps its own identity. */
+.workspace-surface[data-visual-theme="nocturne"] {
+  --theme-bg: #03050d;
+  --theme-surface: rgba(10, 14, 29, .78);
+  --theme-surface-strong: rgba(13, 18, 38, .9);
+  --theme-border: rgba(176, 204, 255, .22);
+  --theme-text: #f5f7ff;
+  --theme-muted: #aeb7c9;
+  --theme-accent: #a8c9ff;
+  --theme-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  --theme-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+}
+.workspace-surface[data-visual-theme="violet"] {
+  --theme-bg: #0a0614;
+  --theme-surface: rgba(27, 14, 50, .76);
+  --theme-surface-strong: rgba(39, 20, 67, .9);
+  --theme-border: rgba(211, 181, 255, .28);
+  --theme-text: #fff8ff;
+  --theme-muted: #c9b9d9;
+  --theme-accent: #d1a7ff;
+  --theme-display: Georgia, "Times New Roman", serif;
+  --theme-body: "Trebuchet MS", Arial, sans-serif;
+}
+.workspace-surface[data-visual-theme="cobalt"] {
+  --theme-bg: #03101b;
+  --theme-surface: rgba(5, 31, 53, .78);
+  --theme-surface-strong: rgba(7, 43, 72, .92);
+  --theme-border: rgba(101, 215, 255, .3);
+  --theme-text: #edfbff;
+  --theme-muted: #9fc4d1;
+  --theme-accent: #55d7ff;
+  --theme-display: "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+  --theme-body: "Segoe UI", Arial, sans-serif;
+}
+.workspace-surface[data-visual-theme="ember"] {
+  --theme-bg: #130907;
+  --theme-surface: rgba(39, 19, 15, .78);
+  --theme-surface-strong: rgba(57, 26, 18, .92);
+  --theme-border: rgba(255, 190, 126, .28);
+  --theme-text: #fff8f0;
+  --theme-muted: #d2b6a6;
+  --theme-accent: #ffbf7b;
+  --theme-display: "Avenir Next", "Century Gothic", sans-serif;
+  --theme-body: "Avenir Next", "Segoe UI", sans-serif;
+}
+.workspace-surface[data-visual-theme] {
+  background: var(--theme-bg) !important;
+  color: var(--theme-text);
+  font-family: var(--theme-body);
+}
+.workspace-surface[data-visual-theme] .ambient-stage {
+  background: radial-gradient(75% 90% at 8% 8%, color-mix(in srgb, var(--theme-accent) 24%, transparent), transparent 65%), var(--theme-bg);
+}
+.workspace-surface[data-visual-theme] .ambient-stage::before,
+.workspace-surface[data-visual-theme] .ambient-stage::after { opacity: .4; }
+.workspace-surface[data-visual-theme] .glass-panel,
+.workspace-surface[data-visual-theme] .panel,
+.workspace-surface[data-visual-theme] .header-bar,
+.workspace-surface[data-visual-theme] .metric-card,
+.workspace-surface[data-visual-theme] .now-next-strip {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text);
+}
+.workspace-surface[data-visual-theme] .workspace-nav {
+  background: color-mix(in srgb, var(--theme-surface-strong) 86%, transparent) !important;
+  border-color: var(--theme-border) !important;
+}
+.workspace-surface[data-visual-theme] h1,
+.workspace-surface[data-visual-theme] h2,
+.workspace-surface[data-visual-theme] h3,
+.workspace-surface[data-visual-theme] .workspace-nav-brand,
+.workspace-surface[data-visual-theme] .project-card-copy h2 {
+  font-family: var(--theme-display);
+  color: var(--theme-text);
+}
+.workspace-surface[data-visual-theme] p,
+.workspace-surface[data-visual-theme] small,
+.workspace-surface[data-visual-theme] .shell-muted,
+.workspace-surface[data-visual-theme] .member-date { color: var(--theme-muted); }
+.workspace-surface[data-visual-theme] .shell-eyebrow,
+.workspace-surface[data-visual-theme] .summary-identity strong,
+.workspace-surface[data-visual-theme] .workspace-nav-tabs a[aria-current="page"] { color: var(--theme-accent); }
+.workspace-surface[data-visual-theme] .form-control,
+.workspace-surface[data-visual-theme] select,
+.workspace-surface[data-visual-theme] textarea,
+.workspace-surface[data-visual-theme] input {
+  background: color-mix(in srgb, var(--theme-bg) 72%, var(--theme-surface-strong)) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+}
+.workspace-surface[data-visual-theme] .btn-primary,
+.workspace-surface[data-visual-theme] .shell-actions .btn-primary {
+  background: var(--theme-accent) !important;
+  border-color: var(--theme-accent) !important;
+  color: var(--theme-bg) !important;
+}
+.workspace-surface[data-visual-theme] .btn-secondary,
+.workspace-surface[data-visual-theme] .btn-icon,
+.workspace-surface[data-visual-theme] .summary-link {
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+  background: color-mix(in srgb, var(--theme-surface-strong) 68%, transparent) !important;
+}
+.workspace-surface[data-visual-theme] .timing-table th,
+.workspace-surface[data-visual-theme] .timing-table td { background: color-mix(in srgb, var(--theme-surface-strong) 76%, transparent) !important; border-color: var(--theme-border) !important; }
+.workspace-surface[data-visual-theme] .shell-project-row:hover,
+.workspace-surface[data-visual-theme] .workspace-nav-tabs a:hover { border-color: var(--theme-accent); }
+.workspace-surface[data-visual-theme] .project-card-art,
+.workspace-surface[data-visual-theme] .project-preview { border-color: var(--theme-border); }
+@supports not (background: color-mix(in srgb, #000 50%, transparent)) {
+  .workspace-surface[data-visual-theme] .workspace-nav { background: var(--theme-surface-strong) !important; }
+  .workspace-surface[data-visual-theme] .form-control,
+  .workspace-surface[data-visual-theme] select,
+  .workspace-surface[data-visual-theme] textarea,
+  .workspace-surface[data-visual-theme] input { background: rgba(3, 5, 13, .86) !important; }
+}
