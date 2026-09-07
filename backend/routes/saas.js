@@ -41,6 +41,10 @@ const cleanIdentity = body => {
   if (location.length > 160) throw new Error('La ubicación no puede superar 160 caracteres.');
   return { eventName, projectType, eventDate, location, accentColor, visualTheme };
 };
+const legacyDate = value => {
+  const date = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) ? date : '';
+};
 
 async function access(projectId, userId, edit = false) {
   const { data: project } = await supabase.from('tshow_projects').select('*').eq('id', projectId).maybeSingle();
@@ -167,7 +171,9 @@ router.patch('/projects/:id/identity', requireSupabaseAuth, async (req, res) => 
     identity = cleanIdentity({
       eventName: req.body.eventName ?? granted.project.event_name ?? existing.eventName,
       projectType: req.body.projectType ?? existing.projectType,
-      eventDate: req.body.eventDate ?? existing.eventDate,
+      // Old projects may contain localized dates (for example "28 ago 2026").
+      // Keep those records editable without making a theme-only update fail.
+      eventDate: legacyDate(req.body.eventDate ?? existing.eventDate),
       location: req.body.location ?? existing.location,
       accentColor: req.body.accentColor ?? existing.accentColor,
       visualTheme: req.body.visualTheme ?? existing.visualTheme
@@ -177,7 +183,9 @@ router.patch('/projects/:id/identity', requireSupabaseAuth, async (req, res) => 
   if (coverKey && !coverKey.startsWith(`projects/${req.params.id}/`)) return res.status(400).json({ success: false, message: 'La portada no pertenece al proyecto.' });
   const payload = { ...(granted.project.payload || {}), ...identity };
   const previousCover = granted.project.cover_key;
-  const { data, error } = await supabase.from('tshow_projects').update({ event_name: identity.eventName, payload, cover_key: coverKey || null }).eq('id', req.params.id).select().single();
+  const update = { event_name: identity.eventName, payload };
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'coverKey')) update.cover_key = coverKey || null;
+  const { data, error } = await supabase.from('tshow_projects').update(update).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ success: false, message: error.message });
   if (previousCover && previousCover !== coverKey) deleteObject(previousCover).catch(storageError => console.error('Old project cover cleanup failed:', storageError.message));
   await audit(data.id, req.user.id, 'project.identity_updated');
