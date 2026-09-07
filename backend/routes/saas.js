@@ -94,6 +94,14 @@ router.post('/projects', requireSupabaseAuth, async (req, res) => {
   let organizationId;
   try { organizationId = await resolveWritableOrganization(req.user.profile, req.body.organizationId); }
   catch (error) { return res.status(error.status || 500).json({ success: false, message: error.message }); }
+  // Fail early with a useful response; the database trigger remains the
+  // authoritative guard for concurrent requests.
+  try {
+    const entitlement = await getEntitlement(req.user.id, req.user.profile?.role);
+    if (entitlement.limit !== null && entitlement.remaining <= 0) return res.status(409).json({ success: false, code: 'PROJECT_QUOTA_EXCEEDED', message: 'Tu cuenta ha alcanzado el límite de proyectos de su plan.', meta: entitlement });
+  } catch (_error) {
+    return res.status(500).json({ success: false, message: 'No se pudo validar el cupo de proyectos.' });
+  }
   const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, organization_id: organizationId, event_name: payload.eventName, payload }).select().single();
   if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
   await audit(data.id, req.user.id, 'project.created');
@@ -103,6 +111,14 @@ router.post('/projects', requireSupabaseAuth, async (req, res) => {
 router.post('/projects/:id/duplicate', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede duplicar este proyecto.' });
+  try {
+    const ownerId = granted.project.owner_id;
+    const { data: ownerProfile } = await supabase.from('profiles').select('role').eq('id', ownerId).maybeSingle();
+    const entitlement = await getEntitlement(ownerId, ownerProfile?.role);
+    if (entitlement.limit !== null && entitlement.remaining <= 0) return res.status(409).json({ success: false, code: 'PROJECT_QUOTA_EXCEEDED', message: 'Tu cuenta ha alcanzado el límite de proyectos de su plan.', meta: entitlement });
+  } catch (_error) {
+    return res.status(500).json({ success: false, message: 'No se pudo validar el cupo de proyectos.' });
+  }
   const payload = { ...granted.project.payload, eventName: `${granted.project.event_name} — Copia` };
   const { data, error } = await supabase.from('tshow_projects').insert({ owner_id: req.user.id, organization_id: granted.project.organization_id || req.user.profile.default_organization_id, event_name: payload.eventName, payload }).select().single();
   if (error) return res.status(error.code === 'P0001' || error.code === '23514' ? 409 : 400).json({ success: false, message: error.message });
