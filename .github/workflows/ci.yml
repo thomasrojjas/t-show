@@ -1,0 +1,42 @@
+name: T-Show quality gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Backend tests
+        run: npm test
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          find . ../frontend/js -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Validate deployment manifest
+        working-directory: .
+        run: node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8'))"
+      - name: Reject obvious committed secrets
+        working-directory: .
+        shell: bash
+        run: |
+          if git grep -nE '(service_role|MP_ACCESS_TOKEN|FLOW_SECRET_KEY|RESEND_API_KEY)=[A-Za-z0-9_-]{12,}' -- ':!docs/**'; then
+            echo 'Potential secret committed to source.' >&2
+            exit 1
+          fi
+

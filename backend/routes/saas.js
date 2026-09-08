@@ -6,6 +6,7 @@ const { requireAuthenticatedUser, requireSupabaseAuth, requirePlatformAdmin } = 
 const { deleteObject, duplicateProjectCover } = require('../r2');
 const { getEntitlement, PLAN_LIMITS } = require('../services/entitlements');
 const { resolveWritableOrganization } = require('../services/organizations');
+const { ADVANCED_FEATURES } = require('../services/features');
 
 const router = express.Router();
 const passwordResetRequests = new Map();
@@ -63,6 +64,22 @@ async function accessForRequest(projectId, req, edit = false) {
 }
 async function audit(projectId, actorId, action, metadata = {}) {
   await supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
+}
+
+async function sendInvitationEmail({ token, email, projectName, role }) {
+  if (!process.env.RESEND_API_KEY) return { status: 'not_configured', error: null };
+  const baseUrl = process.env.FRONTEND_URL || String(process.env.CORS_ORIGIN || '').split(',')[0];
+  const inviteUrl = `${baseUrl}/invite.html?token=${encodeURIComponent(token)}`;
+  const safeProject = String(projectName || 'este evento').replace(/[<>&"]/g, '');
+  const roleLabel = role === 'editor' ? 'Director' : 'Observador';
+  const html = `<!doctype html><html><body style="margin:0;background:#050609;color:#f5f5f2;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050609"><tr><td align="center" style="padding:48px 20px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #272a32;background:#080b13"><tr><td style="padding:36px"><p style="margin:0 0 52px;font-size:13px;font-weight:800;letter-spacing:.2em">T-SHOW</p><p style="margin:0 0 12px;color:#b8d7ff;font-size:11px;font-weight:700;letter-spacing:.16em">INVITACIÓN DE EQUIPO</p><h1 style="margin:0 0 20px;font-size:42px;line-height:1">Tu lugar en el evento.</h1><p style="margin:0 0 30px;color:#b8bac2;font-size:16px;line-height:1.6">Te invitaron a colaborar en <strong style="color:#fff">${safeProject}</strong> como ${roleLabel}.</p><a href="${inviteUrl}" style="display:inline-block;padding:15px 22px;background:#f5f5f2;color:#050609;text-decoration:none;font-weight:700">Aceptar invitación</a><p style="margin:30px 0 0;color:#777d89;font-size:12px;line-height:1.5">Este enlace vence en 7 días. Si no esperabas esta invitación, puedes ignorar el correo.</p></td></tr></table></td></tr></table></body></html>`;
+  try {
+    const response = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: `Invitación a ${safeProject} en T-Show`, html }) });
+    if (response.ok) return { status: 'sent', error: null };
+    return { status: 'failed', error: (await response.text()).slice(0, 500) };
+  } catch (error) {
+    return { status: 'failed', error: String(error.message).slice(0, 500) };
+  }
 }
 
 router.post('/profile', requireAuthenticatedUser, async (req, res) => {
@@ -136,6 +153,17 @@ router.post('/projects/:id/duplicate', requireSupabaseAuth, async (req, res) => 
   }
   await audit(data.id, req.user.id, 'project.duplicated', { sourceProjectId: req.params.id });
   res.status(201).json({ success: true, data });
+});
+
+router.post('/projects/:id/restore', requireSupabaseAuth, async (req, res) => {
+  const { data: deleted } = await supabase.from('tshow_projects').select('owner_id').eq('id', req.params.id).not('deleted_at', 'is', null).maybeSingle();
+  if (!deleted || (deleted.owner_id !== req.user.id && req.user.profile?.role !== 'platform_admin')) return res.status(404).json({ success: false, code: 'PROJECT_NOT_FOUND', message: 'No pudimos encontrar este evento.' });
+  const { data, error } = await supabase.rpc('tshow_restore_project_service', { target_project: req.params.id, actor: req.user.id });
+  if (error) {
+    const quota = String(error.message).includes('PROJECT_QUOTA_EXCEEDED');
+    return res.status(quota ? 409 : 400).json({ success: false, code: quota ? 'PROJECT_QUOTA_EXCEEDED' : 'PROJECT_RESTORE_FAILED', message: quota ? 'Tu cuenta alcanzó el límite de proyectos de su plan.' : 'No pudimos restaurar este evento.' });
+  }
+  res.json({ success: true, data: Array.isArray(data) ? data[0] : data });
 });
 
 router.get('/projects/:id', requireSupabaseAuth, async (req, res) => {
@@ -275,6 +303,9 @@ router.get('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =>
 router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req, true);
   if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede invitar.' });
+  const invitationWindow = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentInvites } = await supabase.from('tshow_invitations').select('id', { count: 'exact', head: true }).eq('invited_by', req.user.id).gte('created_at', invitationWindow);
+  if (Number(recentInvites || 0) >= 10) return res.status(429).json({ success: false, code: 'INVITATION_RATE_LIMIT', message: 'Alcanzaste el límite de invitaciones por hora. Intenta nuevamente más tarde.' });
   const email = String(req.body.email || '').trim().toLowerCase(); const role = req.body.role === 'editor' ? 'editor' : 'viewer';
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, message: 'Correo inválido.' });
   const { data: memberProfile } = await supabase.from('profiles').select('id').eq('email', email).maybeSingle();
@@ -293,7 +324,7 @@ router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =
   if (process.env.RESEND_API_KEY) {
     const inviteUrl = `${process.env.FRONTEND_URL || process.env.CORS_ORIGIN}/invite.html?token=${encodeURIComponent(token)}`;
     const projectName = granted.project.event_name.replace(/[<>&"]/g, '');
-    const html = `<!doctype html><html><body style="margin:0;background:#050609;color:#f5f5f2;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050609"><tr><td align="center" style="padding:48px 20px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #272a32;background:#080b13"><tr><td style="padding:36px"><p style="margin:0 0 52px;font-size:13px;font-weight:800;letter-spacing:.2em">T-SHOW</p><p style="margin:0 0 12px;color:#b8d7ff;font-size:11px;font-weight:700;letter-spacing:.16em">INVITACIÓN DE EQUIPO</p><h1 style="margin:0 0 20px;font-size:42px;line-height:1;letter-spacing:-.04em">Tu lugar en el show.</h1><p style="margin:0 0 30px;color:#b8bac2;font-size:16px;line-height:1.6">Te invitaron a colaborar en <strong style="color:#fff">${projectName}</strong> como ${role === 'editor' ? 'Director' : 'Observador'}.</p><a href="${inviteUrl}" style="display:inline-block;padding:15px 22px;background:#f5f5f2;color:#050609;text-decoration:none;font-weight:700">Aceptar invitación</a><p style="margin:30px 0 0;color:#777d89;font-size:12px;line-height:1.5">Este enlace vence en 7 días. Si no esperabas esta invitación, puedes ignorar el correo.</p></td></tr></table></td></tr></table></body></html>`;
+    const html = `<!doctype html><html><body style="margin:0;background:#050609;color:#f5f5f2;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050609"><tr><td align="center" style="padding:48px 20px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #272a32;background:#080b13"><tr><td style="padding:36px"><p style="margin:0 0 52px;font-size:13px;font-weight:800;letter-spacing:.2em">T-SHOW</p><p style="margin:0 0 12px;color:#b8d7ff;font-size:11px;font-weight:700;letter-spacing:.16em">INVITACIÓN DE EQUIPO</p><h1 style="margin:0 0 20px;font-size:42px;line-height:1;letter-spacing:-.04em">Tu lugar en el evento.</h1><p style="margin:0 0 30px;color:#b8bac2;font-size:16px;line-height:1.6">Te invitaron a colaborar en <strong style="color:#fff">${projectName}</strong> como ${role === 'editor' ? 'Director' : 'Observador'}.</p><a href="${inviteUrl}" style="display:inline-block;padding:15px 22px;background:#f5f5f2;color:#050609;text-decoration:none;font-weight:700">Aceptar invitación</a><p style="margin:30px 0 0;color:#777d89;font-size:12px;line-height:1.5">Este enlace vence en 7 días. Si no esperabas esta invitación, puedes ignorar el correo.</p></td></tr></table></td></tr></table></body></html>`;
     try {
       const emailResponse = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM || 'T-Show <noreply@t-show.site>', to: [email], subject: `Invitación a ${projectName} en T-Show`, html }) });
       deliveryStatus = emailResponse.ok ? 'sent' : 'failed';
@@ -303,9 +334,36 @@ router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =
       console.error('Invitation email failed:', error.message);
     }
   }
-  await supabase.from('tshow_invitations').update({ delivery_status: deliveryStatus }).eq('id', data.id);
+  await supabase.from('tshow_invitations').update({ delivery_status: deliveryStatus, delivery_error: deliveryStatus === 'failed' ? 'No se pudo entregar el correo.' : null, last_sent_at: deliveryStatus === 'sent' ? new Date().toISOString() : null }).eq('id', data.id);
   res.status(201).json({ success: true, data: { ...data, delivery_status: deliveryStatus }, message: deliveryStatus === 'sent' ? `Invitación enviada a ${email}.` : deliveryStatus === 'not_configured' ? 'La invitación quedó guardada, pero el correo está pendiente de entrega.' : 'No pudimos enviar la invitación. Puedes intentarlo nuevamente.' });
 });
+router.post('/projects/:id/invitations/:invitationId/resend', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req);
+  if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, code: 'INVITATION_FORBIDDEN', message: 'No tienes permisos para reenviar invitaciones.' });
+  const { data: invitation } = await supabase.from('tshow_invitations').select('*').eq('id', req.params.invitationId).eq('project_id', req.params.id).maybeSingle();
+  if (!invitation || invitation.status !== 'pending' || new Date(invitation.expires_at) <= new Date()) return res.status(409).json({ success: false, code: 'INVITATION_NOT_PENDING', message: 'Esta invitación ya no está disponible.' });
+  const now = new Date();
+  const windowStart = invitation.resend_window_started_at ? new Date(invitation.resend_window_started_at) : null;
+  const activeWindow = windowStart && now - windowStart < 60 * 60 * 1000;
+  if (activeWindow && Number(invitation.resend_count || 0) >= 3) return res.status(429).json({ success: false, code: 'INVITATION_RESEND_LIMIT', message: 'Alcanzaste el límite de reenvíos. Intenta nuevamente en una hora.' });
+  const token = crypto.randomBytes(32).toString('base64url');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const delivery = await sendInvitationEmail({ token, email: invitation.email, projectName: granted.project.event_name, role: invitation.role });
+  const update = {
+    token_hash: tokenHash,
+    expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+    delivery_status: delivery.status,
+    delivery_error: delivery.error,
+    last_sent_at: delivery.status === 'sent' ? now.toISOString() : null,
+    resend_count: activeWindow ? Number(invitation.resend_count || 0) + 1 : 1,
+    resend_window_started_at: activeWindow ? invitation.resend_window_started_at : now.toISOString()
+  };
+  const { error } = await supabase.from('tshow_invitations').update(update).eq('id', invitation.id);
+  if (error) return res.status(400).json({ success: false, code: 'INVITATION_RESEND_FAILED', message: 'No pudimos renovar la invitación.' });
+  await audit(req.params.id, req.user.id, 'invitation.resent', { invitationId: invitation.id, deliveryStatus: delivery.status });
+  res.json({ success: true, deliveryStatus: delivery.status, message: delivery.status === 'sent' ? `Invitación reenviada a ${invitation.email}.` : 'La invitación fue renovada, pero el correo quedó pendiente de entrega.' });
+});
+
 router.patch('/projects/:id/members/:userId', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req);
   if (!granted || granted.role !== 'admin' && granted.role !== 'owner') return res.status(403).json({ success: false, message: 'Solo el propietario puede cambiar permisos.' });
@@ -356,12 +414,29 @@ router.get('/invitations/:token', async (req, res) => {
 });
 router.post('/invitations/:token/accept', requireSupabaseAuth, async (req, res) => {
   const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  const { data: invite } = await supabase.from('tshow_invitations').select('*').eq('token_hash', hash).eq('status', 'pending').maybeSingle();
-  if (!invite || new Date(invite.expires_at) < new Date() || invite.email !== req.user.email.toLowerCase()) return res.status(400).json({ success: false, message: 'Invitación inválida o expirada.' });
-  await supabase.from('tshow_project_members').upsert({ project_id: invite.project_id, user_id: req.user.id, role: invite.role, invited_by: invite.invited_by });
-  await supabase.from('tshow_invitations').update({ status: 'accepted', accepted_by: req.user.id, accepted_at: new Date().toISOString() }).eq('id', invite.id);
-  await audit(invite.project_id, req.user.id, 'invitation.accepted');
-  res.json({ success: true, projectId: invite.project_id });
+  const { data, error } = await supabase.rpc('tshow_accept_invitation_service', {
+    invitation_hash: hash,
+    authenticated_user: req.user.id,
+    authenticated_email: req.user.email.toLowerCase()
+  });
+  if (error) {
+    const reason = String(error.message || '');
+    const code = reason.includes('EXPIRED') ? 'INVITATION_EXPIRED'
+      : reason.includes('EMAIL_MISMATCH') ? 'INVITATION_EMAIL_MISMATCH'
+        : reason.includes('NOT_PENDING') ? 'INVITATION_ALREADY_USED'
+          : 'INVITATION_INVALID';
+    return res.status(code === 'INVITATION_EMAIL_MISMATCH' ? 403 : 409).json({
+      success: false,
+      code,
+      message: code === 'INVITATION_EXPIRED' ? 'Esta invitación venció.'
+        : code === 'INVITATION_EMAIL_MISMATCH' ? 'Inicia sesión con el correo que recibió la invitación.'
+          : code === 'INVITATION_ALREADY_USED' ? 'Esta invitación ya fue utilizada o revocada.'
+            : 'La invitación no es válida.',
+      requestId: req.requestId
+    });
+  }
+  const accepted = Array.isArray(data) ? data[0] : data;
+  res.json({ success: true, projectId: accepted.project_id, role: accepted.member_role, requestId: req.requestId });
 });
 
 router.get('/billing/plans', requireSupabaseAuth, async (req, res) => {
@@ -422,6 +497,19 @@ router.patch('/admin/accounts/:id/entitlement', requireSupabaseAuth, requirePlat
   if (error) return res.status(400).json({ success: false, message: error.message });
   await supabase.from('tshow_account_entitlement_history').insert({ account_id: req.params.id, changed_by: req.user.id, old_plan: current.account_plan, new_plan: plan, old_limit: current.custom_project_limit, new_limit: customLimit, old_status: current.commercial_status, new_status: status, reason: String(req.body.reason || '').slice(0, 500) });
   res.json({ success: true, data, message: 'Nivel y cupo actualizados.' });
+});
+
+router.get('/admin/accounts/:id/features', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const { data, error } = await supabase.from('tshow_account_feature_overrides').select('*').eq('account_id', req.params.id).order('feature_key');
+  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+});
+router.put('/admin/accounts/:id/features/:featureKey', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
+  const featureKey = String(req.params.featureKey || '');
+  const reason = String(req.body.reason || '').trim();
+  if (!ADVANCED_FEATURES.has(featureKey) || reason.length < 2) return res.status(400).json({ success: false, message: 'Función o motivo inválido.' });
+  const { data, error } = await supabase.from('tshow_account_feature_overrides').upsert({ account_id: req.params.id, feature_key: featureKey, enabled: Boolean(req.body.enabled), reason, updated_by: req.user.id, updated_at: new Date().toISOString() }).select().single();
+  if (!error) await supabase.from('tshow_account_entitlement_history').insert({ account_id: req.params.id, changed_by: req.user.id, reason: `feature:${featureKey}:${Boolean(req.body.enabled)} — ${reason}` });
+  res.status(error ? 400 : 200).json({ success: !error, data, message: error?.message });
 });
 
 module.exports = router;

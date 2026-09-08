@@ -1,1 +1,61 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acceso de evento · T-Show</title><link rel="stylesheet" href="css/operations.css"></head><body><main class="guest-block"><section class="op-panel"><span class="op-brand">T-SHOW</span><p class="op-kicker">Acceso de solo lectura</p><h1 id="title">Cargando evento…</h1><p id="meta" class="op-muted"></p><div id="blocks" class="op-list"></div><p id="status" class="error"></p></section></main><script>(async()=>{const token=new URLSearchParams(location.search).get('token');if(!token){document.getElementById('status').textContent='Falta el token de acceso.';return}try{const r=await fetch(`/api/guest-passes/${encodeURIComponent(token)}`),b=await r.json();if(!r.ok)throw new Error(b.message||'Acceso no disponible.');document.getElementById('title').textContent=b.data.eventName;document.getElementById('meta').textContent=[b.data.eventDate,b.data.location].filter(Boolean).join(' · ');document.getElementById('blocks').innerHTML=(b.data.blocks||[]).map(x=>`<article class="op-list-item"><strong>${x.start||''} · ${x.title||'Bloque'}</strong><span class="op-muted">${x.duration?`${x.duration} min`:''}</span>${x.animator_script?`<p>${x.animator_script}</p>`:''}${x.notes?`<small>${x.notes}</small>`:''}</article>`).join('')||'<p class="op-muted">No hay bloques publicados.</p>'}catch(e){document.getElementById('status').textContent=e.message}})();</script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Acceso al evento · T-Show</title>
+  <link rel="stylesheet" href="css/operations.css">
+</head>
+<body>
+  <main class="guest-block">
+    <section class="op-panel" aria-busy="true" id="panel">
+      <span class="op-brand">T-SHOW</span>
+      <p class="op-kicker">Acceso temporal de solo lectura</p>
+      <h1 id="title">Preparando el evento…</h1>
+      <p id="meta" class="op-muted"></p>
+      <div id="blocks" class="op-list" aria-live="polite"></div>
+      <p id="status" class="error" role="alert"></p>
+    </section>
+  </main>
+  <script>
+  (async () => {
+    const panel = document.getElementById('panel');
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const fragment = new URLSearchParams(location.hash.slice(1));
+    const legacy = new URLSearchParams(location.search);
+    const rawToken = fragment.get('token') || legacy.get('token');
+    history.replaceState(null, '', '/guest');
+    if (!rawToken) {
+      document.getElementById('status').textContent = 'Este enlace no contiene un acceso válido.';
+      panel.setAttribute('aria-busy', 'false');
+      return;
+    }
+    try {
+      const exchange = await fetch('/api/guest-passes/exchange', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: rawToken})
+      });
+      const exchanged = await exchange.json();
+      if (!exchange.ok) throw new Error(exchanged.message || 'Este acceso ya no está disponible.');
+      const response = await fetch(`/api/guest-passes/session/${encodeURIComponent(exchanged.sessionToken)}`);
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.message || 'No pudimos abrir el evento.');
+      const data = body.data || {};
+      document.getElementById('title').textContent = data.eventName || 'Evento';
+      document.getElementById('meta').textContent = [data.eventDate, data.location].filter(Boolean).join(' · ');
+      document.getElementById('blocks').innerHTML = (data.blocks || []).map(block => `
+        <article class="op-list-item">
+          <strong>${esc(block.start || '')}${block.start ? ' · ' : ''}${esc(block.title || 'Bloque')}</strong>
+          <span class="op-muted">${block.duration ? `${Number(block.duration)} min` : ''}</span>
+          ${block.animator_script ? `<p>${esc(block.animator_script)}</p>` : ''}
+          ${block.notes ? `<small>${esc(block.notes)}</small>` : ''}
+        </article>`).join('') || '<p class="op-muted">No hay bloques publicados en esta versión.</p>';
+    } catch (error) {
+      document.getElementById('title').textContent = 'Acceso no disponible';
+      document.getElementById('status').textContent = error.message;
+    } finally {
+      panel.setAttribute('aria-busy', 'false');
+    }
+  })();
+  </script>
+</body>
+</html>
