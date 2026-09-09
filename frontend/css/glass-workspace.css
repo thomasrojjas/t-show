@@ -548,6 +548,37 @@ html,body{max-width:100%;overflow-x:hidden}
   .workspace-surface .glass-panel,
   .workspace-surface .workspace-nav { background-color: rgba(9, 13, 29, .82); }
 }
+
+/* Ticketera metrics */
+.metrics-connect { margin-bottom: var(--space-5, 24px); }
+.ticketera-connect-row,
+.ticketera-connected { display: flex; align-items: center; gap: 14px; }
+.ticketera-connect-row .form-control { flex: 1; min-width: 0; }
+.ticketera-connected { justify-content: space-between; padding-top: 10px; }
+.ticketera-connected > div { display: grid; gap: 5px; }
+.ticketera-connected strong { font-size: clamp(1.15rem, 2vw, 1.55rem); overflow-wrap: anywhere; }
+.metrics-dashboard { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.metrics-dashboard[hidden] { display: none; }
+.metrics-dashboard .metric-card,
+.metric-breakdown { border: 1px solid var(--theme-border, rgba(176,204,255,.2)); background: var(--theme-surface, rgba(8,12,25,.74)); backdrop-filter: blur(18px); }
+.metrics-dashboard .metric-card { min-height: 132px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; }
+.metrics-dashboard .metric-card > span { color: var(--theme-muted, #aeb7c9); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.metrics-dashboard .metric-card > strong { color: var(--theme-text, #f5f7ff); font: 650 clamp(1.8rem, 3vw, 3rem)/1 var(--theme-display, inherit); }
+.metrics-dashboard .metric-card > small { color: var(--theme-muted, #aeb7c9); }
+.metric-breakdown { grid-column: span 2; padding: 24px; }
+.metric-bars { display: grid; gap: 15px; margin-top: 18px; }
+.metric-bar { display: grid; gap: 7px; }
+.metric-bar > div { display: flex; justify-content: space-between; gap: 16px; }
+.metric-bar span { overflow-wrap: anywhere; }
+.metric-bar i { height: 3px; background: rgba(255,255,255,.1); position: relative; overflow: hidden; }
+.metric-bar i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--metric-width); background: var(--theme-accent, #a8c9ff); transition: width .35s ease; }
+@media (max-width: 900px) { .metrics-dashboard { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 560px) {
+  .metrics-dashboard { grid-template-columns: 1fr; }
+  .metric-breakdown { grid-column: auto; }
+  .ticketera-connect-row,
+  .ticketera-connected { align-items: stretch; flex-direction: column; }
+}
 @media (prefers-reduced-motion: reduce) {
   .workspace-surface { background-attachment: initial; }
 }

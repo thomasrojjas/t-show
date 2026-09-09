@@ -46,6 +46,7 @@
   ],
   "redirects": [
     { "source": "/summary.html", "destination": "/summary", "permanent": true },
+    { "source": "/metrics.html", "destination": "/metrics", "permanent": true },
     { "source": "/schedule.html", "destination": "/schedule", "permanent": true },
     { "source": "/team.html", "destination": "/team", "permanent": true },
     { "source": "/files.html", "destination": "/files", "permanent": true },
@@ -58,6 +59,10 @@
     },
     {
       "source": "/summary",
+      "destination": "/app"
+    },
+    {
+      "source": "/metrics",
       "destination": "/app"
     },
     {
