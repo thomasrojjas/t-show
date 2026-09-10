@@ -4,11 +4,19 @@ const Auth = (() => {
     async function client() {
         if (!clientPromise) clientPromise = (async () => {
             const base = window.SHOWTIME_API_URL || window.location.origin;
-            const response = await fetch(`${base}/api/config`);
-            const config = await response.json();
-            if (!config.supabaseUrl || !config.supabaseAnonKey || !window.supabase) throw new Error('Autenticación no configurada.');
+            let response;
+            try {
+                response = await fetch(`${base}/api/config`, { headers: { Accept: 'application/json' } });
+            } catch (_) {
+                throw new Error('No pudimos conectar con el servicio de autenticación. Intenta nuevamente.');
+            }
+            const payload = await response.json().catch(() => ({}));
+            const config = payload.data || payload;
+            if (!response.ok) throw new Error(config.message || 'El servicio de autenticación no está disponible.');
+            if (!config.supabaseUrl || !config.supabaseAnonKey) throw new Error('El servicio de autenticación no está configurado.');
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('No se pudo cargar el cliente de autenticación. Recarga la página.');
             return window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-        })();
+        })().catch(error => { clientPromise = null; throw error; });
         return clientPromise;
     }
     async function token() { const { data } = await (await client()).auth.getSession(); return data.session?.access_token || null; }
@@ -94,7 +102,7 @@ const Auth = (() => {
     }
     async function login(email, password) { const { data, error } = await (await client()).auth.signInWithPassword({ email, password }); if (error) throw error; return data.user; }
     async function completeProfile(values) { return api('/api/profile', { method: 'POST', body: JSON.stringify(values) }); }
-    async function currentUser() { const { data } = await (await client()).auth.getUser(); return data.user || null; }
+    async function currentUser() { try { const { data } = await (await client()).auth.getUser(); return data.user || null; } catch (_) { return null; } }
     async function getProfile() { return (await api('/api/me')).data; }
     async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
