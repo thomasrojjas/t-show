@@ -145,7 +145,7 @@ class BlocksManager {
                 </div>
 
                 <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" class="form-control" ${editable ? '' : 'readonly'} value="${this.escapeHtml(block.title || '')}" oninput="app.blocksManager.updateBlock(${index}, 'title', this.value)" placeholder="Descripción o nombre del evento">
+                    <input type="text" class="form-control" ${editable ? '' : 'readonly'} value="${this.escapeHtml(block.title || '')}" oninput="app.blocksManager.updateBlock(${index}, 'title', this.value)" placeholder="Ej. Apertura de puertas y recepción">
                 </div>
 
                 <div class="${isShow ? 'grid-2' : ''}">
@@ -164,10 +164,10 @@ class BlocksManager {
                     <summary>Notas y guion del animador</summary>
                     <div class="block-notes-fields">
                         <label class="form-label">Notas operativas
-                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="4000" rows="2" oninput="app.blocksManager.updateBlock(${index}, 'notes', this.value)" placeholder="Indicaciones para producción, técnica o dirección">${this.escapeHtml(block.notes || '')}</textarea>
+                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="4000" rows="2" oninput="app.blocksManager.updateBlock(${index}, 'notes', this.value)" placeholder="Ej. Confirmar audio, iluminación y acceso del equipo">${this.escapeHtml(block.notes || '')}</textarea>
                         </label>
                         <label class="form-label">Guion del animador
-                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="8000" rows="3" oninput="app.blocksManager.updateBlock(${index}, 'animator_script', this.value)" placeholder="Texto que debe decir el animador">${this.escapeHtml(block.animator_script || '')}</textarea>
+                            <textarea class="form-control" ${editable ? '' : 'readonly'} maxlength="8000" rows="3" oninput="app.blocksManager.updateBlock(${index}, 'animator_script', this.value)" placeholder="Ej. Buenas noches. Bienvenidas y bienvenidos a este evento…">${this.escapeHtml(block.animator_script || '')}</textarea>
                         </label>
                     </div>
                 </details>
