@@ -178,6 +178,150 @@ body.workspace-surface .workspace-shell{
   width:calc(100% - var(--workspace-nav-space,248px))!important;
   max-width:none!important;box-sizing:border-box!important;
 }
+
+/* Selector de eventos: portada independiente, completa y sin scroll. */
+body.workspace-surface.project-selector-active{
+  overflow:hidden!important;
+}
+body.workspace-surface.project-selector-active nav.workspace-sidebar-shell{
+  display:none!important;
+}
+body.workspace-surface.project-selector-active .workspace-shell{
+  width:100%!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+body.workspace-surface.project-selector-active .workspace-view[data-route="projects"]{
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr);
+  width:100%!important;
+  height:100dvh!important;
+  min-height:0!important;
+  padding:clamp(20px,3vh,38px) clamp(16px,3vw,56px) clamp(16px,2.5vh,32px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box;
+}
+body.workspace-surface.project-selector-active .project-selector-head{
+  width:min(1040px,100%)!important;
+  margin:0 auto!important;
+  padding:0!important;
+  text-align:center!important;
+}
+body.workspace-surface.project-selector-active .project-selector-head h1{
+  margin:clamp(6px,.8vh,12px) 0 clamp(5px,.7vh,10px)!important;
+  font-size:clamp(42px,7.2vh,90px)!important;
+  line-height:.88!important;
+  letter-spacing:-.055em!important;
+}
+body.workspace-surface.project-selector-active .project-selector-head p{
+  margin:0 auto!important;
+  font-size:clamp(14px,1.7vh,20px)!important;
+}
+body.workspace-surface.project-selector-active .selector-quota{
+  display:block;
+  margin-top:clamp(7px,1vh,12px)!important;
+}
+body.workspace-surface.project-selector-active .project-selector-stage{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:clamp(12px,2vh,26px) 0 0!important;
+}
+body.workspace-surface.project-selector-active .project-carousel{
+  display:grid!important;
+  grid-template-columns:repeat(var(--project-grid-columns,4),minmax(0,1fr))!important;
+  grid-template-rows:repeat(var(--project-grid-rows,1),minmax(0,1fr))!important;
+  gap:clamp(10px,1.35vw,24px)!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  scroll-snap-type:none!important;
+}
+body.workspace-surface.project-selector-active .project-card{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  flex:none!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  opacity:.84!important;
+  transform:none!important;
+}
+body.workspace-surface.project-selector-active .project-card.is-focused,
+body.workspace-surface.project-selector-active .project-card:hover,
+body.workspace-surface.project-selector-active .project-card:focus-visible{
+  opacity:1!important;
+  transform:translateY(-3px)!important;
+}
+body.workspace-surface.project-selector-active .project-card-art{
+  height:calc(100% - 38px)!important;
+  min-height:0!important;
+}
+body.workspace-surface.project-selector-active .project-card-copy{
+  padding:clamp(13px,1.6vw,24px)!important;
+}
+body.workspace-surface.project-selector-active .project-card-copy h2{
+  font-size:clamp(18px,1.7vw,30px)!important;
+  line-height:1!important;
+}
+body.workspace-surface.project-selector-active .project-card footer{
+  min-height:38px!important;
+  padding:8px clamp(12px,1.4vw,20px)!important;
+}
+body.workspace-surface.project-selector-active .project-carousel.is-dense .project-card-copy h2{
+  font-size:clamp(15px,1.35vw,23px)!important;
+}
+body.workspace-surface.project-selector-active .project-carousel.is-dense .project-card-copy p{
+  display:none!important;
+}
+body.workspace-surface.project-selector-active .carousel-arrow{
+  display:none!important;
+}
+
+/* El estado contraído muestra únicamente iconos; expandido conserva todas las etiquetas. */
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-nav.workspace-nav-tabs>a{
+  justify-content:center!important;
+  padding-inline:0!important;
+}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-nav.workspace-nav-tabs>a span,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-label,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-context,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-footer .workspace-sync-indicator span:last-child,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-footer .workspace-help-button span,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-user-copy,
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-account>svg{
+  display:none!important;
+  visibility:hidden!important;
+}
+
+@media (max-width:520px){
+  body.workspace-surface.project-selector-active .workspace-view[data-route="projects"]{
+    padding:16px 12px 14px!important;
+  }
+  body.workspace-surface.project-selector-active .project-selector-head h1{
+    font-size:clamp(36px,12vw,54px)!important;
+  }
+  body.workspace-surface.project-selector-active .project-selector-head p{
+    font-size:13px!important;
+  }
+  body.workspace-surface.project-selector-active .project-card-copy{
+    padding:11px!important;
+  }
+  body.workspace-surface.project-selector-active .project-card-copy h2{
+    font-size:15px!important;
+  }
+  body.workspace-surface.project-selector-active .project-card footer{
+    font-size:10px!important;
+  }
+}
 body.workspace-surface .workspace-view{filter:none!important;opacity:1!important}
 body.workspace-surface .workspace-view.is-active{animation:workspaceViewVisible .18s ease-out both!important}
 @keyframes workspaceViewVisible{from{opacity:.84;transform:translateY(5px)}to{opacity:1;transform:none}}
