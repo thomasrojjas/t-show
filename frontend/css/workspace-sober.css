@@ -1,0 +1,26 @@
+/* T-Show internal workspace: restrained, durable and operational. */
+:root{--sober-bg:#07090d;--sober-surface:#0d1016;--sober-surface-2:#11151d;--sober-line:#252b35;--sober-text:#f2f3f5;--sober-muted:#9ca3af;--sober-accent:#b9d5ff}
+html,body.workspace-surface{background:var(--sober-bg)!important;color:var(--sober-text)}
+body.workspace-surface{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
+body.workspace-surface .ambient-stage{background:var(--sober-bg)!important}
+body.workspace-surface .ambient-stage:before,body.workspace-surface .ambient-stage:after,body.workspace-surface .ambient-video{display:none!important}
+body.workspace-surface .ambient-shade{background:linear-gradient(180deg,rgba(7,9,13,.96),rgba(7,9,13,.98))!important;backdrop-filter:none!important}
+body.workspace-surface .workspace-nav{background:rgba(7,9,13,.98)!important;border-color:var(--sober-line)!important;box-shadow:0 1px 0 rgba(255,255,255,.025)!important;backdrop-filter:blur(10px)!important}
+body.workspace-surface .workspace-nav-tabs a,body.workspace-surface .workspace-nav-account{border-radius:7px!important}
+body.workspace-surface .workspace-nav-tabs a[aria-current=page]{background:#e6edf8!important;color:#07090d!important}
+body.workspace-surface .glass-panel,body.workspace-surface .panel,body.workspace-surface .header-bar,body.workspace-surface .metric-card,body.workspace-surface .now-next-strip{background:var(--sober-surface)!important;border:1px solid var(--sober-line)!important;box-shadow:none!important;backdrop-filter:none!important;border-radius:8px!important}
+body.workspace-surface .panel:hover,body.workspace-surface .metric-card:hover{border-color:#3b4655!important}
+body.workspace-surface .form-control,body.workspace-surface input,body.workspace-surface textarea,body.workspace-surface select{background:#080b10!important;border:1px solid #303744!important;border-radius:6px!important;color:var(--sober-text)!important}
+body.workspace-surface .form-control:focus,body.workspace-surface input:focus,body.workspace-surface textarea:focus,body.workspace-surface select:focus{border-color:var(--sober-accent)!important;box-shadow:0 0 0 2px rgba(185,213,255,.16)!important}
+body.workspace-surface .btn,body.workspace-surface .btn-icon,body.workspace-surface .summary-link{border-radius:7px!important;box-shadow:none!important}
+body.workspace-surface .btn-primary{background:var(--sober-accent)!important;color:#07090d!important;border-color:var(--sober-accent)!important}
+body.workspace-surface .btn-secondary{background:#171c25!important;color:var(--sober-text)!important;border-color:#36404f!important}
+body.workspace-surface .shell-hero h1{font-size:clamp(38px,5.5vw,72px)!important;line-height:.96!important;letter-spacing:-.065em!important}
+body.workspace-surface .shell-page-head h1{font-size:clamp(34px,5vw,64px)!important;line-height:1!important;letter-spacing:-.06em!important}
+body.workspace-surface .panel-title h2,body.workspace-surface .panel-title>span:first-child,body.workspace-surface .shell-status-panel h2{font-size:clamp(17px,2vw,26px)!important;line-height:1.15!important}
+body.workspace-surface .timing-table,body.workspace-surface .table-container,body.workspace-surface .timeline-container,body.workspace-surface .timeline-bar{border-radius:6px!important;border-color:var(--sober-line)!important;box-shadow:none!important}
+body.workspace-surface .timing-table th{background:#171c25!important;color:#cdd4df!important}body.workspace-surface .timing-table td{background:#0c1016!important}
+body.workspace-surface .shell-skeleton{border-radius:6px!important;background:linear-gradient(100deg,#10141b 20%,#1b222d 40%,#10141b 60%)!important}
+body.workspace-surface .shell-message{border-radius:6px!important;background:#10151c!important}
+@media(max-width:820px){body.workspace-surface .workspace-shell{padding-top:116px!important}body.workspace-surface .shell-hero h1{font-size:clamp(34px,10vw,52px)!important}body.workspace-surface .header-bar{margin-bottom:14px!important}}
+@media(prefers-reduced-motion:reduce){body.workspace-surface *{animation:none!important;transition:none!important}}
