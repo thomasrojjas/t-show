@@ -139,3 +139,54 @@ body.workspace-surface .workspace-view [data-status=warning]{color:#f5b942!impor
 body.workspace-surface .workspace-view [data-status=error]{color:#ff8f9a!important;border-color:#74313d!important}
 @media(max-width:767px){body.workspace-surface .workspace-sidebar-shell{background:var(--theme-bg,#050812)!important}.workspace-sidebar-backdrop{background:rgba(0,0,0,.68)!important}}
 @media(prefers-reduced-motion:reduce){body.workspace-surface *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Hard layout boundary for the sidebar shell.  Older workspace styles still
+   target `.workspace-nav-tabs` as a horizontal top navigation; these rules
+   keep the new sidebar geometry deterministic regardless of stylesheet order. */
+body.workspace-surface nav.workspace-sidebar-shell{
+  display:block!important;position:fixed!important;inset:0 auto 0 0!important;
+  z-index:100!important;width:var(--workspace-nav-space,248px)!important;
+  min-width:var(--workspace-nav-space,248px)!important;
+  max-width:var(--workspace-nav-space,248px)!important;margin:0!important;
+  padding:0!important;box-sizing:border-box!important;overflow:visible!important;
+  transform:none!important;flex:none!important;grid-template:none!important;
+}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar{
+  display:flex!important;flex-direction:column!important;width:100%!important;
+  min-width:0!important;height:100%!important;max-width:none!important;
+}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav.workspace-nav-tabs{
+  display:flex!important;flex-direction:column!important;position:static!important;inset:auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:auto!important;max-height:none!important;transform:none!important;
+  flex:1 1 auto!important;justify-content:flex-start!important;align-items:stretch!important;gap:2px!important;
+  margin:0!important;padding:14px 10px!important;overflow-x:hidden!important;overflow-y:auto!important;
+}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav.workspace-nav-tabs>a{
+  display:flex!important;position:relative!important;width:100%!important;min-width:0!important;
+  justify-content:flex-start!important;align-items:center!important;box-sizing:border-box!important;
+  margin:2px 0!important;
+}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar> *{flex-shrink:0!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav.workspace-nav-tabs{flex-shrink:1!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav.workspace-nav-tabs>a svg{display:block!important;visibility:visible!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav.workspace-nav-tabs>a span{display:inline!important;visibility:visible!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-label{display:block!important}
+body.workspace-surface .workspace-shell{
+  position:relative!important;z-index:1!important;filter:none!important;opacity:1!important;
+  margin-left:var(--workspace-nav-space,248px)!important;
+  width:calc(100% - var(--workspace-nav-space,248px))!important;
+  max-width:none!important;box-sizing:border-box!important;
+}
+body.workspace-surface .workspace-view{filter:none!important;opacity:1!important}
+body.workspace-surface .workspace-view.is-active{animation:workspaceViewVisible .18s ease-out both!important}
+@keyframes workspaceViewVisible{from{opacity:.84;transform:translateY(5px)}to{opacity:1;transform:none}}
+body.workspace-surface{overflow-x:hidden!important;min-height:100vh}
+@media(max-width:767px){
+  body.workspace-surface nav.workspace-sidebar-shell{
+    width:min(304px,88vw)!important;min-width:0!important;max-width:min(304px,88vw)!important;
+    transform:translateX(-100%)!important;
+  }
+  body.workspace-surface nav.workspace-sidebar-shell.is-drawer-open{transform:none!important}
+  body.workspace-surface .workspace-shell{margin-left:0!important;width:100%!important}
+}
