@@ -87,6 +87,18 @@ router.put('/projects/:id/integrations/ticketera', requireSupabaseAuth, async (r
     return fail(res, 502, error.code || 'TICKETERA_UNAVAILABLE', error.message);
   }
   if (!externalEvent) return fail(res, 404, 'EXTERNAL_EVENT_NOT_FOUND', 'El evento ya no existe en Ticketera.');
+  const { data: existingConnection, error: connectionLookupError } = await supabase
+    .from('tshow_ticketera_connections')
+    .select('project_id')
+    .eq('external_event_id', externalEventId)
+    .neq('project_id', req.params.id)
+    .maybeSingle();
+  if (connectionLookupError) {
+    return fail(res, 500, 'CONNECTION_READ_FAILED', 'No pudimos verificar la disponibilidad del evento de Ticketera.');
+  }
+  if (existingConnection) {
+    return fail(res, 409, 'TICKETERA_EVENT_ALREADY_CONNECTED', 'Este evento de Ticketera ya está conectado a otro proyecto de T-Show.');
+  }
   const row = {
     project_id: req.params.id,
     external_event_id: externalEventId,
@@ -94,6 +106,9 @@ router.put('/projects/:id/integrations/ticketera', requireSupabaseAuth, async (r
     status: 'active', last_error: null, created_by: req.user.id, updated_at: new Date().toISOString()
   };
   const { data, error } = await supabase.from('tshow_ticketera_connections').upsert(row, { onConflict: 'project_id' }).select().single();
+  if (error?.code === '23505') {
+    return fail(res, 409, 'TICKETERA_EVENT_ALREADY_CONNECTED', 'Este evento de Ticketera ya está conectado a otro proyecto de T-Show.');
+  }
   if (error) return fail(res, 500, 'CONNECTION_SAVE_FAILED', 'No pudimos guardar la conexión con Ticketera.');
   await supabase.from('tshow_audit_log').insert({ project_id: req.params.id, actor_id: req.user.id, action: 'integration.ticketera.connected', metadata: { externalEventId } });
   res.json({ success: true, data, message: `Ticketera quedó conectada con ${externalEvent.name}.` });

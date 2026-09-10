@@ -29,3 +29,5 @@ Use un valor aleatorio de al menos 32 bytes. Los dos servicios deben recibir exa
 6. Seleccionar el evento correspondiente de Ticketera y pulsar **Conectar**.
 
 Las cifras se consultan al abrir o actualizar la vista. La base de datos de compradores permanece en Ticketera.
+
+Cada proyecto de T-Show puede conectarse con un único evento de Ticketera y cada evento de Ticketera puede pertenecer a un único proyecto de T-Show. Para reasignarlo, primero debe desconectarse del proyecto actual.
