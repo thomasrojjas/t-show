@@ -10,6 +10,7 @@ const productionRoutes = require('./routes/production');
 const erpRoutes = require('./routes/erp');
 const syncRoutes = require('./routes/sync');
 const integrationRoutes = require('./routes/integrations');
+const notificationRoutes = require('./routes/notifications');
 const { requestContext, securityHeaders, notFound, errorHandler } = require('./lib/http');
 const { assertEnvironment } = require('./lib/environment');
 
@@ -69,6 +70,7 @@ app.use('/api', productionRoutes);
 app.use('/api', erpRoutes);
 app.use('/api', syncRoutes);
 app.use('/api', integrationRoutes);
+app.use('/api', notificationRoutes);
 app.use('/api', notFound);
 app.use(errorHandler);
 
