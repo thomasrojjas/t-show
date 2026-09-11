@@ -1,276 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-Show · Operación en vivo</title>
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/timeline.css">
-    <link rel="stylesheet" href="css/live.css">
-    <link rel="stylesheet" href="css/live-alerts.css">
-    <link rel="stylesheet" href="css/glass-workspace.css">
-    <link rel="stylesheet" href="css/workspace-sober.css">
-    <link rel="stylesheet" href="css/design-system.css">
-    <style>html,body{margin:0;min-height:100%;background:#03040a;color:#f5f5f2}</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101216">
+  <title>T-Show · En vivo</title>
+  <link rel="preload" href="assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/live.css">
 </head>
 <body class="live-body">
-    <div class="ambient-stage" aria-hidden="true"><div class="ambient-shade"></div></div>
-
-    <!-- Marco Perimetral de Alertas de Pantalla Completa -->
-    <div id="screenAmbientBorder"></div>
-
-    <!-- Header Bar -->
-    <header class="live-header">
-        <div class="live-brand" id="appBrandLogo" title="T-Show · Operación en vivo">
-            <div class="brand-icon" aria-hidden="true">TS</div>
-            <div class="live-brand-copy">
-                <span class="live-brand-mark">T-SHOW</span>
-                <h1 id="liveProjectTitle">Evento activo</h1>
-            </div>
-            <span id="liveStatusBadge" class="live-badge-status status-idle">EN ESPERA</span>
-            <span id="currentRoleBadge" class="role-badge role-viewer">OBSERVADOR</span>
+  <a class="skip-link" href="#rundown">Ir a la escaleta</a>
+  <header class="live-header">
+    <a id="backLink" class="back-link" href="/projects"><span aria-hidden="true">←</span> Volver a Escaleta</a>
+    <div class="event-identity"><span class="wordmark">T-SHOW <span>/ En vivo</span></span><h1 id="eventName">Cargando evento…</h1></div>
+    <div class="header-meta"><span id="sessionStatus" class="status">En espera</span><span id="connectionStatus" class="connection" role="status">Conectando…</span><time id="masterClock">--:--:--</time><small id="zoneLabel"></small></div>
+    <div class="header-actions">
+      <button id="stageButton" type="button">Vista escenario <span aria-hidden="true">↗</span></button>
+      <details id="moreMenu"><summary>Más <span aria-hidden="true">⌄</span></summary>
+        <div class="more-panel">
+          <button id="copyLink" type="button">Copiar enlace del evento</button>
+          <small>El enlace requiere acceso al proyecto.</small>
+          <button id="fullscreenButton" type="button">Pantalla completa</button>
+          <button id="reportButton" type="button">Ver balance</button>
+          <button id="finishButton" type="button" class="danger" hidden>Finalizar evento</button>
+          <button id="resetButton" type="button" class="danger" hidden>Reiniciar sesión</button>
         </div>
-
-        <div class="live-header-center">
-            <div class="clock-display" id="masterClock">00:00:00</div>
-            
-            <!-- Botón Maestro Play / Pausa (Solo visible para Director/Admin) -->
-            <button id="btnHeaderPlay" class="btn-play-master" style="display: none;" onclick="liveApp.togglePlayPause()" title="Iniciar o Pausar Seguimiento en Vivo">
-                <span id="btnHeaderPlayIcon" aria-hidden="true">▶</span>
-                <span id="btnHeaderPlayText">Iniciar evento</span>
-            </button>
-        </div>
-
-        <div class="live-header-actions">
-            <!-- MODO 2: Pantalla Completa de la Aplicación General -->
-            <button class="btn-fullscreen" onclick="liveApp.toggleAppFullscreen()" title="Pantalla completa">Pantalla completa</button>
-            
-            <!-- Botones Ocultos para Rol Espectador (Visibles solo para Director/Admin) -->
-            <button class="btn btn-secondary" id="btnShare" style="display: none;" onclick="liveApp.copyShareLink()" title="Copiar enlace de espectador">Compartir</button>
-            <a href="/summary" class="btn btn-secondary" id="btnPlan" style="text-decoration: none; display: none;">Planificación</a>
-        </div>
-    </header>
-
-    <!-- Barra del administrador -->
-    <section id="adminToolbar" class="admin-toolbar" style="display: none;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 12px; font-weight: 800; color: #fca5a5;">PANEL ADMINISTRADOR</span>
-        </div>
-        <div class="toolbar-actions">
-            <button class="btn-play-master" onclick="liveApp.startShow()">Iniciar evento</button>
-            <button class="btn-stop-show" onclick="liveApp.stopShow()">Finalizar evento</button>
-            <button class="btn-live-sec" onclick="liveApp.togglePlayPause()">Pausar / Reanudar</button>
-            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
-            <button class="btn-live-sec" onclick="liveApp.resetLiveSession()">Reiniciar</button>
-        </div>
-    </section>
-
-    <!-- Barra del director de escenario -->
-    <section id="directorToolbar" class="director-toolbar" style="display: none;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 12px; font-weight: 800; color: #c7d2fe;">CONTROL DE ESCENAS</span>
-        </div>
-        <div class="toolbar-actions">
-            <!-- Botón de TAP Directo para Siguiente Bloque -->
-            <button class="btn-tap" onclick="liveApp.tapNextBlock()" title="Terminar el bloque actual y pasar de inmediato al siguiente">
-                TAP · SIGUIENTE BLOQUE
-            </button>
-
-            <!-- Menú de Extensión de Tiempo de Este Módulo -->
-            <div class="extend-menu-container">
-                    <button class="btn-extend" onclick="liveApp.toggleExtendMenu()" title="Mantenerse en este bloque y extender duración">
-                        Extender tiempo
-                </button>
-                <div id="extendDropdown" class="extend-dropdown">
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(2)">Extender +2 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(5)">Extender +5 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(10)">Extender +10 min</button>
-                    <button class="extend-option" onclick="liveApp.extendCurrentBlock(0)" style="color: #34d399;">Mantenerse en Curso</button>
-                </div>
-            </div>
-
-            <button class="btn-live-sec" onclick="liveApp.resyncNow()" title="Reajustar horario al momento actual">Reajustar hora</button>
-            <button class="btn-live-sec" style="color: #6ee7b7;" onclick="liveApp.openReportModal()">Ver Balance</button>
-        </div>
-    </section>
-
-    <!-- Hero Card: Stage Display de Alto Impacto para Observador / Artistas -->
-    <section class="active-hero-card" id="stageHeroCard">
-        <div class="hero-top-row">
-            <div class="hero-title-group">
-                <span id="heroTypeBadge" class="hero-type-badge badge-show">EVENTO</span>
-                <h2 id="heroBlockName" class="hero-block-name">Listo para Iniciar Pauta en Vivo</h2>
-            </div>
-            <div id="heroUpNextContainer" class="hero-up-next">
-                <span>PRÓXIMO BLOQUE: </span>
-                <strong id="heroNextBlockName" style="color: #38bdf8;">--</strong>
-            </div>
-        </div>
-
-        <div class="hero-timers-grid">
-            <!-- MODO 1: Clic en el cuadro del reloj abre vista ampliada hiperreducida para artistas -->
-            <div class="timer-box-main" id="heroTimerBoxMain" onclick="liveApp.openStageConfidenceDisplay()" title="Clic para Pantalla Completa de Escenario (Solo Tiempo & Bloques)">
-                <div class="timer-box-main-label" id="heroTimerLabel">Tiempo Restante</div>
-                <div id="heroRemainingTimer" class="timer-box-main-value">00:00</div>
-            </div>
-
-            <div class="timer-box-small">
-                <div class="timer-box-small-label">Transcurrido</div>
-                <div id="heroElapsedTimer" class="timer-box-small-value">00:00</div>
-            </div>
-
-            <div class="timer-box-small">
-                <div class="timer-box-small-label">Pactado</div>
-                <div id="heroPlannedTimer" class="timer-box-small-value">-- min</div>
-            </div>
-
-            <div class="timer-box-small">
-                <div class="timer-box-small-label">Fin Proyectado</div>
-                <div id="heroProjectedEnd" class="timer-box-small-value" style="color: #a78bfa;">--:--</div>
-            </div>
-
-            <!-- Botón Modo 1 de artistas -->
-            <button class="btn-fullscreen" onclick="liveApp.openStageConfidenceDisplay()" title="Vista de escenario">Vista de escenario</button>
-        </div>
-
-        <!-- Barra de Progreso Continua de Izquierda a Derecha -->
-        <div class="hero-progress-track">
-            <div id="heroProgressFill" class="hero-progress-fill"></div>
-        </div>
-    </section>
-
-    <!-- MODO 1: Vista Hiperreducida a Pantalla Completa para Escenario / Artistas (Confidence Monitor) -->
-    <div id="stageConfidenceModal" class="stage-confidence-display">
-        <div class="stage-conf-top">
-            <div class="stage-conf-header-left">
-                <span class="stage-conf-label">EN CURSO:</span>
-                <h1 id="stageConfCurrentTitle" class="stage-conf-title">Listo para Iniciar Pauta</h1>
-                <span id="stageConfBadge" class="badge badge-show">EVENTO</span>
-            </div>
-            <button class="btn-exit-stage" onclick="liveApp.closeStageConfidenceDisplay()">✕ Salir (ESC)</button>
-        </div>
-
-        <div class="stage-conf-center">
-            <div id="stageConfTimerLabel" class="stage-conf-timer-label">TIEMPO RESTANTE</div>
-            <div id="stageConfTimerValue" class="stage-conf-timer-value">00:00</div>
-        </div>
-
-        <div class="stage-conf-bottom">
-            <span class="stage-conf-label" style="color: #64748b;">PRÓXIMO BLOQUE:</span>
-            <h2 id="stageConfNextTitle" class="stage-conf-next-title">--</h2>
-        </div>
-
-        <div class="stage-conf-progress-track">
-            <div id="stageConfProgressFill" class="stage-conf-progress-fill"></div>
-        </div>
+      </details>
     </div>
-
-    <aside class="live-notes-panel" id="liveNotesPanel" aria-live="polite">
-        <div class="live-notes-heading">
-            <span class="eyebrow">CONTEXTO DEL BLOQUE</span>
-            <h2>Guion y notas</h2>
-        </div>
-        <div class="live-notes-content">
-            <div>
-                <span class="live-notes-label">GUION DEL ANIMADOR</span>
-                <p id="liveAnimatorScript">Selecciona un bloque para ver su guion.</p>
-            </div>
-            <div>
-                <span class="live-notes-label">NOTAS OPERATIVAS</span>
-                <p id="liveOperationalNotes">Las notas del bloque aparecerán aquí.</p>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Contenedor con Autodesplazamiento de la Escaleta en Vivo -->
-    <main class="live-table-container" id="scheduleTableContainer">
-        <table class="live-table">
-            <thead>
-                <tr>
-                    <th style="width: 45px; text-align: center;">Nº</th>
-                    <th style="width: 120px;">Tipo</th>
-                    <th>Bloque</th>
-                    <th style="width: 90px;">Inicio</th>
-                    <th style="width: 100px;">Duración</th>
-                    <th style="width: 90px;">Término</th>
-                    <th style="width: 120px; text-align: right;" id="thActions">Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="liveTableBody">
-                <!-- Generado dinámicamente con auto-scroll a bloque activo -->
-            </tbody>
-        </table>
-    </main>
-
-    <!-- Footer Attribution -->
-    <footer style="text-align: center; padding: 4px; font-size: 11px; color: #6b7280; flex-shrink: 0;">
-        T-Show · Desarrollado por <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none; font-weight: 700;">BaseAndes Software</a>
-    </footer>
-
-    <!-- Modal de compatibilidad (los roles provienen de Supabase) -->
-    <div id="pinModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 400px; text-align: center;">
-            <h2 style="font-size: 17px; margin-bottom: 8px;">Rol del proyecto</h2>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 16px;">Tu rol se determina por tu membresía en Supabase. Solicita cambios al propietario del evento.</p>
-            <button class="btn btn-primary" onclick="liveApp.closeModal('pinModal')">Cerrar</button>
-        </div>
+  </header>
+  <div id="feedback" class="feedback" role="status" hidden><span id="feedbackText"></span><button id="retryButton" type="button" hidden>Recargar sesión</button></div>
+  <main class="console" id="console">
+    <section class="control-bar" aria-label="Controles de ejecución">
+      <div class="mode-field"><label for="trackingMode">Seguimiento</label><select id="trackingMode" disabled><option value="schedule">Según horario</option><option value="manual">Manual</option></select></div>
+      <p id="modeHelp">El bloque avanza con el horario de la escaleta.</p>
+      <span id="roleLabel" class="role-label">Solo lectura</span>
+      <button id="primaryAction" type="button" class="primary" hidden>Iniciar seguimiento</button>
+      <div id="manualControls" class="manual-controls" hidden>
+        <button id="nextButton" type="button" class="primary">Siguiente bloque →</button>
+        <label class="sr-only" for="extendMinutes">Extender tiempo</label><select id="extendMinutes"><option value="2">+2 min</option><option value="5">+5 min</option><option value="10">+10 min</option></select><button id="extendButton" type="button">Extender</button>
+        <button id="restartBlock" type="button">Reiniciar tiempo del bloque</button>
+      </div>
+    </section>
+    <section class="rundown panel" id="rundown" tabindex="-1" aria-labelledby="rundownTitle">
+      <div class="section-heading"><div><h2 id="rundownTitle">Escaleta del evento</h2><p id="blockCount">Cargando bloques…</p></div><span class="section-index" aria-hidden="true">01</span></div>
+      <div class="follow-controls"><label><input id="followLive" type="checkbox" checked> Seguir en vivo</label><button id="returnCurrent" type="button">Volver al actual</button></div>
+      <div class="rundown-columns" aria-hidden="true"><span>Nº</span><span>Inicio</span><span>Bloque / duración</span><span>Estado</span></div>
+      <div id="rundownRows" class="rundown-rows"></div>
+      <p id="emptyRundown" class="empty" hidden>No hay bloques con duración. Agrega bloques desde la Escaleta para iniciar.</p>
+    </section>
+    <div class="detail-column">
+    <section class="monitor panel" aria-labelledby="currentTitle">
+      <div class="monitor-heading"><span id="currentContext">Bloque en curso</span><span id="currentNumber"></span></div>
+      <h2 id="currentTitle">Preparando la consola</h2>
+      <p id="currentType" class="muted"></p>
+      <div class="main-timer"><span id="timerLabel">Tiempo restante</span><div id="remainingTimer" class="timer">--:--</div></div>
+      <progress id="blockProgress" max="100" value="0" aria-label="Progreso del bloque"></progress>
+      <dl class="timer-details"><div><dt>Transcurrido</dt><dd id="elapsedTimer">--:--</dd></div><div><dt>Duración</dt><dd id="plannedTimer">—</dd></div><div><dt>Fin previsto</dt><dd id="projectedEnd">—</dd></div></dl>
+      <div class="next-block"><span>Después</span><strong id="nextTitle">—</strong></div>
+    </section>
+    <section class="context panel" aria-labelledby="contextTitle">
+      <div class="section-heading"><div><span id="selectionHint" class="muted">Consultando el bloque actual</span><h2 id="contextTitle">Guion y notas</h2></div><label class="text-size">Texto<select id="textSize"><option value="18">18 px</option><option value="22">22 px</option><option value="26">26 px</option></select></label></div>
+      <div class="context-tabs" role="tablist" aria-label="Contenido del bloque">
+        <button id="scriptTab" type="button" role="tab" aria-selected="true" aria-controls="scriptPanel">Guion del animador <span id="scriptIndicator" aria-hidden="true"></span></button>
+        <button id="notesTab" type="button" role="tab" aria-selected="false" aria-controls="notesPanel" tabindex="-1">Notas operativas <span id="notesIndicator" aria-hidden="true"></span></button>
+      </div>
+      <div id="scriptPanel" role="tabpanel" aria-labelledby="scriptTab" tabindex="0"><p id="scriptCopy" class="context-copy">Selecciona un bloque.</p></div>
+      <div id="notesPanel" role="tabpanel" aria-labelledby="notesTab" tabindex="0" hidden><p id="notesCopy" class="context-copy"></p></div>
+    </section>
     </div>
-
-    <!-- Modal de Reporte Comparativo Post-Show -->
-    <div id="reportModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 750px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; padding-bottom: 10px; margin-bottom: 14px;">
-                <h2 style="font-size: 18px; color: #f9fafb;">Balance Post-Evento: Planificado vs Real</h2>
-                <button class="btn-icon" onclick="liveApp.closeModal('reportModal')">✕</button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-bottom: 14px; background: #030712; padding: 10px 14px; border: 1px solid #1f2937;">
-                <div>
-                    <span style="font-size: 11px; color: #9ca3af;">DESFASE TOTAL DEL EVENTO:</span>
-                    <div id="reportTotalDiff" style="font-size: 18px; font-weight: 800;">0 min</div>
-                </div>
-                <div>
-                    <button class="btn btn-primary" onclick="window.print()">Imprimir Informe</button>
-                </div>
-            </div>
-
-            <div style="overflow-x: auto; max-height: 400px;">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tipo</th>
-                            <th>Bloque</th>
-                            <th>Inicio (Plan / Real)</th>
-                            <th>Duración (Plan / Real)</th>
-                            <th>Diferencia</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportBody">
-                        <!-- Generado dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Application JavaScript Modules -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        // Guard de sesión — si no hay token, Auth.requireSession() ya redirige a login.html.
-        Auth.requireSession();
-    </script>
-    <script src="js/timing-engine.js"></script>
-    <script src="js/api-client.js"></script>
-    <script src="js/print-export.js"></script>
-    <script src="js/live-engine.js"></script>
-    <script src="js/live-sync.js"></script>
-    <script src="js/ambient-background.js"></script>
-    <script>window.AmbientBackground?.mount({ mode: 'live' });</script>
-    <script src="js/live-app.js"></script>
+  </main>
+  <footer class="live-footer">T-Show / Producción en vivo <span>Salir de la consola no detiene el evento.</span></footer>
+  <dialog id="stageDialog" class="stage-dialog" aria-labelledby="stageTitle">
+    <div class="stage-top"><span id="stageStatus">En vivo</span><button id="closeStage" type="button">← Volver a consola</button></div>
+    <h2 id="stageTitle">Bloque actual</h2><p id="stageTimerLabel">Tiempo restante</p><div id="stageTimer" class="stage-timer">--:--</div>
+    <div class="stage-next"><span>Después</span><strong id="stageNext">—</strong></div>
+    <small id="stageConnection"></small>
+  </dialog>
+  <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+    <h2 id="confirmTitle">Confirmar acción</h2><p id="confirmText"></p><form method="dialog"><button value="cancel">Cancelar</button><button value="confirm" class="primary">Confirmar</button></form>
+  </dialog>
+  <dialog id="reportDialog" class="report-dialog" aria-labelledby="reportTitle">
+    <div class="section-heading"><h2 id="reportTitle">Balance del evento</h2><button id="closeReport" type="button">Cerrar</button></div>
+    <p>Los tiempos manuales son registros de operación. El seguimiento por horario muestra la pauta prevista; no acredita la ejecución real.</p>
+    <div id="reportRows"></div><button id="printReport" type="button">Imprimir balance</button>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api-client.js"></script><script src="js/timing-engine.js"></script>
+  <script src="js/live-engine.js"></script><script src="js/live-sync.js"></script><script src="js/live-app.js"></script>
 </body>
 </html>
