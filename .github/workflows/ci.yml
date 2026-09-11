@@ -18,10 +18,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-      - run: npm ci
+          node-version: 24
+      # The backend lockfile is not part of this repository, so setup-node's
+      # npm cache cannot resolve a dependency path on a clean GitHub runner.
+      - run: npm install --no-audit --no-fund
       - name: Backend tests
         run: npm test
       - name: JavaScript syntax
@@ -39,4 +39,3 @@ jobs:
             echo 'Potential secret committed to source.' >&2
             exit 1
           fi
-
