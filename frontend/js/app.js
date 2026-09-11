@@ -101,6 +101,7 @@ class App {
 
         // Run computation in Timing Engine
         const result = TimingEngine.computeSchedule(formData, formData.blocks);
+        this.blocksManager?.setScheduleRows(result.tableRows);
         window.WorkspaceShell?.setSchedulePreview(result.tableRows);
 
         // Keep the editor oriented around the next operational decision.
@@ -140,11 +141,11 @@ class App {
             result.tableRows.forEach(r => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="text-align: center; font-weight: bold; color: #94a3b8;">${r.num}</td>
+                    <td class="row-number">${r.num}</td>
                     <td><span class="badge ${r.badgeClass}">${r.type}</span></td>
-                    <td style="font-weight: 600;">${r.title}</td>
+                    <td class="row-title">${r.title}</td>
                     <td class="time-cell">${r.start}</td>
-                    <td style="font-weight: 600;">${r.duration} min</td>
+                    <td class="row-duration">${r.duration} min</td>
                     <td class="time-cell">${r.end}</td>
                 `;
                 tbody.appendChild(tr);
@@ -170,16 +171,23 @@ class App {
         }
     }
 
-    async saveProject() {
+    async saveProject(options = {}) {
         try {
-            const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}) };
+            const data = { ...this.getFormData(), ...(this.currentProjectId ? { id: this.currentProjectId } : {}), ...(this.documentVersion !== undefined ? { documentVersion: this.documentVersion } : {}) };
             const res = await ApiClient.saveProject(data);
             this.currentProjectId = res.data?.id || this.currentProjectId;
+            this.documentVersion = res.data?.document_version ?? this.documentVersion;
             window.WorkspaceShell?.setProject(this.currentProjectId, data.eventName);
-            PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
+            window.WorkspaceShell?.refreshNotes();
+            if (!options.silent) PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
             this.renderSavedProjects();
+            return res;
         } catch (error) {
-            PrintExportManager.showToast(error.message || 'No se pudo guardar el proyecto.', 'danger');
+            if (!options.silent) {
+                PrintExportManager.showToast(error.message || 'No se pudo guardar el proyecto.', 'danger');
+                return null;
+            }
+            throw error;
         }
     }
 
@@ -197,6 +205,7 @@ class App {
             this.blocksManager.setBlocks(project.blocks || []);
             this.toggleShowStartMode();
             this.currentProjectId = project.id;
+            this.documentVersion = project.documentVersion;
             window.WorkspaceShell?.setProject(project.id, project.eventName || 'Proyecto activo');
             PrintExportManager.showToast(`Proyecto "${project.eventName}" cargado`, 'info');
         }

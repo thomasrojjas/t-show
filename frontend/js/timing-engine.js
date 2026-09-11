@@ -148,6 +148,7 @@ const TimingEngine = {
                 }
 
                 tableRows.push({
+                    blockId: block.id,
                     num: itemIndex++,
                     type: block.type,
                     badgeClass: badgeClass,
