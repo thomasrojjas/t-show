@@ -52,6 +52,25 @@ const PrintExportManager = {
      * Trigger browser print dialog
      */
     triggerPrint() {
+        const source = document.querySelector('.right-panel-print');
+        if (!source) { window.print(); return; }
+
+        document.getElementById('printRoot')?.remove();
+        const root = document.createElement('div');
+        root.id = 'printRoot';
+        root.className = 'print-root';
+        const copy = source.cloneNode(true);
+        copy.querySelector('.now-next-strip')?.remove();
+        copy.querySelectorAll('button, select, .no-print, .toast-container').forEach(node => node.remove());
+        copy.querySelectorAll('[style*="display: none"]').forEach(node => node.style.removeProperty('display'));
+        root.appendChild(copy);
+        document.body.appendChild(root);
+
+        const cleanup = () => {
+            root.remove();
+            window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup, { once: true });
         window.print();
     }
 };

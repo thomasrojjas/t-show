@@ -222,6 +222,11 @@
 /* Final cascade keeps the official export portrait and includes the timeline. */
 @media print {
   @page { size:A4 portrait; margin:10mm; }
+  body > #printRoot { display:block!important; width:100%!important; margin:0!important; }
+  body > .main-grid { display:none!important; }
+  #printRoot .right-panel-print { display:block!important; width:100%!important; margin:0!important; padding:0!important; }
+  #printRoot .right-panel-print > .print-header { display:block!important; }
+  #printRoot .right-panel-print > .panel { display:block!important; }
   .timeline-container,.print-legend { display:block!important; }
   .right-panel-print > .print-header { display:block!important; }
   .right-panel-print > .panel { display:block!important; }
