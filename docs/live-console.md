@@ -36,6 +36,7 @@ No se admite reemplazar libremente el estado desde el cliente.
 El servidor devuelve 409 ante revisiones antiguas o clientes anteriores; 403 ante falta de permisos.
 La consola comprueba el protocolo de versión antes de habilitar controles, evitando escrituras
 durante un despliegue donde el backend todavía sea antiguo.
+La salud pública /api/health indica liveProtocol: 2 y el commit de Render para comprobar el despliegue.
 
 Realtime comunica revisiones; una consulta de salud cada 15 segundos recupera estado y reloj del servidor.
 Una escritura fallida exige consultar el resultado antes de repetir. No hay cola de comandos offline.

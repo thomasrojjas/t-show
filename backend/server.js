@@ -45,6 +45,8 @@ app.get('/api/health', async (req, res) => {
     success: databaseAvailable,
     status: databaseAvailable ? 'ok' : 'degraded',
     app: 'T-Show API',
+    liveProtocol: 2,
+    release: process.env.RENDER_GIT_COMMIT || null,
     timestamp: new Date().toISOString(),
     requestId: req.requestId,
     dependencies: { database: databaseAvailable ? 'ok' : 'unavailable' }
