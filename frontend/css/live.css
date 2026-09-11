@@ -66,3 +66,5 @@ dialog::backdrop{background:#000b}dialog h2{margin-bottom:16px}dialog p{color:va
 .cue-extra{gap:24px;margin-top:4px;padding-top:8px;padding-bottom:18px}.cue-extra button{flex:0 0 auto}
 @container live (max-width:600px){.cue-extra{gap:16px;padding-top:8px;padding-bottom:18px}}
 .live-header [data-lucide]{width:16px;height:16px;vertical-align:-3px;stroke-width:1.8}.back-link [data-lucide]{width:17px;height:17px}.header-actions button,.header-actions summary{display:inline-flex;align-items:center;gap:8px}
+.wordmark{display:flex;align-items:center;gap:8px}.wordmark img{display:block;width:78px;height:32px;object-fit:contain;object-position:left center}
+body.live-body[data-visual-theme=violet]{--bg:#120d1b;--surface:#21152d;--border:#684a8b}body.live-body[data-visual-theme=cobalt]{--bg:#07121f;--surface:#0d2136;--border:#3673a8}body.live-body[data-visual-theme=ember]{--bg:#1b1009;--surface:#2c1a0e;--border:#925532}body.live-body[data-visual-theme=emerald]{--bg:#061611;--surface:#0c261e;--border:#388f70}body.live-body[data-visual-theme=monochrome]{--bg:#101010;--surface:#1c1c1c;--border:#505050}

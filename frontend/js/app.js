@@ -163,8 +163,9 @@ class App {
                 const seg = document.createElement('div');
                 seg.className = 'timeline-segment';
                 seg.style.width = `${pct}%`;
-                seg.style.backgroundColor = 'var(--project-accent, #74a7ff)';
-                seg.innerText = pct > 5.5 ? `${r.start}` : '';
+                const timelineColors = { 'CONVOCATORIA':'#2f9e78', 'PUERTAS':'#3b82c4', 'PREPARACIÓN':'#c58b35', 'ANIMACIÓN':'#8b5fd3', 'SHOW':'#2f6fd1', 'BIS / ENCORE':'#d15c76', 'OTRO':'#6b7280' };
+                seg.style.backgroundColor = timelineColors[r.type] || 'var(--project-accent, #a8c7fa)';
+                seg.textContent = pct > 5.5 ? `${r.num}` : '';
                 seg.setAttribute('data-tooltip', `[${r.type}] ${r.title} (${r.duration} min | ${r.start} - ${r.end})`);
                 timelineBar.appendChild(seg);
             });

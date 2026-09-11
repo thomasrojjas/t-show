@@ -105,20 +105,20 @@ body.workspace-surface.sidebar-collapsed{--workspace-nav-space:72px}
 .workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand{padding-inline:17px}.workspace-sidebar-shell.is-collapsed .workspace-sidebar-nav>a,.workspace-sidebar-shell.is-collapsed .workspace-help-button,.workspace-sidebar-shell.is-collapsed .workspace-nav-account{justify-content:center;padding-inline:0}.workspace-sidebar-shell.is-collapsed .workspace-sidebar-live{font-size:0}.workspace-sidebar-shell.is-collapsed .workspace-sidebar-live svg{margin:0}
 .workspace-shell{margin-left:var(--workspace-nav-space)!important;width:calc(100% - var(--workspace-nav-space))!important;max-width:none!important;box-sizing:border-box;padding-top:24px!important;transition:margin-left .24s ease,width .24s ease}
 .workspace-sidebar-backdrop{display:none}
-body.workspace-surface[data-visual-theme=nocturne]{--theme-bg:#050812;--theme-surface:#0b1220;--theme-elevated:#121b2d;--theme-text:#f5f7fb;--theme-muted:#9da8ba;--theme-border:#2b3a54;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface[data-visual-theme=violet]{--theme-bg:#090611;--theme-surface:#120d20;--theme-elevated:#1c1230;--theme-text:#fbf8ff;--theme-muted:#b4a9c9;--theme-border:#4b3470;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface[data-visual-theme=cobalt]{--theme-bg:#040a14;--theme-surface:#071426;--theme-elevated:#0e203a;--theme-text:#f4f9ff;--theme-muted:#a5b8cf;--theme-border:#28537e;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface[data-visual-theme=ember]{--theme-bg:#100a07;--theme-surface:#1b100b;--theme-elevated:#2a1710;--theme-text:#fff8f2;--theme-muted:#c9b2a3;--theme-border:#704129;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface[data-visual-theme=emerald]{--theme-bg:#04100d;--theme-surface:#081b17;--theme-elevated:#0e2a22;--theme-text:#f2fff8;--theme-muted:#a8c7b9;--theme-border:#286b57;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface[data-visual-theme=monochrome]{--theme-bg:#080808;--theme-surface:#111;--theme-elevated:#1b1b1b;--theme-text:#fff;--theme-muted:#aaa;--theme-border:#3b3b3b;--workspace-font:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body.workspace-surface{background:var(--theme-bg,#050812);color:var(--theme-text,#f5f7fb)}body.workspace-surface .workspace-shell,body.workspace-surface .workspace-nav{font-family:var(--workspace-font);}
+body.workspace-surface[data-visual-theme=nocturne]{--theme-bg:#101216;--theme-surface:#181c22;--theme-elevated:#20262f;--theme-text:#f2f4f7;--theme-muted:#aeb7c4;--theme-border:#343b46;--theme-accent:#a8c7fa;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface[data-visual-theme=violet]{--theme-bg:#120d1b;--theme-surface:#21152d;--theme-elevated:#302044;--theme-text:#fbf8ff;--theme-muted:#c5b9d4;--theme-border:#684a8b;--theme-accent:#c084fc;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface[data-visual-theme=cobalt]{--theme-bg:#07121f;--theme-surface:#0d2136;--theme-elevated:#143453;--theme-text:#f4f9ff;--theme-muted:#afc4da;--theme-border:#3673a8;--theme-accent:#38bdf8;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface[data-visual-theme=ember]{--theme-bg:#1b1009;--theme-surface:#2c1a0e;--theme-elevated:#442713;--theme-text:#fff8f2;--theme-muted:#d8b9a2;--theme-border:#925532;--theme-accent:#ffb340;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface[data-visual-theme=emerald]{--theme-bg:#061611;--theme-surface:#0c261e;--theme-elevated:#123c2f;--theme-text:#f2fff8;--theme-muted:#b4d3c4;--theme-border:#388f70;--theme-accent:#39ff88;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface[data-visual-theme=monochrome]{--theme-bg:#101010;--theme-surface:#1c1c1c;--theme-elevated:#292929;--theme-text:#fff;--theme-muted:#bdbdbd;--theme-border:#505050;--theme-accent:#f2f4f7;--workspace-font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.workspace-surface{background:var(--theme-bg,#101216);color:var(--theme-text,#f2f4f7)}body.workspace-surface .workspace-shell,body.workspace-surface .workspace-nav{font-family:var(--workspace-font);}
 body.workspace-surface .glass-panel,body.workspace-surface .panel,body.workspace-surface .shell-form-panel{background:color-mix(in srgb,var(--theme-surface,#0b1220) 86%,transparent);border-color:var(--theme-border,#2b3a54)}
 @media(max-width:767px){.workspace-nav.workspace-sidebar-shell{width:min(304px,88vw);transform:translateX(-100%);transition:transform .24s ease}.workspace-nav.workspace-sidebar-shell.is-drawer-open{transform:none}.workspace-nav.workspace-sidebar-shell.is-drawer-open+.workspace-sidebar-backdrop{display:block;position:fixed;inset:0;z-index:99;border:0;background:rgba(0,0,0,.62)}.workspace-shell{margin-left:0!important;width:100%!important;padding:68px 14px 24px!important}body.sidebar-open{overflow:hidden}.workspace-sidebar-brand{height:64px}.workspace-sidebar-toggle{font-size:22px}}
 @media(prefers-reduced-motion:reduce){.workspace-nav.workspace-sidebar-shell,.workspace-shell{transition:none!important}}
 
 /* Sidebar shell final layer: theme tokens apply to every authenticated view. */
 body.workspace-surface .header-bar{display:none!important}
-body.workspace-surface{background:var(--theme-bg,#050812)!important;color:var(--theme-text,#f5f7fb)!important;font-family:var(--workspace-font,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif)!important}
+body.workspace-surface{background:var(--theme-bg,#101216)!important;color:var(--theme-text,#f2f4f7)!important;font-family:var(--workspace-font,"IBM Plex Sans",sans-serif)!important}
 body.workspace-surface .workspace-shell{background:transparent!important;color:var(--theme-text,#f5f7fb)!important}
 body.workspace-surface .workspace-sidebar-shell{background:color-mix(in srgb,var(--theme-bg,#050812) 90%,transparent)!important;border-color:var(--theme-border,#2b3a54)!important}
 body.workspace-surface .workspace-sidebar-nav>a:hover,body.workspace-surface .workspace-sidebar-nav>a:focus-visible,body.workspace-surface .workspace-help-button:hover,body.workspace-surface .workspace-help-button:focus-visible{background:color-mix(in srgb,var(--theme-accent,#74a7ff) 14%,transparent)!important}
@@ -139,6 +139,9 @@ body.workspace-surface .workspace-view [data-status=warning]{color:#f5b942!impor
 body.workspace-surface .workspace-view [data-status=error]{color:#ff8f9a!important;border-color:#74313d!important}
 @media(max-width:767px){body.workspace-surface .workspace-sidebar-shell{background:var(--theme-bg,#050812)!important}.workspace-sidebar-backdrop{background:rgba(0,0,0,.68)!important}}
 @media(prefers-reduced-motion:reduce){body.workspace-surface *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.workspace-surface .workspace-sidebar-brand .workspace-nav-brand{display:block;width:94px;height:42px;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat;color:transparent!important;font-size:0!important;letter-spacing:0!important}
+.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px;height:34px;background-image:url('../assets/branding/tshow-favicon.png');background-position:center}
+.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}
 .workspace-view[data-route="summary"] .shell-projects:last-child .panel-title .shell-eyebrow{font-size:0}
 .workspace-view[data-route="summary"] .shell-projects:last-child .panel-title .shell-eyebrow::after{content:"Resumen del evento";font-size:11px}
 .workspace-view[data-route="summary"] .summary-identity{gap:1px;border-color:var(--theme-border,#2b3a54);background:var(--theme-border,#2b3a54)}
@@ -350,3 +353,8 @@ body.workspace-surface{overflow-x:hidden!important;min-height:100vh}
   body.workspace-surface nav.workspace-sidebar-shell.is-drawer-open{transform:none!important}
   body.workspace-surface .workspace-shell{margin-left:0!important;width:100%!important}
 }
+
+/* Official brand mark remains visible in expanded and collapsed navigation. */
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{display:block!important;width:94px!important;height:42px!important;overflow:hidden!important;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat!important;color:transparent!important;font-size:0!important;letter-spacing:0!important}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px!important;height:34px!important;background-image:url('../assets/branding/tshow-favicon.png')!important;background-position:center!important}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}

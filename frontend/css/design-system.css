@@ -1,4 +1,5 @@
 @font-face { font-family: "IBM Plex Sans"; src: url('../assets/fonts/ibm-plex-sans-latin.woff2') format('woff2'); font-display: swap; font-weight: 100 900; }
+@font-face { font-family: "IBM Plex Mono"; src: url('../assets/fonts/ibm-plex-mono-latin.woff2') format('woff2'); font-display: swap; font-weight: 400 700; }
 :root {
   --ui-bg: #05070c;
   --ui-surface: #0b1220;
@@ -6,7 +7,7 @@
   --ui-border: #26344b;
   --ui-text: #f4f7fb;
   --ui-muted: #a5b1c2;
-  --ui-accent: #9fc9ff;
+  --ui-accent: #a8c7fa;
   --ui-pending: #9fc9ff;
   --ui-success: #65d99a;
   --ui-warning: #f5c76d;
