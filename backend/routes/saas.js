@@ -29,7 +29,7 @@ const validPhone = phone => /^\+569[0-9]{8}$/.test(String(phone || '').replace(/
 const cleanPayload = body => ({ ...body, eventName: String(body.eventName || '').trim() });
 const projectTypes = new Set(['concert', 'festival', 'corporate', 'ceremony', 'broadcast', 'other']);
 const accentColors = new Set(['blue', 'violet', 'cyan', 'green', 'amber', 'rose']);
-const visualThemes = new Set(['nocturne', 'violet', 'cobalt', 'ember']);
+const visualThemes = new Set(['nocturne', 'violet', 'cobalt', 'ember', 'emerald', 'monochrome']);
 const cleanIdentity = body => {
   const eventName = String(body.eventName || '').trim();
   const projectType = projectTypes.has(body.projectType) ? body.projectType : 'other';
@@ -37,10 +37,12 @@ const cleanIdentity = body => {
   const location = String(body.location || '').trim();
   const accentColor = accentColors.has(body.accentColor) ? body.accentColor : 'blue';
   const visualTheme = visualThemes.has(body.visualTheme) ? body.visualTheme : 'nocturne';
+  const backgroundKey = body.backgroundKey == null || body.backgroundKey === '' ? null : String(body.backgroundKey).trim();
   if (!eventName || eventName.length > 180) throw new Error('El nombre del proyecto es inválido.');
   if (eventDate && (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate) || Number.isNaN(Date.parse(`${eventDate}T00:00:00Z`)))) throw new Error('La fecha del evento es inválida.');
   if (location.length > 160) throw new Error('La ubicación no puede superar 160 caracteres.');
-  return { eventName, projectType, eventDate, location, accentColor, visualTheme };
+  if (backgroundKey && !/^[a-z0-9_-]+$/.test(backgroundKey)) throw new Error('El fondo seleccionado no es válido.');
+  return { eventName, projectType, eventDate, location, accentColor, visualTheme, backgroundKey };
 };
 const legacyDate = value => {
   const date = String(value || '').trim();
@@ -204,7 +206,8 @@ router.patch('/projects/:id/identity', requireSupabaseAuth, async (req, res) => 
       eventDate: legacyDate(req.body.eventDate ?? existing.eventDate),
       location: req.body.location ?? existing.location,
       accentColor: req.body.accentColor ?? existing.accentColor,
-      visualTheme: req.body.visualTheme ?? existing.visualTheme
+      visualTheme: req.body.visualTheme ?? existing.visualTheme,
+      backgroundKey: req.body.backgroundKey ?? existing.backgroundKey
     });
   } catch (error) { return res.status(400).json({ success: false, message: error.message }); }
   const coverKey = req.body.coverKey === null ? null : String(req.body.coverKey || granted.project.cover_key || '');
@@ -264,6 +267,19 @@ router.patch('/projects/:id/blocks/:blockId/notes', requireSupabaseAuth, async (
   if (error) return res.status(400).json({ success: false, message: error.message });
   await audit(req.params.id, req.user.id, 'block.notes_updated', { blockId: req.params.blockId, hasNotes: Boolean(notes), hasAnimatorScript: Boolean(animatorScript) });
   res.json({ success: true, data: notesFromProject(data).find(block => block.blockId === req.params.blockId) });
+});
+router.patch('/projects/:id/blocks/:blockId/identity', requireSupabaseAuth, async (req, res) => {
+  const granted = await accessForRequest(req.params.id, req, true);
+  if (!granted) return res.status(403).json({ success: false, message: 'No tienes permiso para editar el fondo del bloque.' });
+  const backgroundKey = req.body?.backgroundKey == null ? null : String(req.body.backgroundKey).trim().slice(0, 180);
+  if (backgroundKey && !/^[a-z0-9_-]+$/.test(backgroundKey)) return res.status(400).json({ success: false, message: 'El fondo seleccionado no es válido.' });
+  const blocks = Array.isArray(granted.project.payload?.blocks) ? granted.project.payload.blocks : [];
+  if (!blocks.some(block => block.id === req.params.blockId)) return res.status(404).json({ success: false, message: 'Bloque no encontrado.' });
+  const payload = { ...(granted.project.payload || {}), blocks: blocks.map(block => block.id === req.params.blockId ? { ...block, backgroundKey } : block) };
+  const { data, error } = await supabase.from('tshow_projects').update({ payload }).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ success: false, message: error.message });
+  await audit(req.params.id, req.user.id, 'block.identity_updated', { blockId: req.params.blockId, backgroundKey });
+  res.json({ success: true, data });
 });
 
 router.get('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
@@ -448,6 +464,12 @@ router.get('/billing/subscription', requireSupabaseAuth, async (req, res) => {
   const { data, error } = await supabase.from('tshow_subscriptions').select('*,tshow_plans(*)').eq('account_id', req.user.id).maybeSingle();
   res.status(error ? 400 : 200).json({ success: !error, data, message: error?.message });
 });
+router.get('/backgrounds', requireSupabaseAuth, async (req, res) => {
+  let query = supabase.from('tshow_background_library').select('*').eq('active', true).order('category').order('title');
+  if (req.query.category) query = query.eq('category', String(req.query.category));
+  const { data, error } = await query;
+  res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
+});
 router.get('/admin/plans', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
   const { data, error } = await supabase.from('tshow_plans').select('*').order('name').order('interval');
   res.status(error ? 400 : 200).json({ success: !error, data: data || [], message: error?.message });
@@ -465,21 +487,24 @@ router.patch('/admin/plans/:id', requireSupabaseAuth, requirePlatformAdmin, upda
 // Superadmin account entitlement management. All writes are audited.
 router.get('/admin/accounts', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
   const query = String(req.query.q || '').trim().toLowerCase();
-  const { data: profiles, error } = await supabase.from('profiles').select('id,first_name,last_name,email,role,account_plan,custom_project_limit,commercial_status,created_at,entitlement_updated_at').order('created_at', { ascending: false });
+  const { data: profiles, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,entitlement_updated_at').order('created_at', { ascending: false });
   if (error) return res.status(400).json({ success: false, message: error.message });
   const rows = [];
   for (const profile of profiles || []) {
-    if (query && !`${profile.first_name} ${profile.last_name} ${profile.email}`.toLowerCase().includes(query)) continue;
+    let organizationName = '';
+    if (profile.default_organization_id) { const { data: org } = await supabase.from('tshow_organizations').select('name').eq('id', profile.default_organization_id).maybeSingle(); organizationName = org?.name || ''; }
+    if (query && !`${profile.first_name} ${profile.last_name} ${profile.email} ${profile.rut || ''} ${organizationName}`.toLowerCase().includes(query)) continue;
     const entitlement = await getEntitlement(profile.id, profile.role);
-    rows.push({ ...profile, ...entitlement });
+    rows.push({ ...profile, organization: organizationName, ...entitlement });
   }
   res.json({ success: true, data: rows });
 });
 router.get('/admin/accounts/:id', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
-  const { data: profile, error } = await supabase.from('profiles').select('id,first_name,last_name,email,role,account_plan,custom_project_limit,commercial_status,created_at,entitlement_updated_at').eq('id', req.params.id).maybeSingle();
+  const { data: profile, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,entitlement_updated_at').eq('id', req.params.id).maybeSingle();
   if (error || !profile) return res.status(404).json({ success: false, message: 'Cuenta no encontrada.' });
   const entitlement = await getEntitlement(profile.id, profile.role);
-  res.json({ success: true, data: { ...profile, ...entitlement } });
+  const { data: org } = profile.default_organization_id ? await supabase.from('tshow_organizations').select('name').eq('id', profile.default_organization_id).maybeSingle() : { data: null };
+  res.json({ success: true, data: { ...profile, organization: org?.name || '', ...entitlement } });
 });
 router.get('/admin/accounts/:id/history', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
   const { data, error } = await supabase.from('tshow_account_entitlement_history').select('*').eq('account_id', req.params.id).order('created_at', { ascending: false });
@@ -491,11 +516,16 @@ router.patch('/admin/accounts/:id/entitlement', requireSupabaseAuth, requirePlat
   const customLimit = req.body.customLimit === null || req.body.customLimit === '' || req.body.customLimit === undefined ? null : Number(req.body.customLimit);
   if (customLimit !== null && (!Number.isInteger(customLimit) || customLimit < 1)) return res.status(400).json({ success: false, message: 'El límite personalizado debe ser un entero mayor que cero.' });
   const status = ['free', 'active', 'expired', 'cancelled', 'read_only'].includes(req.body.status) ? req.body.status : (plan === 'free' ? 'free' : 'active');
-  const { data: current } = await supabase.from('profiles').select('id,account_plan,custom_project_limit,commercial_status').eq('id', req.params.id).maybeSingle();
+  const reason = String(req.body.reason || '').trim();
+  if (reason.length < 2) return res.status(400).json({ success: false, message: 'El motivo es obligatorio.' });
+  const startsAt = req.body.startsAt ? new Date(req.body.startsAt).toISOString() : null;
+  const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt).toISOString() : null;
+  if ((req.body.startsAt && Number.isNaN(Date.parse(req.body.startsAt))) || (req.body.expiresAt && Number.isNaN(Date.parse(req.body.expiresAt))) || (startsAt && expiresAt && startsAt >= expiresAt)) return res.status(400).json({ success: false, message: 'La vigencia de la excepción es inválida.' });
+  const { data: current } = await supabase.from('profiles').select('id,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at').eq('id', req.params.id).maybeSingle();
   if (!current) return res.status(404).json({ success: false, message: 'Cuenta no encontrada.' });
-  const { data, error } = await supabase.from('profiles').update({ account_plan: plan, custom_project_limit: customLimit, commercial_status: status, entitlement_updated_at: new Date().toISOString(), entitlement_updated_by: req.user.id }).eq('id', req.params.id).select().single();
+  const { data, error } = await supabase.from('profiles').update({ account_plan: plan, custom_project_limit: customLimit, commercial_status: status, entitlement_starts_at: startsAt, entitlement_expires_at: expiresAt, entitlement_updated_at: new Date().toISOString(), entitlement_updated_by: req.user.id }).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ success: false, message: error.message });
-  await supabase.from('tshow_account_entitlement_history').insert({ account_id: req.params.id, changed_by: req.user.id, old_plan: current.account_plan, new_plan: plan, old_limit: current.custom_project_limit, new_limit: customLimit, old_status: current.commercial_status, new_status: status, reason: String(req.body.reason || '').slice(0, 500) });
+  await supabase.from('tshow_account_entitlement_history').insert({ account_id: req.params.id, changed_by: req.user.id, old_plan: current.account_plan, new_plan: plan, old_limit: current.custom_project_limit, new_limit: customLimit, old_status: current.commercial_status, new_status: status, old_starts_at: current.entitlement_starts_at, new_starts_at: startsAt, old_expires_at: current.entitlement_expires_at, new_expires_at: expiresAt, reason: reason.slice(0, 500) });
   res.json({ success: true, data, message: 'Nivel y cupo actualizados.' });
 });
 

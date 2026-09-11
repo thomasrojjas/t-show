@@ -89,6 +89,17 @@ timming/
 
 ## 📡 Endpoints de la API REST
 
+La migración `backend/db/migrations/026_admin_backgrounds.sql` incorpora vigencias de excepciones comerciales, auditoría reforzada y el catálogo de fondos visuales. Los endpoints protegidos relacionados son:
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/api/admin/accounts` | Cuentas, plan, uso, cupo y vigencia; admite nombre, correo, RUT u organización |
+| `GET` | `/api/admin/accounts/:id/history` | Historial administrativo |
+| `PATCH` | `/api/admin/accounts/:id/entitlement` | Plan, estado, límite y excepción temporal; exige motivo |
+| `GET` | `/api/backgrounds` | Biblioteca de fondos aprobados |
+| `PATCH` | `/api/projects/:id/identity` | Identidad, tema y fondo predeterminado del evento |
+| `PATCH` | `/api/projects/:id/blocks/:blockId/identity` | Fondo específico de un bloque |
+
 | Método | Endpoint | Descripción |
 |---|---|---|
 | `GET` | `/api/health` | Estado del servidor y hora |

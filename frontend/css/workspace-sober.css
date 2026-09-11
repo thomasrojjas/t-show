@@ -139,6 +139,7 @@ body.workspace-surface .workspace-view [data-status=warning]{color:#f5b942!impor
 body.workspace-surface .workspace-view [data-status=error]{color:#ff8f9a!important;border-color:#74313d!important}
 @media(max-width:767px){body.workspace-surface .workspace-sidebar-shell{background:var(--theme-bg,#050812)!important}.workspace-sidebar-backdrop{background:rgba(0,0,0,.68)!important}}
 @media(prefers-reduced-motion:reduce){body.workspace-surface *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.shell-status-panel .now-next-card{position:relative;overflow:hidden;margin-top:auto;background:linear-gradient(90deg,rgba(5,8,18,.9),rgba(5,8,18,.58)),url('../assets/backgrounds/live-desktop-poster-v1.webp') center/cover;border-color:rgba(160,190,230,.28);backdrop-filter:blur(8px)}
 
 /* Hard layout boundary for the sidebar shell.  Older workspace styles still
    target `.workspace-nav-tabs` as a horizontal top navigation; these rules
@@ -323,6 +324,7 @@ body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-a
   }
 }
 body.workspace-surface .workspace-view{filter:none!important;opacity:1!important}
+.shell-editorial,.shell-status-panel{position:relative;overflow:hidden}.shell-editorial{isolation:isolate;min-height:360px}.summary-visual,.status-visual{position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;opacity:.5}.summary-visual{background-image:linear-gradient(90deg,rgba(5,8,18,.96) 0%,rgba(5,8,18,.78) 42%,rgba(5,8,18,.22) 100%),url('../assets/backgrounds/workspace-desktop-poster-v1.webp');}.status-visual{background-image:linear-gradient(180deg,rgba(5,8,18,.76),rgba(5,8,18,.94)),url('../assets/tshow-stage.webp');opacity:.42}.summary-copy,.status-copy{position:relative;z-index:1}.summary-copy{max-width:720px;padding-top:104px}.status-copy{min-height:328px;display:flex;flex-direction:column;justify-content:center}.shell-status-panel .now-next-card{margin-top:auto;background:rgba(5,8,18,.58);border-color:rgba(160,190,230,.28);backdrop-filter:blur(8px)}
 body.workspace-surface .workspace-view.is-active{animation:workspaceViewVisible .18s ease-out both!important}
 @keyframes workspaceViewVisible{from{opacity:.84;transform:translateY(5px)}to{opacity:1;transform:none}}
 body.workspace-surface{overflow-x:hidden!important;min-height:100vh}

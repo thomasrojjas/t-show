@@ -162,7 +162,7 @@ class App {
                 const seg = document.createElement('div');
                 seg.className = 'timeline-segment';
                 seg.style.width = `${pct}%`;
-                seg.style.backgroundColor = r.color;
+                seg.style.backgroundColor = 'var(--project-accent, #74a7ff)';
                 seg.innerText = pct > 5.5 ? `${r.start}` : '';
                 seg.setAttribute('data-tooltip', `[${r.type}] ${r.title} (${r.duration} min | ${r.start} - ${r.end})`);
                 timelineBar.appendChild(seg);
