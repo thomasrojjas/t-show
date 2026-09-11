@@ -292,6 +292,11 @@ body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sideb
   justify-content:center!important;
   padding-inline:0!important;
 }
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand{padding-inline:17px!important;gap:0}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:0;overflow:hidden;font-size:0;letter-spacing:0}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{content:'T';font-size:13px;letter-spacing:.1em}
+body.workspace-surface .workspace-sidebar-live{background:var(--theme-accent,#9fc9ff)!important;color:#05070c!important}
+body.workspace-surface .workspace-sync-indicator>span:first-child{display:none!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-nav.workspace-nav-tabs>a span,
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-label,
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-context,
