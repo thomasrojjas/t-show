@@ -358,9 +358,9 @@ body.workspace-surface{overflow-x:hidden!important;min-height:100vh}
 body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{display:block!important;width:94px!important;height:42px!important;overflow:hidden!important;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat!important;color:transparent!important;font-size:0!important;letter-spacing:0!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px!important;height:34px!important;background-image:url('../assets/branding/tshow-favicon.png')!important;background-position:center!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}
-body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page]{color:#101216!important}
-body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] span{color:#101216!important;font-weight:700}
-body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] svg{color:#101216!important;stroke:currentColor!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page]{color:#f2f4f7!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] span{color:#f2f4f7!important;font-weight:700}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] svg{color:#f2f4f7!important;stroke:currentColor!important}
 body.workspace-surface .workspace-sidebar-toggle span{display:inline-block;transition:transform .2s ease}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-toggle span{transform:rotate(180deg)}
 body.workspace-surface .shell-page-head{display:flex;align-items:end;justify-content:space-between;gap:28px}
