@@ -84,6 +84,15 @@ body.workspace-surface select:focus-visible,
 body.workspace-surface textarea:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 body.workspace-surface button[aria-busy="true"] { cursor: wait; }
 
+/* The create tile owns its content so the plus mark never escapes the card. */
+body.workspace-surface .create-project-card { display: grid; place-items: center; padding: clamp(20px, 4vw, 34px); overflow: hidden; box-sizing: border-box; }
+body.workspace-surface .create-project-content { display: grid; justify-items: center; width: min(100%, 280px); min-width: 0; }
+body.workspace-surface .create-project-card .create-symbol { width: clamp(64px, 7vw, 88px); height: clamp(64px, 7vw, 88px); margin: 0 0 var(--ui-space-4); flex: 0 0 auto; }
+body.workspace-surface .create-project-card h2, body.workspace-surface .create-project-card p { max-width: 100%; overflow-wrap: anywhere; }
+body.workspace-surface .create-project-card h2 { margin: 0 0 var(--ui-space-2); }
+body.workspace-surface .create-project-card p { margin: 0; }
+body.workspace-surface [data-cancel-confirm][aria-disabled="true"] { pointer-events: none; opacity: .55; }
+
 @media (max-width: 900px) {
   body.workspace-surface #blocksContainer.blocks-compact { grid-template-columns: minmax(0, 1fr); }
   body.workspace-surface .block-detail { order: -1; }
