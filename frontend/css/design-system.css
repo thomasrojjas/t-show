@@ -83,6 +83,14 @@ body.workspace-surface input:focus-visible,
 body.workspace-surface select:focus-visible,
 body.workspace-surface textarea:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 body.workspace-surface button[aria-busy="true"] { cursor: wait; }
+/* Escaleta hierarchy: setup first, editable rundown second, calculated output last. */
+body.workspace-surface .workspace-view[data-route="schedule"] .main-grid { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; gap: clamp(16px, 2vw, 28px); }
+body.workspace-surface .workspace-view[data-route="schedule"] .left-panel-print,
+body.workspace-surface .workspace-view[data-route="schedule"] .right-panel-print { min-width: 0; display: grid; gap: 16px; align-content: start; }
+body.workspace-surface .workspace-view[data-route="schedule"] .left-panel-print > .panel { margin: 0; }
+body.workspace-surface .workspace-view[data-route="schedule"] .right-panel-print > .panel { margin: 0; }
+body.workspace-surface .workspace-view[data-route="schedule"] .right-panel-print .now-next-strip { margin: 0; }
+body.workspace-surface .workspace-view[data-route="schedule"] .right-panel-print .metrics-grid { margin: 0; }
 body.workspace-surface #blocksContainer:not(.blocks-compact) { display: block; align-items: stretch; }
 body.workspace-surface #blocksContainer:not(.blocks-compact) .blocks-empty { display: block; width: 100%; min-width: 0; box-sizing: border-box; text-align: left; white-space: normal; overflow-wrap: anywhere; }
 
@@ -96,6 +104,7 @@ body.workspace-surface .create-project-card p { margin: 0; }
 body.workspace-surface [data-cancel-confirm][aria-disabled="true"] { pointer-events: none; opacity: .55; }
 
 @media (max-width: 900px) {
+  body.workspace-surface .workspace-view[data-route="schedule"] .main-grid { grid-template-columns: minmax(0, 1fr); }
   body.workspace-surface #blocksContainer.blocks-compact { grid-template-columns: minmax(0, 1fr); }
   body.workspace-surface .block-detail { order: -1; }
 }
