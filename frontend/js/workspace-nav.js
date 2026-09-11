@@ -86,7 +86,7 @@
       if(profile.role==='platform_admin'){
         const adminLink=document.createElement('a');adminLink.href='/admin.html';adminLink.className='workspace-sidebar-admin';adminLink.innerHTML=`${navIcons.settings}<span>Super admin</span>`;adminLink.title='Administración de cuentas y planes';
         const controlLabel=[...document.querySelectorAll('.workspace-sidebar-label')].find(node=>node.textContent.trim()==='CONTROL');
-        controlLabel?.after(adminLink);
+        nav.querySelector('[data-route="projects"]')?.after(adminLink);
       }
     }catch(_){/* La navegación sigue siendo utilizable si el perfil tarda o falla. */}
   }
