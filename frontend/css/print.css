@@ -219,6 +219,42 @@
   .legend-conv { background:#2f9e78!important; }.legend-doors { background:#3b82c4!important; }.legend-prep { background:#c58b35!important; }.legend-anim { background:#8b5fd3!important; }.legend-show { background:#2f6fd1!important; }.legend-bis { background:#d15c76!important; }.legend-other { background:#6b7280!important; }
 }
 
+/* Export-only contrast layer. This stays scoped to the temporary print root. */
+@media print {
+  body > *:not(#printRoot) { display:none!important; }
+  body > #printRoot,
+  #printRoot .right-panel-print,
+  #printRoot .right-panel-print > .panel,
+  #printRoot .right-panel-print .metric-card,
+  #printRoot .right-panel-print .table-container,
+  #printRoot .right-panel-print .timeline-container { background:#fff!important; color:#111!important; }
+  #printRoot * { text-shadow:none!important; box-shadow:none!important; }
+  #printRoot .now-next-strip, #printRoot button, #printRoot select, #printRoot .no-print { display:none!important; }
+  #printRoot .right-panel-print { font-family:"IBM Plex Sans",Arial,sans-serif!important; }
+  #printRoot .print-header *, #printRoot .metric-card *, #printRoot .panel-title *, #printRoot .timing-table *, #printRoot .timeline-container * { color:#111!important; }
+  #printRoot .metrics-grid { gap:2mm!important; margin:0 0 4mm!important; }
+  #printRoot .metric-card { min-height:0!important; padding:2mm!important; border:1px solid #777!important; }
+  #printRoot .metric-label { font-size:7pt!important; font-weight:700!important; }
+  #printRoot .metric-value { font-size:13pt!important; font-weight:700!important; }
+  #printRoot .panel-title { margin:0 0 2mm!important; padding:0 0 2mm!important; border-bottom:1.5px solid #111!important; }
+  #printRoot #displayEventTitle { font-size:14pt!important; color:#111!important; }
+  #printRoot .table-container { overflow:visible!important; border:1px solid #111!important; }
+  #printRoot .timing-table { width:100%!important; border-collapse:collapse!important; font-size:9pt!important; }
+  #printRoot .timing-table th { padding:1.2mm 1.5mm!important; color:#111!important; background:#e6e8eb!important; border-bottom:1.5px solid #111!important; font-size:8pt!important; }
+  #printRoot .timing-table td { padding:1.1mm 1.5mm!important; color:#111!important; background:#fff!important; border-bottom:1px solid #aeb4bb!important; }
+  #printRoot .timing-table tr:nth-child(even) td { background:#f5f6f7!important; }
+  #printRoot .timing-table tr { break-inside:avoid!important; page-break-inside:avoid!important; }
+  #printRoot .badge { color:#111!important; background:#fff!important; border:1px solid #555!important; }
+  #printRoot .time-cell { color:#111!important; font-family:"IBM Plex Mono",Consolas,monospace!important; font-weight:700!important; }
+  #printRoot .timeline-container { display:block!important; break-inside:avoid!important; page-break-inside:avoid!important; margin-top:4mm!important; padding:3mm!important; border:1px solid #333!important; }
+  #printRoot .timeline-bar { display:flex!important; height:8mm!important; background:#f1f3f5!important; border:1px solid #555!important; }
+  #printRoot .timeline-segment { min-width:1px!important; color:#fff!important; border-right:1px solid rgba(0,0,0,.45)!important; }
+  #printRoot .timeline-segment::after { display:none!important; }
+  #printRoot .print-legend { display:flex!important; flex-wrap:wrap!important; gap:1.5mm 4mm!important; break-before:avoid!important; page-break-before:avoid!important; margin-top:1.5mm!important; color:#222!important; font-size:7pt!important; }
+  #printRoot .print-legend span { display:inline-flex!important; align-items:center!important; gap:1mm!important; }
+  #printRoot .legend-swatch { display:inline-block!important; width:3mm!important; height:3mm!important; border:1px solid #333!important; }
+}
+
 /* Final cascade keeps the official export portrait and includes the timeline. */
 @media print {
   @page { size:A4 portrait; margin:10mm; }
