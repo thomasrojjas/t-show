@@ -20,7 +20,7 @@ const Auth = (() => {
         return clientPromise;
     }
     async function token() { const { data } = await (await client()).auth.getSession(); return data.session?.access_token || null; }
-    async function api(path, options = {}) { const accessToken = await token(); const response = await fetch(`${window.SHOWTIME_API_URL || window.location.origin}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}), ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) } }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.message || 'No se pudo completar la solicitud.'); return body; }
+    async function api(path, options = {}) { const accessToken = await token(); const response = await fetch(`${window.SHOWTIME_API_URL || window.location.origin}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}), ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) } }); const body = await response.json().catch(() => ({})); if (!response.ok) { const error = new Error(body.message || 'No se pudo completar la solicitud.'); error.code = body.code; error.status = response.status; error.requestId = body.requestId; throw error; } return body; }
     function normalizeRut(value) {
         const compact = String(value || '').replace(/[^0-9kK]/g, '').toUpperCase();
         if (compact.length < 8 || compact.length > 9) return '';
@@ -107,9 +107,23 @@ const Auth = (() => {
     async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
-    async function acceptInvitation(invite) { if (!invite) return null; return api(`/api/invitations/${encodeURIComponent(invite)}/accept`, { method: 'POST' }); }
+    function pendingInvitation() {
+        const params = new URLSearchParams(location.search);
+        const incoming = params.get('invite') || (location.pathname.endsWith('invite.html') ? params.get('token') : null);
+        try {
+            if (incoming) sessionStorage.setItem('tshow_pending_invite', incoming);
+            return incoming || sessionStorage.getItem('tshow_pending_invite');
+        } catch (_) { return incoming; }
+    }
+    async function acceptInvitation(invite) {
+        if (!invite) return null;
+        const accepted = await api(`/api/invitations/${encodeURIComponent(invite)}/accept`, { method: 'POST' });
+        await Promise.all([api(`/api/projects/${encodeURIComponent(accepted.projectId)}`), api('/api/projects')]);
+        try { sessionStorage.removeItem('tshow_pending_invite'); } catch (_) {}
+        return accepted;
+    }
     async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
-    return { client, token, api, login, register, acceptInvitation, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, passwordHint, bindPasswordToggles, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
+    return { client, token, api, login, register, acceptInvitation, pendingInvitation, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, passwordHint, bindPasswordToggles, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();
 document.addEventListener('DOMContentLoaded', () => Auth.bindPasswordToggles());

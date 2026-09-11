@@ -108,8 +108,10 @@ router.get('/projects', requireSupabaseAuth, async (req, res) => {
   try { entitlement = await getEntitlement(id, req.user.profile?.role); } catch (entitlementError) { return res.status(500).json({ success: false, message: 'No se pudo calcular el cupo de proyectos.' }); }
   const meta = { ownedCount: ownedCount || 0, limit: entitlement.limit, remaining: entitlement.remaining, plan: entitlement.plan, subscriptionStatus: entitlement.status };
   if (isPlatformAdmin) return res.json({ success: true, data: (owned || []).map(project => ({ ...project, member_role: project.owner_id === id ? 'owner' : 'admin' })), meta });
-  const { data: memberships } = await supabase.from('tshow_project_members').select('project_id,role,tshow_projects(*)').eq('user_id', id);
-  const projects = [...owned, ...(memberships || []).map(m => ({ ...m.tshow_projects, member_role: m.role })).filter(project => project && !project.deleted_at)];
+  const { data: memberships, error: membershipError } = await supabase.from('tshow_project_members').select('project_id,role,tshow_projects(*)').eq('user_id', id);
+  if (membershipError) return res.status(503).json({ success: false, code: 'PROJECT_LIST_UNAVAILABLE', message: 'No se pudieron cargar los proyectos compartidos. Intenta nuevamente.', requestId: req.requestId });
+  const shared = (memberships || []).filter(m => m.tshow_projects && !m.tshow_projects.deleted_at).map(m => ({ ...m.tshow_projects, member_role: m.role }));
+  const projects = [...new Map([...shared, ...(owned || []).map(p => ({ ...p, member_role: 'owner' }))].map(p => [p.id, p])).values()];
   res.json({ success: true, data: projects, meta });
 });
 
@@ -441,31 +443,33 @@ router.delete('/invitations/:id', requireSupabaseAuth, async (req, res) => {
 router.get('/invitations/:token', async (req, res) => {
   const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
   const { data: invite, error } = await supabase.from('tshow_invitations').select('email,role,expires_at,status,tshow_projects(event_name)').eq('token_hash', hash).maybeSingle();
-  if (error || !invite || invite.status !== 'pending' || new Date(invite.expires_at) < new Date()) return res.status(404).json({ success: false, message: 'La invitación no es válida o ya expiró.' });
+  if (error) return res.status(503).json({ success: false, code: 'INVITATION_SERVICE_ERROR', message: 'No se pudo consultar la invitación. Intenta nuevamente.' });
+  if (!invite) return res.status(404).json({ success: false, code: 'INVITATION_NOT_FOUND', message: 'El enlace de invitación no existe.' });
+  if (invite.status === 'revoked') return res.status(410).json({ success: false, code: 'INVITATION_REVOKED', message: 'Esta invitación fue revocada.' });
+  if (invite.status !== 'accepted' && (invite.status === 'expired' || new Date(invite.expires_at) <= new Date())) return res.status(410).json({ success: false, code: 'INVITATION_EXPIRED', message: 'Esta invitación venció. Solicita una nueva.' });
   res.json({ success: true, data: { email: invite.email, role: invite.role, expires_at: invite.expires_at, project_name: invite.tshow_projects?.event_name || 'este proyecto' } });
 });
-router.post('/invitations/:token/accept', requireSupabaseAuth, async (req, res) => {
+router.post('/invitations/:token/accept', requireAuthenticatedUser, async (req, res) => {
   const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
   const { data, error } = await supabase.rpc('tshow_accept_invitation_service', {
     invitation_hash: hash,
     authenticated_user: req.user.id,
-    authenticated_email: req.user.email.toLowerCase()
+    authenticated_email: (req.user.email || '').trim().toLowerCase()
   });
   if (error) {
     const reason = String(error.message || '');
-    const code = reason.includes('EXPIRED') ? 'INVITATION_EXPIRED'
-      : reason.includes('EMAIL_MISMATCH') ? 'INVITATION_EMAIL_MISMATCH'
-        : reason.includes('NOT_PENDING') ? 'INVITATION_ALREADY_USED'
-          : 'INVITATION_INVALID';
-    return res.status(code === 'INVITATION_EMAIL_MISMATCH' ? 403 : 409).json({
-      success: false,
-      code,
-      message: code === 'INVITATION_EXPIRED' ? 'Esta invitación venció.'
-        : code === 'INVITATION_EMAIL_MISMATCH' ? 'Inicia sesión con el correo que recibió la invitación.'
-          : code === 'INVITATION_ALREADY_USED' ? 'Esta invitación ya fue utilizada o revocada.'
-            : 'La invitación no es válida.',
-      requestId: req.requestId
-    });
+    const failures = {
+      INVITATION_NOT_FOUND: [404, 'El enlace de invitación no existe. Solicita uno nuevo.'],
+      INVITATION_EXPIRED: [410, 'Esta invitación venció. Solicita una nueva.'],
+      INVITATION_REVOKED: [410, 'Esta invitación fue revocada.'],
+      INVITATION_NOT_PENDING: [409, 'Esta invitación ya no está pendiente.'],
+      INVITATION_ACCESS_REMOVED: [403, 'Ya no tienes acceso a este proyecto. Solicita una nueva invitación.'],
+      INVITATION_EMAIL_MISMATCH: [403, 'Inicia sesión con el correo que recibió la invitación.'],
+      PROFILE_NOT_FOUND: [403, 'Completa tu perfil para aceptar la invitación.']
+    };
+    const known = failures[reason];
+    if (!known) console.error('invitation.accept failed', { requestId: req.requestId, databaseCode: error.code });
+    return res.status(known?.[0] || 503).json({ success: false, code: known ? reason : 'INVITATION_SERVICE_ERROR', message: known?.[1] || 'La sesión está iniciada, pero no pudimos aceptar la invitación. Intenta nuevamente.', requestId: req.requestId });
   }
   const accepted = Array.isArray(data) ? data[0] : data;
   res.json({ success: true, projectId: accepted.project_id, role: accepted.member_role, requestId: req.requestId });
