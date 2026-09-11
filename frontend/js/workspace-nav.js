@@ -78,11 +78,16 @@
       const profile=profileResult?.data||profileResult?.profile||profileResult||{};
       const metadata=user?.user_metadata||{};
       const fullName=[profile.first_name||metadata.first_name,profile.last_name||metadata.last_name].filter(Boolean).join(' ')||user?.email?.split('@')[0]||'Mi cuenta';
-      currentAccount={id:user?.id,email:user?.email||profile.email||'',name:fullName};
+      currentAccount={id:user?.id,email:user?.email||profile.email||'',name:fullName,role:profile.role||''};
       const avatar=initials(fullName);
       ['workspaceUserAvatar','workspaceMenuAvatar'].forEach(id=>{const node=document.getElementById(id);if(node)node.textContent=avatar;});
       const name=document.getElementById('workspaceUserName'),menuName=document.getElementById('workspaceMenuName'),email=document.getElementById('workspaceMenuEmail');
       if(name)name.textContent=fullName;if(menuName)menuName.textContent=fullName;if(email)email.textContent=currentAccount.email;
+      if(profile.role==='platform_admin'){
+        const adminLink=document.createElement('a');adminLink.href='/admin.html';adminLink.className='workspace-sidebar-admin';adminLink.innerHTML=`${navIcons.settings}<span>Super admin</span>`;adminLink.title='Administración de cuentas y planes';
+        const controlLabel=[...document.querySelectorAll('.workspace-sidebar-label')].find(node=>node.textContent.trim()==='CONTROL');
+        controlLabel?.after(adminLink);
+      }
     }catch(_){/* La navegación sigue siendo utilizable si el perfil tarda o falla. */}
   }
 

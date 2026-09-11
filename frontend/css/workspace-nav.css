@@ -8,5 +8,7 @@
 .workspace-nav-tabs a:hover,.workspace-nav-tabs a:focus-visible,.workspace-nav-tabs a[aria-current="page"] { color:#050609; background:var(--nav-active); border-color:var(--nav-active); outline:none; }
 .workspace-nav-account { color:var(--nav-text); border-color:var(--nav-line); margin-left:4px; cursor:pointer; background:transparent; }
 .workspace-nav-live { color:#050609 !important; background:#80e2a7 !important; border-color:#80e2a7 !important; }
+.workspace-sidebar-admin { color:#bcd4ff !important; }
+.workspace-sidebar-admin svg { stroke:currentColor; fill:none; stroke-width:1.7; width:18px; height:18px; }
 @media(max-width:760px){ .workspace-nav { flex-wrap:wrap; gap:10px; padding-bottom:8px; } .workspace-nav-project{order:3; max-width:100%; width:100%;} .workspace-nav-tabs{order:4; margin-left:0; width:100%;} .workspace-nav-account{margin-left:auto;} }
 @media(prefers-reduced-motion:reduce){ .workspace-nav *{scroll-behavior:auto!important;} }

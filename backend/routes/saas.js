@@ -487,24 +487,52 @@ router.patch('/admin/plans/:id', requireSupabaseAuth, requirePlatformAdmin, upda
 // Superadmin account entitlement management. All writes are audited.
 router.get('/admin/accounts', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
   const query = String(req.query.q || '').trim().toLowerCase();
-  const { data: profiles, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,entitlement_updated_at').order('created_at', { ascending: false });
+  const { data: profiles, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,phone,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,updated_at,entitlement_updated_at,entitlement_updated_by').order('created_at', { ascending: false });
   if (error) return res.status(400).json({ success: false, message: error.message });
+  const profileIds = (profiles || []).map(profile => profile.id);
+  const [{ data: organizations }, { data: subscriptions }, { data: payments }] = await Promise.all([
+    supabase.from('tshow_organizations').select('id,name'),
+    profileIds.length ? supabase.from('tshow_subscriptions').select('account_id,status,current_period_end,updated_at,tshow_plans(code,name)').in('account_id', profileIds) : Promise.resolve({ data: [] }),
+    profileIds.length ? supabase.from('tshow_payments').select('account_id,status,amount_clp,paid_at,created_at').in('account_id', profileIds).order('paid_at', { ascending: false }) : Promise.resolve({ data: [] })
+  ]);
+  const organizationMap = new Map((organizations || []).map(org => [org.id, org.name]));
+  const subscriptionMap = new Map((subscriptions || []).map(subscription => [subscription.account_id, subscription]));
+  const latestPaymentMap = new Map();
+  for (const payment of payments || []) if (!latestPaymentMap.has(payment.account_id)) latestPaymentMap.set(payment.account_id, payment);
   const rows = [];
   for (const profile of profiles || []) {
-    let organizationName = '';
-    if (profile.default_organization_id) { const { data: org } = await supabase.from('tshow_organizations').select('name').eq('id', profile.default_organization_id).maybeSingle(); organizationName = org?.name || ''; }
+    const organizationName = organizationMap.get(profile.default_organization_id) || '';
     if (query && !`${profile.first_name} ${profile.last_name} ${profile.email} ${profile.rut || ''} ${organizationName}`.toLowerCase().includes(query)) continue;
     const entitlement = await getEntitlement(profile.id, profile.role);
-    rows.push({ ...profile, organization: organizationName, ...entitlement });
+    const subscription = subscriptionMap.get(profile.id);
+    const latestPayment = latestPaymentMap.get(profile.id);
+    rows.push({ ...profile, organization: organizationName, ...entitlement,
+      subscriptionStatus: subscription?.status || 'inactive',
+      subscriptionPlan: subscription?.tshow_plans?.name || subscription?.tshow_plans?.[0]?.name || '',
+      currentPeriodEnd: subscription?.current_period_end || null,
+      lastPaymentAt: latestPayment?.paid_at || latestPayment?.created_at || null,
+      lastPaymentStatus: latestPayment?.status || null,
+      entitlementSource: profile.custom_project_limit || profile.account_plan !== 'free' ? 'manual' : subscription?.status === 'active' ? 'subscription' : 'free'
+    });
   }
   res.json({ success: true, data: rows });
 });
 router.get('/admin/accounts/:id', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
-  const { data: profile, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,entitlement_updated_at').eq('id', req.params.id).maybeSingle();
+  const { data: profile, error } = await supabase.from('profiles').select('id,first_name,last_name,email,rut,phone,default_organization_id,role,account_plan,custom_project_limit,commercial_status,entitlement_starts_at,entitlement_expires_at,created_at,updated_at,entitlement_updated_at,entitlement_updated_by').eq('id', req.params.id).maybeSingle();
   if (error || !profile) return res.status(404).json({ success: false, message: 'Cuenta no encontrada.' });
   const entitlement = await getEntitlement(profile.id, profile.role);
   const { data: org } = profile.default_organization_id ? await supabase.from('tshow_organizations').select('name').eq('id', profile.default_organization_id).maybeSingle() : { data: null };
-  res.json({ success: true, data: { ...profile, organization: org?.name || '', ...entitlement } });
+  const [{ data: subscription }, { data: payments }] = await Promise.all([
+    supabase.from('tshow_subscriptions').select('account_id,status,current_period_end,updated_at,tshow_plans(code,name)').eq('account_id', profile.id).maybeSingle(),
+    supabase.from('tshow_payments').select('status,amount_clp,paid_at,created_at,provider').eq('account_id', profile.id).order('paid_at', { ascending: false }).limit(10)
+  ]);
+  res.json({ success: true, data: { ...profile, organization: org?.name || '', ...entitlement,
+    subscriptionStatus: subscription?.status || 'inactive',
+    subscriptionPlan: subscription?.tshow_plans?.name || subscription?.tshow_plans?.[0]?.name || '',
+    currentPeriodEnd: subscription?.current_period_end || null,
+    payments: payments || [],
+    entitlementSource: profile.custom_project_limit || profile.account_plan !== 'free' ? 'manual' : subscription?.status === 'active' ? 'subscription' : 'free'
+  } });
 });
 router.get('/admin/accounts/:id/history', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
   const { data, error } = await supabase.from('tshow_account_entitlement_history').select('*').eq('account_id', req.params.id).order('created_at', { ascending: false });
