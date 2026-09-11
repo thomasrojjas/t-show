@@ -131,15 +131,17 @@
                     <span class="panel-hint">Reordena arrastrando o con teclado</span>
                 </div>
 
-                <div id="blocksContainer" class="blocks-list">
-                    <!-- Dynamic Blocks rendered by BlocksManager -->
-                </div>
-
-                <div class="grid-3 no-print" style="margin-top: 14px;">
+                <div class="block-add-actions no-print" aria-label="Agregar bloques a la escaleta">
                     <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('show')">+ Show</button>
                     <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('anim')">+ Animador</button>
                     <button class="btn btn-secondary" style="font-size: 11px; justify-content: center;" onclick="app.blocksManager.addBlock('other')">+ Bloque Libre</button>
                 </div>
+
+                <div id="blocksContainer" class="blocks-list">
+                    <!-- Dynamic Blocks rendered by BlocksManager -->
+                </div>
+
+
             </div>
         </section>
 
@@ -249,6 +251,7 @@
     <script src="js/print-export.js"></script>
     <script src="js/app.js"></script>
     <script src="js/ambient-background.js"></script>
+    <script src="js/project-files.js"></script>
     <script src="js/workspace-nav.js"></script>
 </body>
 </html>
