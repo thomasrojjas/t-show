@@ -7,6 +7,7 @@ const { deleteObject, duplicateProjectCover } = require('../r2');
 const { getEntitlement, PLAN_LIMITS } = require('../services/entitlements');
 const { resolveWritableOrganization } = require('../services/organizations');
 const { ADVANCED_FEATURES } = require('../services/features');
+const LiveEngine = require('../../frontend/js/live-engine');
 
 const router = express.Router();
 const passwordResetRequests = new Map();
@@ -286,15 +287,30 @@ router.get('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
   if (!await accessForRequest(req.params.id, req)) return res.status(403).json({ success: false, message: 'Sin acceso al proyecto.' });
   const { data, error } = await supabase.from('tshow_live_sessions').select('*').eq('project_id', req.params.id).maybeSingle();
   if (error) return res.status(400).json({ success: false, message: error.message });
-  res.json({ success: true, data: data?.state || null });
+  res.json({ success: true, data: data?.state || null, version: data?.revision || 0, serverNow: new Date().toISOString() });
 });
 router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
-  if (!await accessForRequest(req.params.id, req, true)) return res.status(403).json({ success: false, message: 'Sin permiso para operar en vivo.' });
-  const state = req.body || {};
-  const { data, error } = await supabase.from('tshow_live_sessions').upsert({ project_id: req.params.id, state, updated_by: req.user.id, last_updated: new Date().toISOString() }).select().single();
-  if (error) return res.status(400).json({ success: false, message: error.message });
-  await audit(req.params.id, req.user.id, 'live.updated');
-  res.json({ success: true, data: data.state });
+  const granted = await accessForRequest(req.params.id, req, true);
+  if (!granted) return res.status(403).json({ success: false, message: 'Sin permiso para operar en vivo.' });
+  const { expectedVersion, action } = req.body || {};
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0 || !action)
+    return res.status(409).json({ success: false, code: 'LIVE_RELOAD_REQUIRED', message: 'Actualiza la consola antes de operar.' });
+  if (['finish', 'reset'].includes(action) && !['owner', 'admin'].includes(granted.role))
+    return res.status(403).json({ success: false, message: 'Solo el propietario o administrador puede realizar esta acción.' });
+  const current = await supabase.from('tshow_live_sessions').select('state,revision').eq('project_id', req.params.id).maybeSingle();
+  if (current.error) return res.status(503).json({ success: false, message: 'No se pudo consultar la sesión. Reintenta.' });
+  if ((current.data?.revision || 0) !== expectedVersion)
+    return res.status(409).json({ success: false, code: 'LIVE_CONFLICT', message: 'Otro operador actualizó la sesión. Recarga antes de repetir la acción.' });
+  let state;
+  try { state = LiveEngine.transition(granted.project.payload, current.data?.state || {}, req.body, granted.role); }
+  catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+  const { data, error } = await supabase.rpc('tshow_commit_live_session', {
+    target_project: req.params.id, expected_revision: expectedVersion, next_state: state, actor: req.user.id, action_name: action
+  });
+  if (error) return res.status(error.code === '40001' ? 409 : 503).json({ success: false,
+    code: error.code === '40001' ? 'LIVE_CONFLICT' : 'LIVE_SAVE_FAILED',
+    message: error.code === '40001' ? 'Otro operador actualizó la sesión. Recarga antes de repetir la acción.' : 'No se pudo guardar. Recarga la sesión para comprobar el resultado.' });
+  res.json({ success: true, data: data.state, version: data.revision, serverNow: new Date().toISOString() });
 });
 
 router.get('/projects/:id/members', requireSupabaseAuth, async (req, res) => {

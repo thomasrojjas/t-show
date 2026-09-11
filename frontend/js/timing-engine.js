@@ -149,6 +149,7 @@ const TimingEngine = {
 
                 tableRows.push({
                     blockId: block.id,
+                    raw: block,
                     num: itemIndex++,
                     type: block.type,
                     badgeClass: badgeClass,
@@ -165,6 +166,8 @@ const TimingEngine = {
             if (block.type === 'SHOW' && blockBis > 0) {
                 const endTime = this.addMinutes(currentTime, blockBis);
                 tableRows.push({
+                    blockId: block.id ? block.id + ':encore' : undefined,
+                    raw: block,
                     num: itemIndex++,
                     type: 'BIS / ENCORE',
                     badgeClass: 'badge-bis',

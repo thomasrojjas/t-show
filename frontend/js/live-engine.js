@@ -1,321 +1,165 @@
-/**
- * Show Time - LiveEngine
- * Core real-time math engine for live show tracking, progressive timing, block extension, and cascading projection
- * Developed by BaseAndes Software (https://www.baseandes.com/)
- */
+/* Shared deterministic live math and transitions. Also used by the API. */
+const LiveTiming = typeof module !== 'undefined' && module.exports ? require('./timing-engine') : TimingEngine;
 const LiveEngine = {
-    /**
-     * Format a Date object to "HH:MM:SS" string
-     */
-    formatTimeSeconds(date) {
-        if (!date) return '00:00:00';
-        const d = new Date(date);
-        const h = String(d.getHours()).padStart(2, '0');
-        const m = String(d.getMinutes()).padStart(2, '0');
-        const s = String(d.getSeconds()).padStart(2, '0');
-        return `${h}:${m}:${s}`;
+    defaults(state = {}) {
+        return { status: 'idle', trackingMode: 'schedule', currentIndex: 0, currentBlockStartTime: null,
+            mutedBlockNums: [], omittedItemNums: [], blockExtensions: {}, history: [], ...state };
     },
-
-    /**
-     * Format seconds into "MM:SS" or "HH:MM:SS" with explicit seconds
-     */
-    formatDurationSeconds(totalSeconds) {
-        const isNegative = totalSeconds < 0;
-        const absSec = Math.abs(Math.floor(totalSeconds));
-        const hours = Math.floor(absSec / 3600);
-        const minutes = Math.floor((absSec % 3600) / 60);
-        const seconds = absSec % 60;
-
-        const pad = (num) => String(num).padStart(2, '0');
-
-        let formatted = '';
-        if (hours > 0) {
-            formatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-        } else {
-            formatted = `${pad(minutes)}:${pad(seconds)}`;
-        }
-
-        return isNegative ? `-${formatted}` : formatted;
+    zone(project) {
+        const zone = project.timeZone || project.timezone || 'America/Santiago';
+        new Intl.DateTimeFormat('en', { timeZone: zone }).format();
+        return zone;
     },
-
-    /**
-     * Compute full live state snapshot
-     * @param {Object} projectData - The base project configuration
-     * @param {Object} liveState - The current live session state
-     * @returns {Object} Complete calculated live model
-     */
-    computeLiveSnapshot(projectData, liveState) {
-        if (!projectData) return null;
-
-        // Base plan computation
-        const baseComputed = TimingEngine.computeSchedule(projectData, projectData.blocks || []);
-        const now = new Date();
-
-        // Extract list of all schedule items from base plan
-        const allItems = JSON.parse(JSON.stringify(baseComputed.tableRows || []));
-
-        const omittedList = liveState.omittedItemNums || [];
-        const mutedList = liveState.mutedBlockNums || [];
-        const extensions = liveState.blockExtensions || {};
-
-        // Identify muted, omitted and extended items
-        const processedItems = allItems.map(item => {
-            const isOmitted = omittedList.includes(item.num);
-            const isMuted = mutedList.includes(item.num);
-            const addedMinutes = extensions[item.num] || 0;
-            const effectiveDuration = isMuted ? 0 : Math.max(1, item.duration + addedMinutes);
-
-            return {
-                ...item,
-                isOmitted,
-                isMuted,
-                addedMinutes,
-                duration: effectiveDuration,
-                originalDuration: item.duration,
-                effectiveDuration
-            };
-        }).filter(item => !item.isOmitted);
-
-        const status = liveState.status || 'idle'; // 'idle' | 'live' | 'paused' | 'finished'
-        const trackingMode = liveState.trackingMode || 'schedule'; // 'schedule' | 'manual'
-        let currentIndex = Math.max(0, liveState.currentIndex || 0);
-
-        let currentItem = null;
-        let nextItem = null;
-        let elapsedSeconds = 0;
-        let remainingSeconds = 0;
-        let progressPercent = 0;
-        let isOvertime = false;
-        let overtimeSeconds = 0;
-
-        // Helper to convert "HH:MM" to Date for today
-        const getRowDateTime = (timeStr, baseD = now, isNextDay = false) => {
-            const [h, m] = (timeStr || '00:00').split(':').map(Number);
-            const d = new Date(baseD);
-            d.setHours(h || 0, m || 0, 0, 0);
-            if (isNextDay) d.setDate(d.getDate() + 1);
-            return d;
+    dateInZone(now, zone) {
+        const parts = new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+        const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
+        return `${p.year}-${p.month}-${p.day}`;
+    },
+    zonedTime(date, time, zone) {
+        const [y, m, d] = date.split('-').map(Number);
+        const [h, min] = time.split(':').map(Number);
+        const target = Date.UTC(y, m - 1, d, h, min);
+        const formatter = new Intl.DateTimeFormat('en-GB', { timeZone: zone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23' });
+        let epoch = target;
+        for (let i = 0; i < 4; i++) {
+            const p = Object.fromEntries(formatter.formatToParts(epoch).map(x => [x.type, x.value]));
+            const actual = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+            if (actual === target) return epoch;
+            epoch += target - actual;
+        }
+        throw new Error('El horario coincide con un cambio de hora. Ajusta la hora de inicio en la Escaleta.');
+    },
+    formatTimeSeconds(date, zone = 'America/Santiago') {
+        return new Intl.DateTimeFormat('es-CL', { timeZone: zone, hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23' }).format(new Date(date));
+    },
+    formatDurationSeconds(seconds) {
+        const n = Math.floor(Math.abs(seconds || 0));
+        return (seconds < 0 ? '−' : '') + (n >= 3600 ? String(Math.floor(n / 3600)).padStart(2, '0') + ':' : '') +
+            String(Math.floor(n / 60) % 60).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    },
+    computeLiveSnapshot(project, input = {}, now = Date.now()) {
+        if (!project) return null;
+        const state = this.defaults(input), zone = this.zone(project);
+        const effectiveNow = state.status === 'paused' ? Date.parse(state.pausedAt || new Date(now).toISOString()) :
+            state.status === 'finished' ? Date.parse(state.finishedAt || new Date(now).toISOString()) : now;
+        const date = project.eventDate || state.eventDate || this.dateInZone(now, zone);
+        const rows = LiveTiming.computeSchedule(project, project.blocks || []).tableRows;
+        let previousMinutes = -1, day = 0;
+        const items = rows.map(row => {
+            const minutes = +row.start.slice(0, 2) * 60 + +row.start.slice(3);
+            if (minutes < previousMinutes) day++;
+            previousMinutes = minutes;
+            const dayDate = new Date(Date.parse(date + 'T12:00:00Z') + day * 86400000).toISOString().slice(0, 10);
+            const startMs = this.zonedTime(dayDate, row.start, zone);
+            const raw = row.raw || (project.blocks || []).find(b => b.id && b.id === row.blockId) || {};
+            const key = row.blockId || `segment:${row.type}:${row.num}`;
+            const isMuted = state.mutedBlockNums.includes(row.num) || (state.mutedBlockIds || []).includes(key);
+            const duration = row.duration + (state.trackingMode === 'manual' ? Number(state.blockExtensions[key] ?? state.blockExtensions[row.num] ?? 0) : 0);
+            return { ...row, key, raw, isMuted, effectiveDuration: duration, startMs, endMs: startMs + row.duration * 60000 };
+        }).filter(row => !state.omittedItemNums.includes(row.num));
+        const executable = items.filter(row => !row.isMuted);
+        let index = state.currentBlockId ? executable.findIndex(x => x.key === state.currentBlockId) : state.currentIndex;
+        if (index < 0) index = 0;
+        let current = executable[index] || executable[0], next = null, elapsed = 0, remaining = current?.effectiveDuration * 60 || 0;
+        let waiting = false, scheduleEnded = false;
+        if (state.trackingMode === 'schedule' && state.status !== 'idle') {
+            index = executable.findIndex(row => effectiveNow < row.endMs);
+            scheduleEnded = executable.length > 0 && index === -1;
+            if (scheduleEnded) index = executable.length - 1;
+            current = executable[index] || null;
+            waiting = !!current && effectiveNow < current.startMs;
+            elapsed = current ? Math.min(current.duration * 60, Math.max(0, (effectiveNow - current.startMs) / 1000)) : 0;
+            remaining = current ? Math.max(0, ((waiting ? current.startMs : current.endMs) - effectiveNow) / 1000) : 0;
+        } else if (state.trackingMode === 'manual' && state.status !== 'idle' && current) {
+            elapsed = Math.max(0, (effectiveNow - Date.parse(state.currentBlockStartTime || new Date(effectiveNow).toISOString())) / 1000);
+            remaining = current.effectiveDuration * 60 - elapsed;
+        }
+        next = executable[index + 1] || null;
+        const progress = current && !waiting ? Math.min(100, elapsed / (current.effectiveDuration * 60) * 100) : 0;
+        for (const row of items) {
+            const execIndex = executable.indexOf(row);
+            row.rowState = row.isMuted ? 'muted' : state.status === 'idle' ? 'future' :
+                state.trackingMode === 'schedule' ? (effectiveNow >= row.endMs ? 'completed' : row === current && !waiting ? 'active' : 'future') :
+                execIndex < index || row === current && state.status === 'finished' ? 'completed' : row === current ? 'active' : 'future';
+        }
+        const projectedEndMs = state.trackingMode === 'manual' && current && state.status !== 'idle' ?
+            effectiveNow + (Math.max(0, remaining) + executable.slice(index + 1).reduce((sum, row) => sum + row.effectiveDuration * 60, 0)) * 1000 :
+            executable.at(-1)?.endMs;
+        return { status: state.status, trackingMode: state.trackingMode, currentIndex: index, currentItem: current, nextItem: next,
+            elapsedSeconds: elapsed, remainingSeconds: state.status === 'finished' ? 0 : remaining,
+            progressPercent: progress, items, executable, waiting, scheduleEnded, zone, projectedEndMs,
+            history: state.history, isOvertime: remaining < 0, alertLevel: remaining < 0 ? 'error' : !waiting && remaining <= 60 ? 'warning' : 'normal' };
+    },
+    transition(project, input, command, permission, now = Date.now()) {
+        const manager = ['owner', 'admin'].includes(permission);
+        if (!manager && permission !== 'editor') throw new Error('No tienes permiso para operar este evento.');
+        const state = this.defaults(JSON.parse(JSON.stringify(input || {})));
+        const snap = this.computeLiveSnapshot(project, state, now);
+        const stamp = new Date(now).toISOString(), action = command.action;
+        const requireState = (...allowed) => { if (!allowed.includes(state.status)) throw new Error('La acción no está disponible en el estado actual.'); };
+        const manualLive = () => { requireState('live'); if (state.trackingMode !== 'manual' || !snap.currentItem) throw new Error('Esta acción requiere un bloque en modo manual.'); };
+        const record = () => {
+            if (state.trackingMode !== 'manual' || !snap.currentItem || !state.currentBlockStartTime) return;
+            const row = snap.currentItem;
+            state.history.push({ key: row.key, num: row.num, title: row.title, type: row.type, plannedStart: row.start,
+                plannedDuration: row.duration, actualStart: state.actualBlockStartedAt || state.currentBlockStartTime,
+                actualEnd: stamp, actualDurationMinutes: snap.elapsedSeconds / 60, diffMinutes: snap.elapsedSeconds / 60 - row.duration, source: 'manual' });
         };
-
-        // Recalculate schedule starting times in cascade taking muted (0 duration) and extensions into account
-        let rollingTime = null;
-        let prevEndHour = -1;
-        let dayOffset = 0;
-
-        const mappedScheduleItems = [];
-
-        for (let i = 0; i < processedItems.length; i++) {
-            const item = processedItems[i];
-            
-            if (i === 0) {
-                const startHour = parseInt((item.start || '00:00').split(':')[0]) || 0;
-                rollingTime = getRowDateTime(item.start, now, false);
+        if (action === 'start') {
+            requireState('idle');
+            if (!snap.executable.length) throw new Error('Agrega bloques con duración antes de iniciar.');
+            state.status = 'live'; state.startedAt = stamp;
+            state.eventDate = project.eventDate || this.dateInZone(now, snap.zone);
+            state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
+        } else if (action === 'pause') {
+            requireState('live'); state.status = 'paused'; state.pausedAt = stamp;
+        } else if (action === 'resume') {
+            requireState('paused');
+            if (state.trackingMode === 'manual' && state.pausedAt && state.currentBlockStartTime)
+                state.currentBlockStartTime = new Date(Date.parse(state.currentBlockStartTime) + now - Date.parse(state.pausedAt)).toISOString();
+            state.status = 'live'; state.pausedAt = null;
+        } else if (action === 'mode') {
+            requireState('idle', 'live', 'paused');
+            if (!['manual', 'schedule'].includes(command.mode)) throw new Error('Modo inválido.');
+            if (state.trackingMode === command.mode) return state;
+            if (command.mode === 'manual') {
+                state.currentIndex = snap.currentIndex; state.currentBlockId = snap.currentItem?.key;
+                const anchor = state.status === 'paused' ? Date.parse(state.pausedAt || stamp) : now;
+                state.currentBlockStartTime = new Date(anchor - snap.elapsedSeconds * 1000).toISOString();
+                state.actualBlockStartedAt = stamp;
+            } else { record(); state.currentBlockId = null; }
+            state.trackingMode = command.mode;
+        } else if (action === 'next') {
+            manualLive(); record();
+            if (!snap.nextItem) { state.status = 'finished'; state.finishedAt = stamp; }
+            else {
+                state.currentIndex = snap.currentIndex + 1; state.currentBlockId = snap.nextItem.key;
+                state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
             }
-
-            const startHour = rollingTime.getHours();
-            if (prevEndHour > 18 && startHour < 6) {
-                dayOffset = 1;
-            }
-
-            const startDate = new Date(rollingTime);
-            const durationMin = item.isMuted ? 0 : item.effectiveDuration;
-            const endDate = new Date(startDate.getTime() + (durationMin * 60000));
-            prevEndHour = endDate.getHours();
-            rollingTime = new Date(endDate);
-
-            mappedScheduleItems.push({
-                ...item,
-                recalcStart: TimingEngine.formatTime(startDate),
-                recalcEnd: TimingEngine.formatTime(endDate),
-                startDate,
-                endDate
-            });
-        }
-
-        // Filter active (non-muted) items for execution pointer
-        const executableItems = mappedScheduleItems.filter(item => !item.isMuted);
-
-        // 1. AUTO SCHEDULE TRACKING MODE (Seguimiento según Horario Programado)
-        if (status === 'live' && trackingMode === 'schedule' && executableItems.length > 0) {
-            let foundIdx = -1;
-            for (let i = 0; i < executableItems.length; i++) {
-                const item = executableItems[i];
-                if (now >= item.startDate && now < item.endDate) {
-                    foundIdx = i;
-                    break;
-                }
-            }
-
-            if (foundIdx === -1 && now < executableItems[0].startDate) {
-                currentIndex = 0;
-                currentItem = executableItems[0];
-                nextItem = executableItems[1] || null;
-                const diffToStartSec = Math.max(0, Math.floor((executableItems[0].startDate.getTime() - now.getTime()) / 1000));
-                elapsedSeconds = 0;
-                remainingSeconds = diffToStartSec;
-                progressPercent = 0;
-            } else if (foundIdx === -1 && now >= executableItems[executableItems.length - 1].endDate) {
-                currentIndex = executableItems.length - 1;
-                currentItem = executableItems[currentIndex];
-                nextItem = null;
-                elapsedSeconds = (currentItem.effectiveDuration || 1) * 60;
-                remainingSeconds = 0;
-                progressPercent = 100;
-            } else {
-                if (foundIdx !== -1) {
-                    currentIndex = foundIdx;
-                    currentItem = executableItems[currentIndex];
-                    nextItem = executableItems[currentIndex + 1] || null;
-                    const totalDurSec = (currentItem.effectiveDuration || 1) * 60;
-                    elapsedSeconds = Math.max(0, Math.floor((now.getTime() - currentItem.startDate.getTime()) / 1000));
-                    remainingSeconds = Math.max(0, Math.floor((currentItem.endDate.getTime() - now.getTime()) / 1000));
-                    progressPercent = Math.min(100, Math.max(0, (elapsedSeconds / totalDurSec) * 100));
-                } else {
-                    for (let i = 0; i < executableItems.length; i++) {
-                        if (now < executableItems[i].startDate) {
-                            currentIndex = i;
-                            currentItem = executableItems[i];
-                            nextItem = executableItems[i + 1] || null;
-                            elapsedSeconds = 0;
-                            remainingSeconds = Math.max(0, Math.floor((currentItem.startDate.getTime() - now.getTime()) / 1000));
-                            progressPercent = 0;
-                            break;
-                        }
-                    }
-                }
-            }
-        } 
-        // 2. MANUAL DIRECTOR TRACKING MODE (Control Manual / TAP)
-        else if (status === 'live' && trackingMode === 'manual' && executableItems.length > 0) {
-            if (currentIndex >= executableItems.length) {
-                currentIndex = executableItems.length - 1;
-            }
-            currentItem = executableItems[currentIndex];
-            nextItem = executableItems[currentIndex + 1] || null;
-            const blockStartMs = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime).getTime() : now.getTime();
-            const totalDurationSec = (currentItem.effectiveDuration || 1) * 60;
-
-            elapsedSeconds = Math.max(0, Math.floor((now.getTime() - blockStartMs) / 1000));
-            remainingSeconds = totalDurationSec - elapsedSeconds;
-
-            if (remainingSeconds < 0) {
-                isOvertime = true;
-                overtimeSeconds = Math.abs(remainingSeconds);
-                progressPercent = 100;
-            } else {
-                progressPercent = Math.min(100, Math.max(0, (elapsedSeconds / totalDurationSec) * 100));
-            }
-        } else if (executableItems.length > 0) {
-            // Idle / Paused
-            if (currentIndex >= executableItems.length) currentIndex = 0;
-            currentItem = executableItems[currentIndex] || executableItems[0];
-            nextItem = executableItems[currentIndex + 1] || null;
-            remainingSeconds = (currentItem ? currentItem.effectiveDuration : 0) * 60;
-        }
-
-        // Project remaining future blocks in manual mode
-        let projectedCurrentTime = new Date();
-        if (status === 'live' && trackingMode === 'manual') {
-            const remainingCurrentBlockSec = Math.max(0, remainingSeconds);
-            projectedCurrentTime = new Date(now.getTime() + remainingCurrentBlockSec * 1000);
-        }
-
-        // Enrich items for the UI table
-        const enrichedItems = mappedScheduleItems.map((item) => {
-            let rowState = 'future'; // 'completed' | 'active' | 'future' | 'muted'
-            let liveStart = item.recalcStart;
-            let liveEnd = item.recalcEnd;
-            let rowProgress = 0;
-
-            if (item.isMuted) {
-                rowState = 'muted';
-                liveStart = '--:--';
-                liveEnd = '--:--';
-                rowProgress = 0;
-            } else if (trackingMode === 'schedule') {
-                if (now >= item.endDate) {
-                    rowState = 'completed';
-                    rowProgress = 100;
-                } else if (now >= item.startDate && now < item.endDate && status === 'live') {
-                    rowState = 'active';
-                    rowProgress = progressPercent;
-                } else {
-                    rowState = 'future';
-                    rowProgress = 0;
-                }
-            } else {
-                // Manual mode
-                const execIdx = executableItems.findIndex(e => e.num === item.num);
-                if (execIdx !== -1) {
-                    if (execIdx < currentIndex) {
-                        rowState = 'completed';
-                        const hist = (liveState.history || []).find(h => h.num === item.num);
-                        if (hist) {
-                            liveStart = hist.actualStartFormatted || item.start;
-                            liveEnd = hist.actualEndFormatted || item.end;
-                        }
-                        rowProgress = 100;
-                    } else if (execIdx === currentIndex && status === 'live') {
-                        rowState = 'active';
-                        const blockStart = liveState.currentBlockStartTime ? new Date(liveState.currentBlockStartTime) : now;
-                        liveStart = TimingEngine.formatTime(blockStart);
-                        const projectedBlockEnd = new Date(blockStart.getTime() + (item.effectiveDuration * 60000));
-                        liveEnd = TimingEngine.formatTime(projectedBlockEnd);
-                        rowProgress = progressPercent;
-                    } else if (status === 'live' && execIdx > currentIndex) {
-                        rowState = 'future';
-                        liveStart = TimingEngine.formatTime(projectedCurrentTime);
-                        projectedCurrentTime = TimingEngine.addMinutes(projectedCurrentTime, item.effectiveDuration);
-                        liveEnd = TimingEngine.formatTime(projectedCurrentTime);
-                    }
-                }
-            }
-
-            return {
-                ...item,
-                rowState,
-                liveStart,
-                liveEnd,
-                rowProgress
-            };
-        });
-
-        // Determine Alert Level for screen perimeter border
-        let alertLevel = 'normal'; // 'normal' | 'yellow' | 'red' | 'overtime'
-        if (status === 'live' && currentItem) {
-            if (isOvertime) {
-                alertLevel = 'overtime';
-            } else if (remainingSeconds <= 30 && remainingSeconds > 0) {
-                alertLevel = 'red';
-            } else if (remainingSeconds <= 60 && remainingSeconds > 0) {
-                alertLevel = 'yellow';
-            }
-        }
-
-        const lastMapped = mappedScheduleItems[mappedScheduleItems.length - 1];
-        const projectedEndTime = (status === 'live' && trackingMode === 'manual') 
-            ? TimingEngine.formatTime(projectedCurrentTime) 
-            : (lastMapped ? lastMapped.recalcEnd : baseComputed.metrics.endTimeFormatted);
-
-        return {
-            status,
-            trackingMode,
-            currentIndex,
-            currentItem,
-            nextItem,
-            elapsedSeconds,
-            remainingSeconds,
-            progressPercent,
-            isOvertime,
-            overtimeSeconds,
-            alertLevel,
-            items: enrichedItems,
-            history: liveState.history || [],
-            projectedEndTime
-        };
+        } else if (action === 'extend') {
+            manualLive();
+            if (![2, 5, 10].includes(command.minutes)) throw new Error('Extensión inválida.');
+            state.blockExtensions[snap.currentItem.key] = Number(state.blockExtensions[snap.currentItem.key] ?? state.blockExtensions[snap.currentItem.num] ?? 0) + command.minutes;
+        } else if (action === 'restart-block') {
+            manualLive(); record(); state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
+        } else if (action === 'exclude' || action === 'restore') {
+            requireState('idle', 'live', 'paused');
+            const row = snap.items.find(x => x.key === command.key);
+            if (!row || (action === 'exclude' && row.rowState !== 'future')) throw new Error('Solo puedes excluir bloques futuros.');
+            if (action === 'restore' && state.status !== 'idle' && (state.trackingMode === 'schedule' ? row.startMs <= now : row.num <= (snap.currentItem?.num || 0)))
+                throw new Error('Solo puedes restaurar bloques futuros.');
+            state.mutedBlockIds = (state.mutedBlockIds || []).filter(key => key !== row.key);
+            state.mutedBlockNums = state.mutedBlockNums.filter(num => num !== row.num);
+            if (action === 'exclude') state.mutedBlockIds.push(row.key);
+        } else if (action === 'finish') {
+            if (!manager) throw new Error('Solo el propietario o administrador puede finalizar.');
+            requireState('live', 'paused'); record(); state.status = 'finished'; state.finishedAt = stamp;
+        } else if (action === 'reset') {
+            if (!manager) throw new Error('Solo el propietario o administrador puede reiniciar.');
+            requireState('idle', 'paused', 'finished');
+            return this.defaults();
+        } else throw new Error('Acción desconocida. Actualiza la consola.');
+        return state;
     }
 };
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = LiveEngine;
-}
+if (typeof module !== 'undefined' && module.exports) module.exports = LiveEngine;
