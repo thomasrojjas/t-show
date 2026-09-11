@@ -11,12 +11,12 @@
 <body class="live-body">
   <a class="skip-link" href="#rundown">Ir a la escaleta</a>
   <header class="live-header">
-    <a id="backLink" class="back-link" href="/projects"><span aria-hidden="true">←</span> Volver a Escaleta</a>
-    <div class="event-identity"><span class="wordmark">T-SHOW <span>/ En vivo</span></span><h1 id="eventName">Cargando evento…</h1></div>
+    <a id="backLink" class="back-link" href="/projects"><i data-lucide="arrow-left" aria-hidden="true"></i> Volver a Escaleta</a>
+    <div class="event-identity"><span class="wordmark">T-SHOW <span>/ Operación</span></span><h1 id="eventName">Cargando evento…</h1></div>
     <div class="header-meta"><span id="sessionStatus" class="status">En espera</span><span id="connectionStatus" class="connection" role="status">Conectando…</span><time id="masterClock">--:--:--</time><small id="zoneLabel"></small></div>
     <div class="header-actions">
-      <button id="stageButton" type="button">Vista escenario <span aria-hidden="true">↗</span></button>
-      <details id="moreMenu"><summary>Más <span aria-hidden="true">⌄</span></summary>
+      <button id="stageButton" type="button">Vista escenario <i data-lucide="external-link" aria-hidden="true"></i></button>
+      <details id="moreMenu"><summary>Más <i data-lucide="chevron-down" aria-hidden="true"></i></summary>
         <div class="more-panel">
           <button id="copyLink" type="button">Copiar enlace del evento</button>
           <small>El enlace requiere acceso al proyecto.</small>
@@ -84,9 +84,9 @@
     <p>Los tiempos manuales son registros de operación. El seguimiento por horario muestra la pauta prevista; no acredita la ejecución real.</p>
     <div id="reportRows"></div><button id="printReport" type="button">Imprimir balance</button>
   </dialog>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
   <script src="js/config.js"></script><script src="js/auth.js"></script>
   <script src="js/api-client.js"></script><script src="js/timing-engine.js"></script>
-  <script src="js/live-engine.js"></script><script src="js/live-sync.js"></script><script src="js/live-app.js"></script>
+  <script>window.lucide?.createIcons();</script><script src="js/live-engine.js"></script><script src="js/live-sync.js"></script><script src="js/live-app.js"></script>
 </body>
 </html>

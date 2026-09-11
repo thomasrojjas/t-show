@@ -145,6 +145,9 @@ body.workspace-surface .workspace-view [data-status=error]{color:#ff8f9a!importa
 .workspace-view[data-route="summary"] .summary-identity>*{display:flex;flex-direction:column;gap:6px;min-height:76px;justify-content:center;background:color-mix(in srgb,var(--theme-elevated,#121b2d) 76%,transparent)}
 .workspace-view[data-route="summary"] .summary-identity>*::before{color:var(--theme-muted,#9da8ba);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .workspace-view[data-route="summary"] .summary-identity>*:nth-child(1)::before{content:"Tipo de evento"}.workspace-view[data-route="summary"] .summary-identity>*:nth-child(2)::before{content:"Fecha"}.workspace-view[data-route="summary"] .summary-identity>*:nth-child(3)::before{content:"Ubicación"}.workspace-view[data-route="summary"] .summary-identity>*:nth-child(4)::before{content:"Permiso"}
+.workspace-surface .workspace-nav-account-menu{top:auto;bottom:calc(100% + 10px);max-height:min(520px,calc(100dvh - 24px));overflow:auto;overscroll-behavior:contain}
+@media(max-width:520px){.workspace-surface .workspace-nav-account-menu{top:66px;bottom:auto;max-height:calc(100dvh - 82px)}}
+.workspace-surface .workspace-sidebar-live span{font-size:0}.workspace-surface .workspace-sidebar-live span::after{content:"Operación en vivo";font-size:12px}
 .shell-status-panel .now-next-card{position:relative;overflow:hidden;margin-top:auto;background:linear-gradient(90deg,rgba(5,8,18,.9),rgba(5,8,18,.58)),url('../assets/backgrounds/live-desktop-poster-v1.webp') center/cover;border-color:rgba(160,190,230,.28);backdrop-filter:blur(8px)}
 
 /* Hard layout boundary for the sidebar shell.  Older workspace styles still

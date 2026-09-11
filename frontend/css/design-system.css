@@ -69,6 +69,10 @@ body.workspace-surface .block-add-actions { display: flex; flex-wrap: wrap; gap:
 .file-drop.is-dragging, .file-drop:focus-within { border-color: var(--ui-accent); background: var(--ui-surface-raised); }
 #fileFields { border: 0; margin: 0; padding: 0; min-width: 0; }
 #fileInput { max-width: 100%; }
+#fileInput::file-selector-button,
+input[type="file"]::file-selector-button { margin: -8px 12px -8px -8px; padding: 8px 12px; border: 1px solid var(--ui-border); border-radius: 5px; background: var(--ui-surface-raised); color: var(--ui-text); font: inherit; cursor: pointer; }
+#fileInput::file-selector-button:hover,
+input[type="file"]::file-selector-button:hover { border-color: var(--ui-accent); background: var(--ui-accent); color: #101216; }
 .file-library-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--ui-border); }
 .file-library-row > div { min-width: 0; overflow-wrap: anywhere; }
 .file-library-row small { display: block; margin-top: 6px; }
