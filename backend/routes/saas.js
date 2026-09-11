@@ -515,22 +515,24 @@ router.get('/admin/accounts', requireSupabaseAuth, requirePlatformAdmin, async (
   const subscriptionMap = new Map((subscriptions || []).map(subscription => [subscription.account_id, subscription]));
   const latestPaymentMap = new Map();
   for (const payment of payments || []) if (!latestPaymentMap.has(payment.account_id)) latestPaymentMap.set(payment.account_id, payment);
-  const rows = [];
-  for (const profile of profiles || []) {
+  const eligibleProfiles = (profiles || []).filter(profile => {
     const organizationName = organizationMap.get(profile.default_organization_id) || '';
-    if (query && !`${profile.first_name} ${profile.last_name} ${profile.email} ${profile.rut || ''} ${organizationName}`.toLowerCase().includes(query)) continue;
+    return !query || `${profile.first_name} ${profile.last_name} ${profile.email} ${profile.rut || ''} ${organizationName}`.toLowerCase().includes(query);
+  });
+  const rows = await Promise.all(eligibleProfiles.map(async profile => {
+    const organizationName = organizationMap.get(profile.default_organization_id) || '';
     const entitlement = await getEntitlement(profile.id, profile.role);
     const subscription = subscriptionMap.get(profile.id);
     const latestPayment = latestPaymentMap.get(profile.id);
-    rows.push({ ...profile, organization: organizationName, ...entitlement,
+    return { ...profile, organization: organizationName, ...entitlement,
       subscriptionStatus: subscription?.status || 'inactive',
       subscriptionPlan: subscription?.tshow_plans?.name || subscription?.tshow_plans?.[0]?.name || '',
       currentPeriodEnd: subscription?.current_period_end || null,
       lastPaymentAt: latestPayment?.paid_at || latestPayment?.created_at || null,
       lastPaymentStatus: latestPayment?.status || null,
       entitlementSource: profile.custom_project_limit || profile.account_plan !== 'free' ? 'manual' : subscription?.status === 'active' ? 'subscription' : 'free'
-    });
-  }
+    };
+  }));
   res.json({ success: true, data: rows });
 });
 router.get('/admin/accounts/:id', requireSupabaseAuth, requirePlatformAdmin, async (req, res) => {
