@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/workspace-nav.css">
     <link rel="stylesheet" href="css/glass-workspace.css">
     <link rel="stylesheet" href="css/workspace-sober.css">
+    <link rel="stylesheet" href="css/design-system.css">
     <style>html,body{margin:0;min-height:100%;background:#03040a;color:#f5f5f2}</style>
 </head>
 <body data-workspace-page="shell">
@@ -22,7 +23,7 @@
             <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" focusable="false"><path d="M12 3v2m-5.5.5 1.4 1.4M4 11h2m12 0h2m-3.9-4.1 1.4-1.4M12 8v4l2.5 2.5M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg></div>
             <div class="brand-text">
                 <h1>Show Time <span class="brand-badge">Pro</span></h1>
-                <p>Gestor Profesional de Timing & Escaleta • <a href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: none;">BaseAndes Software</a></p>
+                <p>Gestor Profesional de Timing & Escaleta • <a class="brand-link" href="https://www.baseandes.com/" target="_blank" rel="noopener noreferrer">BaseAndes Software</a></p>
             </div>
         </div>
         <div class="actions">
@@ -55,7 +56,7 @@
             <div class="panel">
                 <div class="panel-title">
                     <span>Proyectos Guardados</span>
-                    <span id="storageBadge" style="font-size: 11px; color: var(--accent-success); font-weight: bold;">Sincronizando...</span>
+                    <span id="storageBadge" class="storage-badge">Sincronizando...</span>
                 </div>
                 <div id="savedProjectsContainer" class="saved-projects-list">
                     <!-- Dynamic Saved Projects -->
@@ -79,8 +80,8 @@
                 </div>
 
                 <!-- SEGMENTO 1: CONVOCATORIA DE COMISIONES -->
-                <div class="segment-card" style="border-left: 4px solid #c084fc;">
-                    <div class="segment-card-title" style="color: #c084fc;">
+                <div class="segment-card">
+                    <div class="segment-card-title">
                         <span>Segmento 1: Convocatoria Staff</span>
                     </div>
                     <div class="grid-2">
@@ -96,8 +97,8 @@
                 </div>
 
                 <!-- SEGMENTO 2: APERTURA DE PUERTAS -->
-                <div class="segment-card" style="border-left: 4px solid #06b6d4;">
-                    <div class="segment-card-title" style="color: #06b6d4;">
+                <div class="segment-card">
+                    <div class="segment-card-title">
                         <span>Segmento 2: Apertura de Puertas</span>
                     </div>
                     <div class="grid-2">
@@ -113,8 +114,8 @@
                 </div>
 
                 <!-- SEGMENTO 3: INICIO DEL EVENTO -->
-                <div class="segment-card" style="border-left: 4px solid #818cf8;">
-                    <div class="segment-card-title" style="color: #818cf8;">
+                <div class="segment-card">
+                    <div class="segment-card-title">
                         <span>Segmento 3: Inicio del Evento</span>
                     </div>
                     <div class="grid-2">
@@ -138,7 +139,7 @@
             <div class="panel">
                 <div class="panel-title">
                     <span>Estructura & Bloques del Evento</span>
-                    <span style="font-size: 11px; color: var(--text-muted);">Reordena arrastrando o con teclado</span>
+                    <span class="panel-hint">Reordena arrastrando o con teclado</span>
                 </div>
 
                 <div id="blocksContainer" class="blocks-list">
@@ -180,23 +181,23 @@
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-label">Convocatoria</div>
-                    <div class="metric-value" id="metricConvTime" style="color: #c084fc;">18:30</div>
+                    <div class="metric-value" id="metricConvTime">18:30</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Apertura Puertas</div>
-                    <div class="metric-value" id="metricDoorsTime" style="color: #06b6d4;">19:30</div>
+                    <div class="metric-value" id="metricDoorsTime">19:30</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Inicio Show</div>
-                    <div class="metric-value" id="metricShowStartTime" style="color: #34d399;">20:30</div>
+                    <div class="metric-value" id="metricShowStartTime">20:30</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Hora Término</div>
-                    <div class="metric-value" id="metricEndTime" style="color: #f59e0b;">01:20</div>
+                    <div class="metric-value" id="metricEndTime">01:20</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Duración Total</div>
-                    <div class="metric-value" id="metricTotalDuration" style="color: #818cf8;">6h 50m</div>
+                    <div class="metric-value" id="metricTotalDuration">6h 50m</div>
                 </div>
             </div>
 
@@ -204,7 +205,7 @@
             <div class="panel" style="padding: 18px;">
                 <div class="panel-title" style="border-bottom: none; margin-bottom: 12px;">
                     <span id="displayEventTitle" style="font-size: 18px; font-weight: 800;">Gran Concierto & Show Estelar</span>
-                    <span style="font-size: 12px; color: var(--accent-success); font-weight: bold;">● Pauta de Timing Oficial</span>
+                    <span class="status-success">● Pauta de Timing Oficial</span>
                 </div>
 
                 <div class="table-container">
@@ -229,7 +230,7 @@
                 <div class="timeline-container">
                     <div class="timeline-header">
                         <span>Distribución Visual del Evento</span>
-                        <span id="timelineTotalSpan" style="color: #818cf8; font-weight: 800;">18:30 A 01:20 (6H 50M)</span>
+                        <span id="timelineTotalSpan" class="timeline-total">18:30 A 01:20 (6H 50M)</span>
                     </div>
                     <div class="timeline-bar" id="timelineBar">
                         <!-- Visual segments rendered dynamically -->

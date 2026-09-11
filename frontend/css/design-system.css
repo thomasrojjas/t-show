@@ -1,0 +1,101 @@
+:root {
+  --ui-bg: #05070c;
+  --ui-surface: #0b1220;
+  --ui-surface-raised: #111a2a;
+  --ui-border: #26344b;
+  --ui-text: #f4f7fb;
+  --ui-muted: #a5b1c2;
+  --ui-accent: #9fc9ff;
+  --ui-pending: #9fc9ff;
+  --ui-success: #65d99a;
+  --ui-warning: #f5c76d;
+  --ui-danger: #ff7f8d;
+  --ui-complete: #c8d0dc;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 24px;
+  --ui-radius: 10px;
+}
+
+/* Shared operational surfaces used by live, teleprompter and control views. */
+.op-shell { --op-line: var(--ui-border); --op-text: var(--ui-text); --op-muted: var(--ui-muted); }
+.op-panel { border-radius: var(--ui-radius); }
+.op-status.success, .success { color: var(--ui-success); }
+.op-status.warning, .warning { color: var(--ui-warning); }
+.op-status.error, .error { color: var(--ui-danger); }
+.op-shell button:focus-visible, .op-shell a:focus-visible, .op-shell input:focus-visible, .op-shell select:focus-visible, .op-shell textarea:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+
+body.workspace-surface,
+body.workspace-surface .workspace-shell,
+body.workspace-surface .workspace-view { min-width: 0; }
+body.workspace-surface .workspace-view .panel,
+body.workspace-surface .workspace-view .glass-panel,
+body.workspace-surface .workspace-view .metric-card { color: var(--ui-text); }
+body.workspace-surface .workspace-view .panel-title { gap: var(--ui-space-3); align-items: center; }
+body.workspace-surface .workspace-view .panel-title > * { min-width: 0; }
+body.workspace-surface .brand-link { color: var(--ui-accent); text-decoration: none; }
+body.workspace-surface .storage-badge,
+body.workspace-surface .panel-hint { color: var(--ui-muted); font-size: 11px; }
+body.workspace-surface .status-success { color: var(--ui-success); font-size: 12px; font-weight: 700; }
+body.workspace-surface .timeline-total { color: var(--ui-accent); font-weight: 800; }
+body.workspace-surface .timing-table .row-number { text-align: center; color: var(--ui-muted); font-weight: 700; }
+body.workspace-surface .timing-table .row-title,
+body.workspace-surface .timing-table .row-duration { font-weight: 600; }
+
+/* The editor must never inherit the legacy flex width that caused the 1-column
+   collapse on narrow screens. */
+body.workspace-surface .left-panel-print,
+body.workspace-surface .right-panel-print,
+body.workspace-surface .blocks-list,
+body.workspace-surface #blocksContainer { min-width: 0; width: 100%; }
+body.workspace-surface #blocksContainer.blocks-compact { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr); gap: var(--ui-space-3); }
+body.workspace-surface .blocks-compact .blocks-rundown { min-width: 0; display: grid; gap: 6px; align-content: start; }
+body.workspace-surface .block-row { min-width: 0; width: 100%; }
+body.workspace-surface .block-row-main { min-width: 0; }
+body.workspace-surface .block-row-main strong { min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+body.workspace-surface .block-detail { min-width: 0; }
+
+/* Parameter cards: labels wrap safely and fields keep the same rhythm. */
+body.workspace-surface .segment-card { border-left: 2px solid var(--ui-accent) !important; padding: 14px; }
+body.workspace-surface .segment-card-title { color: var(--ui-text) !important; letter-spacing: .08em; line-height: 1.25; }
+body.workspace-surface .segment-card .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--ui-space-3); }
+body.workspace-surface .segment-card .form-label,
+body.workspace-surface .segment-card .form-group { min-width: 0; }
+body.workspace-surface .segment-card label { overflow-wrap: anywhere; }
+
+/* Type is identified by text and structure; color is reserved for state. */
+body.workspace-surface .metric-value,
+body.workspace-surface .time-cell,
+body.workspace-surface .timing-table .badge { color: var(--ui-text) !important; }
+body.workspace-surface .timing-table .badge { background: var(--ui-surface-raised) !important; border-color: var(--ui-border) !important; }
+body.workspace-surface .metric-card { border-color: var(--ui-border) !important; }
+body.workspace-surface .metric-card .metric-value { font-variant-numeric: tabular-nums; }
+body.workspace-surface .block-row-type b { color: var(--ui-accent); }
+body.workspace-surface [data-status="success"] { color: var(--ui-success) !important; }
+body.workspace-surface [data-status="warning"] { color: var(--ui-warning) !important; }
+body.workspace-surface [data-status="error"] { color: var(--ui-danger) !important; }
+
+body.workspace-surface button:focus-visible,
+body.workspace-surface a:focus-visible,
+body.workspace-surface input:focus-visible,
+body.workspace-surface select:focus-visible,
+body.workspace-surface textarea:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+body.workspace-surface button[aria-busy="true"] { cursor: wait; }
+
+@media (max-width: 900px) {
+  body.workspace-surface #blocksContainer.blocks-compact { grid-template-columns: minmax(0, 1fr); }
+  body.workspace-surface .block-detail { order: -1; }
+}
+@media (max-width: 640px) {
+  body.workspace-surface .segment-card .grid-2 { grid-template-columns: minmax(0, 1fr); gap: var(--ui-space-2); }
+  body.workspace-surface .segment-card .form-group { margin-bottom: 0 !important; }
+  body.workspace-surface .block-row-main { grid-template-columns: 28px minmax(72px, auto) minmax(0, 1fr); }
+  body.workspace-surface .block-row-time,
+  body.workspace-surface .block-row-duration { display: none; }
+  body.workspace-surface .block-detail { padding: var(--ui-space-3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.workspace-surface *, body.workspace-surface *::before, body.workspace-surface *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
