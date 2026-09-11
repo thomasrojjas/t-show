@@ -1,0 +1,50 @@
+/* Compact page headings and event overview, using the selected project theme. */
+.workspace-mobile-menu {display:none}
+@media screen and (max-width:767px) {
+  body.workspace-surface:not(.project-selector-active) .workspace-mobile-menu {display:block;position:fixed;top:8px;left:14px;z-index:90;min-height:44px;padding:8px 14px;background:var(--theme-surface);color:var(--theme-text);border:1px solid var(--theme-border);border-radius:6px;font:inherit}
+}
+body.workspace-surface .shell-page-head.compact-page-head {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:24px;
+  min-height:0!important;padding:20px 0 28px!important;margin-bottom:12px!important;
+}
+body.workspace-surface .compact-page-head .shell-page-head-copy {display:block;min-width:0;max-width:80ch}
+body.workspace-surface .compact-page-head h1 {font-family:var(--ui-font-sans)!important;font-size:40px!important;line-height:1.15!important;letter-spacing:-.035em!important;margin:10px 0 12px!important;text-wrap:initial;word-break:normal}
+body.workspace-surface .compact-page-head p {max-width:75ch;margin:0;color:var(--theme-muted);font-size:16px;line-height:1.5}
+body.workspace-surface .compact-page-head .shell-page-actions {display:flex;justify-content:flex-end!important;flex-wrap:wrap;gap:10px;margin:0;align-self:start}
+body.workspace-surface .compact-page-head .shell-page-actions .btn {text-decoration:none!important;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.overview-times {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--theme-border);border-radius:8px;margin-bottom:24px;overflow:hidden}
+.overview-times>div {padding:18px;background:var(--theme-surface);border-right:1px solid var(--theme-border)}
+.overview-times>div:last-child {border:0}
+.overview-times span,.overview-times strong {display:block}
+body.workspace-surface #view-notes .panel-title {display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px}
+body.workspace-surface #view-notes .panel-title>div {flex:1 1 220px}
+body.workspace-surface #view-notes .notes-filter {width:auto;max-width:100%;flex:0 1 260px}
+.overview-times span {font-size:13px;color:var(--theme-muted)}
+.overview-times strong {font:600 22px/1.4 var(--ui-font-mono);margin-top:6px;color:var(--theme-text);overflow-wrap:anywhere}
+.overview-grid {display:grid;grid-template-columns:1.15fr 1fr;gap:24px}
+body.workspace-surface .overview-grid .overview-section {padding:24px!important;margin:0!important;min-width:0}
+body.workspace-surface .overview-section h2 {font:600 22px/1.3 var(--ui-font-sans);margin:0 0 20px}
+.overview-facts {margin:0 0 20px}
+.overview-facts>div {display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--theme-border)}
+.overview-facts dd {margin:0;font-weight:600;white-space:nowrap}
+.overview-state {font-size:22px;font-weight:600;margin:0 0 18px}
+.overview-state small {font-size:14px;font-weight:400;display:block}
+.overview-cues {margin:0 0 16px}
+.overview-cues dt {font-size:13px;color:var(--theme-muted)}
+.overview-cues dd {font-size:18px;margin:4px 0 16px;overflow-wrap:anywhere}
+.overview-section ul {padding-left:20px;line-height:1.8}
+.overview-section .overview-link {background:transparent!important;color:var(--theme-text)!important;border:0;padding:0;text-align:left;text-decoration:underline;cursor:pointer;font:inherit}
+#overviewError:not(:empty) {padding:16px;border-left:3px solid var(--ui-warning);margin-bottom:16px}
+@media(max-width:1200px) {
+  body.workspace-surface .shell-page-head.compact-page-head {grid-template-columns:minmax(0,1fr)}
+  body.workspace-surface .compact-page-head .shell-page-actions {justify-self:end}
+}
+@media(max-width:700px) {
+  body.workspace-surface .workspace-shell {padding-top:64px!important}
+  body.workspace-surface .compact-page-head h1 {font-size:30px!important}
+  .overview-grid {grid-template-columns:minmax(0,1fr)}
+  .overview-times {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .overview-times>div {border-bottom:1px solid var(--theme-border)}
+  .overview-times>div:last-child {grid-column:1/-1}
+  body.workspace-surface .compact-page-head .shell-page-actions {max-width:100%;justify-content:flex-end!important}
+}
