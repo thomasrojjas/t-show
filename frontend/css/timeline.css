@@ -76,6 +76,8 @@
     transform: translateX(-50%) translateY(-4px);
 }
 
+.print-legend { display:none; }
+
 .timeline-container { background:#080a0f; border:1px solid #272a32; border-radius: 0; box-shadow:none; }
 .timeline-bar { height:36px; border-radius: 0; background:#050609; box-shadow:none; }
 .timeline-segment::after { border-radius: 0; box-shadow:none; }

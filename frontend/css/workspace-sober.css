@@ -358,3 +358,19 @@ body.workspace-surface{overflow-x:hidden!important;min-height:100vh}
 body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{display:block!important;width:94px!important;height:42px!important;overflow:hidden!important;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat!important;color:transparent!important;font-size:0!important;letter-spacing:0!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px!important;height:34px!important;background-image:url('../assets/branding/tshow-favicon.png')!important;background-position:center!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page]{color:#101216!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] span{color:#101216!important;font-weight:700}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] svg{color:#101216!important;stroke:currentColor!important}
+body.workspace-surface .workspace-sidebar-toggle span{display:inline-block;transition:transform .2s ease}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-toggle span{transform:rotate(180deg)}
+body.workspace-surface .shell-page-head{display:flex;align-items:end;justify-content:space-between;gap:28px}
+body.workspace-surface .shell-page-head-copy{min-width:0}
+body.workspace-surface .shell-page-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;flex:0 0 auto}
+body.workspace-surface .shell-page-actions .btn{width:auto;white-space:nowrap}
+body.workspace-surface .block-controls{gap:6px;padding:0 8px}
+body.workspace-surface .block-controls .btn-icon{display:grid;place-items:center;width:40px;height:36px;min-height:36px;padding:0;border:1px solid var(--theme-border,#343b46);border-radius:6px;background:color-mix(in srgb,var(--theme-elevated,#20262f) 78%,transparent);color:var(--theme-text,#f2f4f7);font-size:17px;font-weight:800;line-height:1}
+body.workspace-surface .block-controls .btn-icon:hover,body.workspace-surface .block-controls .btn-icon:focus-visible{background:var(--theme-accent,#a8c7fa);border-color:var(--theme-accent,#a8c7fa);color:#101216;outline:2px solid var(--theme-accent,#a8c7fa);outline-offset:1px}
+body.workspace-surface .block-controls .btn-icon.danger{color:#ff9ca4}
+body.workspace-surface .workspace-view[data-route="schedule"] .block-row-main strong{color:var(--theme-text,#f2f4f7)!important;font-size:13px;font-weight:700}
+body.workspace-surface .workspace-view[data-route="schedule"] .block-row-type b{color:var(--theme-accent,#a8c7fa)!important;font-weight:800}
+@media(max-width:900px){body.workspace-surface .shell-page-head{align-items:start;flex-direction:column}.shell-page-actions{justify-content:flex-start!important}}
