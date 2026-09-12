@@ -2,14 +2,15 @@ const express = require('express');
 const { supabase } = require('../supabaseClient');
 const { requireSupabaseAuth } = require('../middleware/supabaseAuth');
 const { featureEnabled } = require('../services/features');
+const { createClient, configuration } = require('../services/ticketera');
+const ticketera = createClient();
 
 const router = express.Router();
 const ticketeraConfigured = () => Boolean(
   String(process.env.TICKETERA_API_URL || '').trim() &&
   String(process.env.TICKETERA_API_KEY || '').trim()
 );
-const cleanBaseUrl = () => String(process.env.TICKETERA_API_URL || '').trim().replace(/\/$/, '');
-const fail = (res, status, code, message) => res.status(status).json({ success: false, code, message });
+const fail = (res, status, code, message) => res.status(status).json({ success: false, code, message, requestId: res.req.requestId });
 
 async function projectAccess(req, projectId) {
   const { data: project, error } = await supabase.from('tshow_projects')
@@ -27,40 +28,15 @@ async function integrationAllowed(req, project) {
   return featureEnabled(project.owner_id, 'integrations', req.user.profile?.role);
 }
 
-async function ticketeraRequest(path) {
-  if (!ticketeraConfigured()) {
-    const error = new Error('La conexión con Ticketera aún no está configurada en Render.');
-    error.code = 'TICKETERA_NOT_CONFIGURED';
-    throw error;
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  try {
-    const response = await fetch(`${cleanBaseUrl()}${path}`, {
-      headers: { Authorization: `Bearer ${process.env.TICKETERA_API_KEY}`, Accept: 'application/json' },
-      signal: controller.signal
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(payload.message || payload.error || 'Ticketera no respondió correctamente.');
-      error.code = response.status === 401 ? 'TICKETERA_UNAUTHORIZED' : 'TICKETERA_UNAVAILABLE';
-      throw error;
-    }
-    return payload;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 router.get('/integrations/ticketera/events', requireSupabaseAuth, async (req, res) => {
   try {
     if (!await featureEnabled(req.user.id, 'integrations', req.user.profile?.role)) {
       return fail(res, 403, 'FEATURE_DISABLED', 'La integración con Ticketera no está habilitada para esta cuenta.');
     }
-    const data = await ticketeraRequest('/api/integrations/tshow/events');
-    res.json({ success: true, data: data.events || [] });
+    const data = await ticketera.events(req.requestId);
+    res.json({ success: true, data: data.events });
   } catch (error) {
-    fail(res, error.code === 'TICKETERA_NOT_CONFIGURED' ? 503 : 502, error.code || 'TICKETERA_UNAVAILABLE', error.message);
+    fail(res, error.status || 502, error.code || 'TICKETERA_UNAVAILABLE', error.status ? error.message : 'No pudimos consultar Ticketera.');
   }
 });
 
@@ -68,6 +44,9 @@ router.get('/projects/:id/integrations/ticketera', requireSupabaseAuth, async (r
   const access = await projectAccess(req, req.params.id);
   if (!access) return fail(res, 403, 'PROJECT_FORBIDDEN', 'No tienes acceso a este proyecto.');
   if (!await integrationAllowed(req, access.project)) return fail(res, 403, 'FEATURE_DISABLED', 'La integración con Ticketera no está habilitada para esta cuenta.');
+  if (ticketeraConfigured()) {
+    try { configuration(); } catch (error) { return fail(res, error.status, error.code, error.message); }
+  }
   const { data, error } = await supabase.from('tshow_ticketera_connections').select('*').eq('project_id', req.params.id).maybeSingle();
   if (error) return fail(res, 500, 'CONNECTION_READ_FAILED', 'No pudimos consultar la conexión con Ticketera.');
   res.json({ success: true, data: data || null, configured: ticketeraConfigured(), manageable: ['owner', 'admin'].includes(access.role) });
@@ -81,10 +60,10 @@ router.put('/projects/:id/integrations/ticketera', requireSupabaseAuth, async (r
   if (!/^[A-Za-z0-9_-]{1,120}$/.test(externalEventId)) return fail(res, 400, 'INVALID_EXTERNAL_EVENT', 'Selecciona un evento válido de Ticketera.');
   let externalEvent;
   try {
-    const result = await ticketeraRequest('/api/integrations/tshow/events');
+    const result = await ticketera.events(req.requestId);
     externalEvent = (result.events || []).find(event => String(event.id) === externalEventId);
   } catch (error) {
-    return fail(res, 502, error.code || 'TICKETERA_UNAVAILABLE', error.message);
+    return fail(res, error.status || 502, error.code || 'TICKETERA_UNAVAILABLE', error.status ? error.message : 'No pudimos consultar Ticketera.');
   }
   if (!externalEvent) return fail(res, 404, 'EXTERNAL_EVENT_NOT_FOUND', 'El evento ya no existe en Ticketera.');
   const { data: existingConnection, error: connectionLookupError } = await supabase
@@ -131,13 +110,14 @@ router.get('/projects/:id/metrics/ticketera', requireSupabaseAuth, async (req, r
   if (error) return fail(res, 500, 'CONNECTION_READ_FAILED', 'No pudimos consultar la conexión con Ticketera.');
   if (!connection) return fail(res, 404, 'TICKETERA_NOT_CONNECTED', 'Conecta este proyecto con un evento de Ticketera para ver sus métricas.');
   try {
-    const result = await ticketeraRequest(`/api/integrations/tshow/events/${encodeURIComponent(connection.external_event_id)}/metrics`);
+    const result = await ticketera.metrics(connection.external_event_id, req.requestId);
     const syncedAt = new Date().toISOString();
-    await supabase.from('tshow_ticketera_connections').update({ status: 'active', last_synced_at: syncedAt, last_error: null, updated_at: syncedAt }).eq('id', connection.id);
+    const { error: syncError } = await supabase.from('tshow_ticketera_connections').update({ status: 'active', last_synced_at: syncedAt, last_error: null, updated_at: syncedAt }).eq('id', connection.id);
+    if (syncError) return fail(res, 500, 'CONNECTION_SAVE_FAILED', 'Las cifras llegaron, pero no pudimos guardar el estado de sincronización. Vuelve a intentar.');
     res.json({ success: true, data: result.metrics, connection: { ...connection, status: 'active', last_synced_at: syncedAt }, manageable: ['owner', 'admin'].includes(access.role) });
   } catch (requestError) {
     await supabase.from('tshow_ticketera_connections').update({ status: 'error', last_error: requestError.message.slice(0, 500), updated_at: new Date().toISOString() }).eq('id', connection.id);
-    fail(res, 502, requestError.code || 'TICKETERA_UNAVAILABLE', requestError.message);
+    fail(res, requestError.status || 502, requestError.code || 'TICKETERA_UNAVAILABLE', requestError.status ? requestError.message : 'No pudimos consultar Ticketera.');
   }
 });
 

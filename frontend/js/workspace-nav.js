@@ -243,7 +243,56 @@
   const formatClp=value=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(Number(value)||0);
   function metricBars(items,labelKey='name') { const rows=Array.isArray(items)?items:[]; const max=Math.max(1,...rows.map(item=>Number(item.count)||0)); return rows.map(item=>`<div class="metric-bar"><div><span>${esc(item[labelKey]||'Sin nombre')}</span><strong>${Number(item.count)||0}</strong></div><i style="--metric-width:${Math.max(2,Math.round((Number(item.count)||0)*100/max))}%"></i></div>`).join('')||'<p class="shell-muted">Aún no hay datos para mostrar.</p>'; }
   function renderTicketeraMetrics(metrics){document.getElementById('metricsDashboard').hidden=false;document.getElementById('metricIssued').textContent=Number(metrics.issued)||0;document.getElementById('metricChecked').textContent=`${Number(metrics.checkedIn)||0} acreditadas`;document.getElementById('metricRevenue').textContent=formatClp(metrics.grossSalesClp);document.getElementById('metricPayments').textContent=`${Number(metrics.approvedTickets)||0} ventas aprobadas · ${Number(metrics.pendingPayments)||0} pendientes`;document.getElementById('metricOccupancy').textContent=`${Number(metrics.occupancyPercent)||0}%`;document.getElementById('metricCapacity').textContent=metrics.capacity?`${metrics.issued} de ${metrics.capacity} entradas`:'Sin aforo definido';document.getElementById('metricPending').textContent=Number(metrics.pendingAttendance)||0;document.getElementById('metricTicketTypes').innerHTML=metricBars((metrics.ticketTypes||[]).map(item=>({...item,count:item.issued})));document.getElementById('metricZones').innerHTML=metricBars((metrics.zones||[]).map(item=>({name:item.zone,count:item.count})));}
-  async function loadMetrics(){if(!currentProject)return navigate('projects',true);const status=document.getElementById('metricsStatus'),connector=document.getElementById('ticketeraConnector'),dashboard=document.getElementById('metricsDashboard');status.dataset.status='';status.textContent='Consultando conexión con Ticketera…';connector.innerHTML='';dashboard.hidden=true;try{const connectionResult=await Auth.api(`/api/projects/${encodeURIComponent(currentProject)}/integrations/ticketera`);const connection=connectionResult.data;if(!connection){status.textContent=connectionResult.configured?'Selecciona el evento equivalente en Ticketera.':'Ticketera todavía no está configurada en Render.';if(connectionResult.manageable&&connectionResult.configured){const eventsResult=await Auth.api('/api/integrations/ticketera/events');const options=(eventsResult.data||[]).map(event=>`<option value="${esc(event.id)}">${esc(event.name)}${event.date?` · ${dateLabel(event.date)}`:''}</option>`).join('');connector.innerHTML=`<label class="form-label" for="ticketeraEventSelect">Evento en Ticketera</label><div class="ticketera-connect-row"><select class="form-control" id="ticketeraEventSelect"><option value="">Selecciona un evento</option>${options}</select><button class="btn btn-primary" id="ticketeraConnect" type="button">Conectar</button></div>`;}return;}connector.innerHTML=`<div class="ticketera-connected"><div><span class="shell-eyebrow">Conectado con</span><strong>${esc(connection.external_event_name)}</strong><small>${connection.last_synced_at?`Última actualización ${new Date(connection.last_synced_at).toLocaleString('es-CL')}`:'Esperando primera actualización'}</small></div>${connectionResult.manageable?'<button class="btn btn-secondary" id="ticketeraDisconnect" type="button">Desconectar</button>':''}</div>`;const metricsResult=await Auth.api(`/api/projects/${encodeURIComponent(currentProject)}/metrics/ticketera`);renderTicketeraMetrics(metricsResult.data||{});status.dataset.status='success';status.textContent='Métricas sincronizadas con Ticketera.';}catch(error){status.dataset.status=error.code==='FEATURE_DISABLED'?'warning':'error';status.textContent=error.message||'No pudimos cargar las métricas de Ticketera.';}}
+  let metricsRequest = null;
+  async function loadMetrics(){
+    if(!currentProject)return navigate('projects',true);
+    const project=currentProject,generation=navigationGeneration;
+    if(metricsRequest?.project===project&&metricsRequest.generation===generation)return;
+    const request={project,generation};
+    metricsRequest=request;
+    const active=()=>metricsRequest===request&&currentProject===project&&currentRoute==='metrics'&&navigationGeneration===generation;
+    const status=document.getElementById('metricsStatus'),connector=document.getElementById('ticketeraConnector'),dashboard=document.getElementById('metricsDashboard'),refresh=document.getElementById('metricsRefresh');
+    refresh.disabled=true;refresh.textContent='Consultando…';
+    status.dataset.status='';status.textContent='Consultando conexión con Ticketera…';connector.innerHTML='';dashboard.hidden=true;
+    try{
+      const connectionResult=await Auth.api(`/api/projects/${encodeURIComponent(project)}/integrations/ticketera`);
+      if(!active())return;
+      const connection=connectionResult.data;
+      if(!connection){
+        status.textContent=connectionResult.configured?'Consultando eventos de Ticketera…':'Ticketera todavía no está configurada en el servidor.';
+        if(connectionResult.manageable&&connectionResult.configured){
+          const eventsResult=await Auth.api('/api/integrations/ticketera/events');
+          if(!active())return;
+          if(!Array.isArray(eventsResult.data))throw new Error('Ticketera devolvió un catálogo incompatible.');
+          if(!eventsResult.data.length){status.textContent='No hay eventos disponibles en Ticketera.';return;}
+          const options=eventsResult.data.map(event=>`<option value="${esc(event.id)}">${esc(event.name)}${event.date?` · ${dateLabel(event.date)}`:''}</option>`).join('');
+          status.textContent='Selecciona el evento equivalente en Ticketera.';
+          connector.innerHTML=`<label class="form-label" for="ticketeraEventSelect">Evento en Ticketera</label><div class="ticketera-connect-row"><select class="form-control" id="ticketeraEventSelect"><option value="">Selecciona un evento</option>${options}</select><button class="btn btn-primary" id="ticketeraConnect" type="button">Conectar</button></div>`;
+        }else if(connectionResult.configured){status.textContent='El propietario o administrador debe conectar un evento de Ticketera.';}
+        return;
+      }
+      connector.innerHTML=`<div class="ticketera-connected"><div><span class="shell-eyebrow">Conectado con</span><strong>${esc(connection.external_event_name)}</strong><small>${connection.last_synced_at?`Última actualización ${new Date(connection.last_synced_at).toLocaleString('es-CL')}`:'Esperando primera actualización'}</small></div>${connectionResult.manageable?'<button class="btn btn-secondary" id="ticketeraDisconnect" type="button" disabled>Desconectar</button>':''}</div>`;
+      const metricsResult=await Auth.api(`/api/projects/${encodeURIComponent(project)}/metrics/ticketera`);
+      if(!active())return;
+      const values=metricsResult.data;
+      if(!values||!['issued','checkedIn','grossSalesClp','approvedTickets','pendingPayments','occupancyPercent','capacity','pendingAttendance'].every(key=>typeof values[key]==='number'&&Number.isFinite(values[key])&&values[key]>=0)||!Array.isArray(values.ticketTypes)||!Array.isArray(values.zones))throw new Error('Ticketera no entregó métricas válidas.');
+      renderTicketeraMetrics(metricsResult.data);
+      const syncLabel=connector.querySelector('small');
+      if(syncLabel&&metricsResult.connection?.last_synced_at)syncLabel.textContent=`Última actualización ${new Date(metricsResult.connection.last_synced_at).toLocaleString('es-CL')}`;
+      status.dataset.status='success';status.textContent='Métricas sincronizadas con Ticketera.';
+    }catch(error){
+      if(!active())return;
+      dashboard.hidden=true;
+      status.dataset.status=error.code==='FEATURE_DISABLED'?'warning':'error';
+      status.textContent=(error.message||'No pudimos cargar las métricas de Ticketera.')+(error.requestId?` Referencia: ${error.requestId}`:'');
+    }finally{
+      if(active()){
+        refresh.disabled=false;refresh.textContent='Actualizar';
+        const disconnect=connector.querySelector('#ticketeraDisconnect');if(disconnect)disconnect.disabled=false;
+      }
+      if(metricsRequest===request)metricsRequest=null;
+    }
+  }
 
   function ensureThemeControl(){const panel=document.querySelector('#view-settings .shell-form-panel');if(!panel||document.getElementById('shellVisualTheme'))return;const group=document.createElement('div');group.className='form-group theme-control-group';group.innerHTML=`<label class="form-label" for="shellVisualTheme">Estilo del espacio de trabajo</label><select id="shellVisualTheme" class="form-control">${Object.entries(visualThemes).map(([key,theme])=>`<option value="${key}">${theme.label} · ${theme.description}</option>`).join('')}</select><small class="shell-muted">La landing mantiene su identidad pública. Este estilo solo cambia el espacio autenticado.</small>`;const actions=panel.querySelector('.shell-actions');panel.querySelector('.grid-2')?.insertAdjacentElement('afterend',group);if(actions){const button=document.createElement('button');button.className='btn btn-secondary';button.id='shellApplyTheme';button.type='button';button.textContent='Aplicar estilo';actions.appendChild(button);const feedback=document.createElement('small');feedback.id='shellThemeFeedback';feedback.className='shell-muted';feedback.setAttribute('role','status');actions.appendChild(feedback);button.addEventListener('click',async()=>{if(!currentProject||!currentProjectData)return;button.disabled=true;button.setAttribute('aria-busy','true');feedback.textContent='Guardando estilo…';try{const visualTheme=document.getElementById('shellVisualTheme').value;const identity={eventName:currentProjectData.eventName||currentProjectName,projectType:currentProjectData.projectType||'other',eventDate:currentProjectData.eventDate||'',location:currentProjectData.location||'',accentColor:currentProjectData.accentColor||'blue',visualTheme};await ApiClient.updateProjectIdentity(currentProject,identity);currentProjectData={...currentProjectData,visualTheme};projectsCache=projectsCache.map(project=>project.id===currentProject?{...project,visualTheme}:project);applyProjectIdentity(currentProjectData);feedback.dataset.status='success';feedback.textContent='Estilo aplicado correctamente.';}catch(error){feedback.dataset.status='error';feedback.textContent=error.message||'No se pudo aplicar el estilo.';}finally{button.disabled=false;button.removeAttribute('aria-busy');}});}}
   function updateProjectUI(){const name=document.getElementById('navProjectName');if(name){name.textContent=currentProjectName;name.hidden=currentRoute==='projects'||!currentProject;name.title=`Cambiar de evento · ${currentProjectName}`;}['shellLiveLink','summaryLiveLink'].forEach(id=>{const link=document.getElementById(id);if(link)link.href=currentProject?`live.html?project=${encodeURIComponent(currentProject)}`:'live.html';});const title=document.getElementById('summaryProjectTitle');if(title)title.textContent=currentProjectName;const input=document.getElementById('shellEventName');if(input)input.value=currentProjectName==='Elige tu evento'?'':currentProjectName;const pid=document.getElementById('shellProjectId');if(pid)pid.textContent=currentProject?'Identificador interno protegido':'Sin evento seleccionado';const role=document.getElementById('workspaceUserRole');if(role)role.textContent=currentProjectData?roleLabel(currentProjectData.permission):'Cuenta T-Show';ensureThemeControl();const themeSelect=document.getElementById('shellVisualTheme');if(themeSelect)themeSelect.value=currentProjectData?.visualTheme||'nocturne';document.body.classList.toggle('project-selector-active',currentRoute==='projects');}
@@ -261,7 +310,29 @@
     document.getElementById('tutorialPrevious').addEventListener('click',()=>showTutorialStep(tutorialStep-1));
     document.getElementById('tutorialNext').addEventListener('click',()=>tutorialStep===tutorialSteps.length-1?closeTutorial():showTutorialStep(tutorialStep+1));
     document.getElementById('tutorialSkip').addEventListener('click',()=>closeTutorial());
-    document.getElementById('view-metrics').addEventListener('click',async event=>{const connect=event.target.closest('#ticketeraConnect'),disconnect=event.target.closest('#ticketeraDisconnect'),refresh=event.target.closest('#metricsRefresh');if(refresh){await loadMetrics();return;}if(connect){const externalEventId=document.getElementById('ticketeraEventSelect')?.value;if(!externalEventId){document.getElementById('metricsStatus').textContent='Selecciona un evento de Ticketera.';document.getElementById('metricsStatus').dataset.status='warning';return;}connect.disabled=true;try{await Auth.api(`/api/projects/${encodeURIComponent(currentProject)}/integrations/ticketera`,{method:'PUT',body:JSON.stringify({externalEventId})});await loadMetrics();}finally{connect.disabled=false;}return;}if(disconnect){confirmAction('Desconectar Ticketera','Las métricas dejarán de actualizarse hasta conectar otro evento.',async()=>{await Auth.api(`/api/projects/${encodeURIComponent(currentProject)}/integrations/ticketera`,{method:'DELETE'});await loadMetrics();});}});
+    document.getElementById('view-metrics').addEventListener('click',async event=>{
+      const connect=event.target.closest('#ticketeraConnect'),disconnect=event.target.closest('#ticketeraDisconnect'),refresh=document.getElementById('metricsRefresh');
+      if(event.target.closest('#metricsRefresh')){if(!refresh.disabled)await loadMetrics();return;}
+      if(!connect&&!disconnect)return;
+      if((connect||disconnect).disabled)return;
+      const project=currentProject,generation=navigationGeneration;
+      const active=()=>currentProject===project&&currentRoute==='metrics'&&navigationGeneration===generation;
+      const perform=async(method,body)=>{
+        if(!active()||(connect||disconnect).disabled)return;
+        (connect||disconnect).disabled=true;refresh.disabled=true;
+        try{
+          await Auth.api(`/api/projects/${encodeURIComponent(project)}/integrations/ticketera`,{method,...(body?{body:JSON.stringify(body)}:{})});
+          if(active())await loadMetrics();
+        }catch(error){
+          if(active()){const status=document.getElementById('metricsStatus');status.dataset.status='error';status.textContent=(error.message||'No pudimos actualizar la conexión.')+(error.requestId?` Referencia: ${error.requestId}`:'');}
+        }finally{if(active()){(connect||disconnect).disabled=false;refresh.disabled=false;}}
+      };
+      if(connect){
+        const externalEventId=document.getElementById('ticketeraEventSelect')?.value;
+        if(!externalEventId){document.getElementById('metricsStatus').textContent='Selecciona un evento de Ticketera.';return;}
+        await perform('PUT',{externalEventId});
+      }else{confirmAction('Desconectar Ticketera','Las métricas dejarán de actualizarse hasta conectar otro evento.',()=>perform('DELETE'));}
+    });
     const carousel=document.getElementById('projectCarousel');carousel.addEventListener('scroll',()=>requestAnimationFrame(updateCarouselFocus),{passive:true});carousel.addEventListener('keydown',event=>{if(event.key==='ArrowRight'){event.preventDefault();moveCarousel(1)}if(event.key==='ArrowLeft'){event.preventDefault();moveCarousel(-1)}if((event.key==='Enter'||event.key===' ')&&document.activeElement?.classList.contains('project-card')){event.preventDefault();document.activeElement.click();}});carousel.addEventListener('click',async event=>{const menuButton=event.target.closest('.project-menu-button');if(menuButton){event.stopPropagation();const menu=menuButton.nextElementSibling;menu.hidden=!menu.hidden;menuButton.setAttribute('aria-expanded',String(!menu.hidden));return;}const action=event.target.closest('[data-project-action]');if(action){event.stopPropagation();const card=action.closest('.project-card'),project=projectsCache.find(item=>item.id===card.dataset.projectId);await projectAction(action.dataset.projectAction,project);return;}const card=event.target.closest('.project-card');if(!card)return;if(card.dataset.createProject)openWizard('create');else{const project=projectsCache.find(item=>item.id===card.dataset.projectId);if(project)await openProject(project);}});
     window.addEventListener('resize',()=>requestAnimationFrame(updateProjectGridLayout),{passive:true});
     document.querySelector('.carousel-prev').onclick=()=>moveCarousel(-1);document.querySelector('.carousel-next').onclick=()=>moveCarousel(1);
