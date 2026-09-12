@@ -1,10 +1,10 @@
 const messages = {
-  TICKETERA_NOT_CONFIGURED: 'La conexión con Ticketera no está configurada en el servidor.',
-  TICKETERA_INVALID_CONFIG: 'La URL de Ticketera debe ser una dirección base HTTPS válida, sin rutas ni parámetros.',
-  TICKETERA_UNAUTHORIZED: 'Ticketera rechazó las credenciales de integración. Contacta al administrador.',
-  TICKETERA_INVALID_RESPONSE: 'Ticketera devolvió una respuesta incompatible. No se han actualizado las cifras.',
-  TICKETERA_UNAVAILABLE: 'Ticketera no está disponible en este momento. Puedes volver a intentar.',
-  TICKETERA_TIMEOUT: 'Ticketera tardó demasiado en responder. Espera un momento y vuelve a intentar.'
+  TICKETERA_NOT_CONFIGURED: 'La conexión con PASSLINK no está configurada en el servidor.',
+  TICKETERA_INVALID_CONFIG: 'La URL de PASSLINK debe ser una dirección base HTTPS válida, sin rutas ni parámetros.',
+  TICKETERA_UNAUTHORIZED: 'PASSLINK rechazó las credenciales de integración. Contacta al administrador.',
+  TICKETERA_INVALID_RESPONSE: 'PASSLINK devolvió una respuesta incompatible. No se han actualizado las cifras.',
+  TICKETERA_UNAVAILABLE: 'PASSLINK no está disponible en este momento. Puedes volver a intentar.',
+  TICKETERA_TIMEOUT: 'PASSLINK tardó demasiado en responder. Espera un momento y vuelve a intentar.'
 };
 
 function failure(code) {

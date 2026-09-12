@@ -1,0 +1,27 @@
+/* Commercial hierarchy: product evidence first, existing brand retained. */
+.landing-body .hero h1{font-size:clamp(40px,4.4vw,68px);line-height:1.05;letter-spacing:-.045em;max-width:17ch}
+.landing-body .hero-image>img{opacity:1;filter:none;object-fit:cover}
+.landing-body .hero-image{min-height:380px}
+.landing-body .product-screens{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px}
+.screenshot-open{display:block;width:100%;padding:0;background:transparent;color:inherit;cursor:zoom-in;border:1px solid var(--line)}
+.screenshot-open img{display:block;width:100%;height:auto}
+.landing-body .screen-card{min-width:0;margin:0}
+.landing-body .plans-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+.landing-body .plans-list article{display:block;padding:24px;min-width:0}
+.plans-list .text-action{display:block;margin-top:24px}
+.landing-body .plan-label{letter-spacing:0;font-size:13px;text-transform:none}
+.landing-body .audience-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.landing-body .audience-list li:nth-child(n){padding:24px;border-left:0}
+.audience-list p,.integration-layout p,.plans-section>p{color:var(--muted);line-height:1.6;font-size:16px}
+.passlink-label{color:var(--accent);font-weight:600}
+.passlink-steps{padding-left:24px;line-height:1.6}.passlink-steps li{padding:8px}
+.landing-body .integration-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);align-items:start}
+.landing-body .statement{display:block;padding-block:60px}.statement h2{max-width:30ch}
+.landing-body [data-reveal]{animation:none;opacity:1;transform:none}
+.landing-body :focus-visible{outline:3px solid var(--accent);outline-offset:5px}
+#screenshotDialog{width:min(1500px,96vw);max-width:96vw;max-height:94vh;padding:16px;border:1px solid #a8c7fa;background:#101216;color:#f2f4f7;overflow:auto}
+#screenshotDialog::backdrop{background:rgb(0 0 0 / .85)}
+#screenshotDialog img{display:block;width:100%;height:auto;margin-top:14px}
+#closeScreenshot{font:inherit;padding:12px 20px;background:#a8c7fa;color:#101216;border:0;cursor:pointer}
+@media(max-width:1100px){.landing-body .plans-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.landing-body .product-screens,.landing-body .plans-list,.landing-body .integration-layout,.landing-body .audience-list{grid-template-columns:1fr}.landing-body .hero-image{min-height:250px}.landing-body .hero h1{font-size:42px}.landing-body .nav-account a:first-child{display:inline;font-size:12px}.landing-body .site-nav{gap:8px}.landing-body .nav-account{gap:10px}.landing-body .wordmark-logo img{width:64px;height:64px}.landing-body .nav-account .button{padding:12px;font-size:12px}}

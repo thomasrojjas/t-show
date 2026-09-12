@@ -25,10 +25,10 @@ const auth = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentUser:
           catalogCalls++;
           const snapshot=mode;
           if(snapshot==='slow')await new Promise(resolve=>{release=resolve;});
-          if(snapshot==='error')return route.fulfill({status:502,json:{code:'TICKETERA_INVALID_RESPONSE',message:'Ticketera devolvió una respuesta incompatible. No se han actualizado las cifras.',requestId:'qa-support-123456789'}});
-          return route.fulfill({json:{data:snapshot==='empty'?[]:[{id:'1',name:'Evento Ticketera'}]}});
+          if(snapshot==='error')return route.fulfill({status:502,json:{code:'TICKETERA_INVALID_RESPONSE',message:'PASSLINK devolvió una respuesta incompatible. No se han actualizado las cifras.',requestId:'qa-support-123456789'}});
+          return route.fulfill({json:{data:snapshot==='empty'?[]:[{id:'1',name:'Evento PASSLINK'}]}});
         }
-        if(p.endsWith('/integrations/ticketera'))return route.fulfill({json:{data:connected?{external_event_name:'Evento Ticketera'}:null,configured:true,manageable:true}});
+        if(p.endsWith('/integrations/ticketera'))return route.fulfill({json:{data:connected?{external_event_name:'Evento PASSLINK'}:null,configured:true,manageable:true}});
         if(p.endsWith('/metrics/ticketera'))return route.fulfill({json:{data:mode==='invalid-metrics'?{}:metrics,connection:{last_synced_at:new Date().toISOString()}}});
         if(p==='/api/projects')return route.fulfill({json:{data:['qa','qa2'].map(id=>({id,event_name:id,payload:{...project,id},member_role:'owner'})),meta:{limit:20}}});
         if(/^\/api\/projects\/qa2?$/.test(p))return route.fulfill({json:{data:{id:p.split('/').pop(),event_name:'QA',payload:{...project,id:p.split('/').pop()},permission:'owner'}}});

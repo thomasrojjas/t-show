@@ -1,4 +1,14 @@
 (function () {
+  const dialog=document.getElementById('screenshotDialog');
+  let opener=null;
+  document.querySelectorAll('.screenshot-open').forEach(button=>button.addEventListener('click',()=>{
+    opener=button;
+    const source=button.querySelector('img'),target=document.getElementById('expandedScreenshot');
+    target.src=source.src;target.alt=source.alt;
+    dialog.showModal();document.getElementById('closeScreenshot').focus();
+  }));
+  document.getElementById('closeScreenshot')?.addEventListener('click',()=>dialog.close());
+  dialog?.addEventListener('close',()=>opener?.focus());
   const body = document.body;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const revealTargets = document.querySelectorAll(

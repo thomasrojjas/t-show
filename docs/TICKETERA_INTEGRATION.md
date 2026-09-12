@@ -24,11 +24,13 @@ Use un valor aleatorio de al menos 32 bytes. Los dos servicios deben recibir exa
 1. Desplegar Ticketera con su nueva variable.
 2. Desplegar T-Show con sus dos variables.
 3. Aplicar `backend/db/migrations/023_ticketera_metrics.sql` en Supabase.
-4. Habilitar la función `integrations` para la cuenta u organización desde Superadmin.
+4. La conexión PASSLINK se incluye desde Pro (también Max y Empresa), según el plan vigente del propietario del proyecto. Starter no la incluye. Se conservan las excepciones explícitas de `integrations` de Superadmin.
 5. Abrir un proyecto en T-Show y entrar a **Métricas**.
 6. Seleccionar el evento correspondiente de Ticketera y pulsar **Conectar**.
 
 Las cifras se consultan al abrir o actualizar la vista. La base de datos de compradores permanece en Ticketera.
+
+El catálogo acepta `?project=ID` para resolver membresía y plan del propietario; los clientes anteriores sin ese parámetro conservan la comprobación del plan de su propia cuenta. Las rutas, tablas, claves y códigos internos `ticketera` permanecen estables. Un fallo de consulta de permisos devuelve 503, no una denegación comercial. Cambiar de plan no elimina conexiones.
 
 Cada proyecto de T-Show puede conectarse con un único evento de Ticketera y cada evento de Ticketera puede pertenecer a un único proyecto de T-Show. Para reasignarlo, primero debe desconectarse del proyecto actual.
 

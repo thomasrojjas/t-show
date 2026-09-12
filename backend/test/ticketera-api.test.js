@@ -3,19 +3,20 @@ const assert=require('node:assert/strict');
 const express=require('express');
 const {requestContext}=require('../lib/http');
 let upstreamError=null,saveError=null;
+let projectOwner='user',member=true,allowed=true,checkedAccount=null;
 const updates=[];
 const connection={id:'connection',project_id:'project',external_event_id:'1',last_synced_at:'2026-01-01T00:00:00Z'};
 const fake={from(table){
   return {select(){return this;},eq(){return this;},
     update(row){updates.push(row);return this;},
-    maybeSingle:async()=>({data:table==='tshow_projects'?{id:'project',owner_id:'user'}:connection}),
+    maybeSingle:async()=>({data:table==='tshow_projects'?{id:'project',owner_id:projectOwner}:table==='tshow_project_members'?(member?{role:'viewer'}:null):connection}),
     then(resolve,reject){return Promise.resolve({error:saveError}).then(resolve,reject);}
   };
 }};
 for(const [path,exports] of [
   ['../supabaseClient',{supabase:fake}],
   ['../middleware/supabaseAuth',{requireSupabaseAuth:(req,res,next)=>{req.user={id:'user',profile:{}};next();}}],
-  ['../services/features',{featureEnabled:async()=>true}],
+  ['../services/passlink-access',{passlinkAllowed:async account=>{checkedAccount=account;return allowed;}}],
   ['../services/ticketera',{configuration:()=>({}),createClient:()=>({
     events:async()=>{if(upstreamError)throw upstreamError;return {events:[]};},
     metrics:async()=>{if(upstreamError)throw upstreamError;return {metrics:{issued:0}};}
@@ -29,6 +30,18 @@ test('integration routes preserve error statuses, request IDs and connection tim
   const get=path=>fetch(base+path,{headers:{'X-Request-Id':'qa-request-123'}});
   try{
     assert.deepEqual(await (await get('/integrations/ticketera/events')).json(),{success:true,data:[]});
+    projectOwner='pro-owner';
+    assert.equal((await get('/integrations/ticketera/events?project=project')).status,200);
+    assert.equal(checkedAccount,'pro-owner');
+    assert.equal((await get('/projects/project/metrics/ticketera')).status,200);
+    assert.equal(checkedAccount,'pro-owner');
+    member=false;assert.equal((await get('/integrations/ticketera/events?project=project')).status,403);
+    member=true;allowed=false;
+    const before=updates.length;
+    assert.equal((await get('/projects/project/metrics/ticketera')).status,403);
+    assert.equal((await get('/integrations/ticketera/events?project=project')).status,403);
+    assert.equal(updates.length,before);
+    allowed=true;projectOwner='user';
     for(const [code,status] of [['TICKETERA_TIMEOUT',504],['TICKETERA_NOT_CONFIGURED',503],['TICKETERA_INVALID_RESPONSE',502],['TICKETERA_UNAUTHORIZED',502]]){
       upstreamError=Object.assign(new Error('Safe message'),{code,status});
       for(const path of ['/integrations/ticketera/events','/projects/project/metrics/ticketera']){
