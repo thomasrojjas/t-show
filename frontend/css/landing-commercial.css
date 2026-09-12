@@ -1,5 +1,5 @@
 /* Commercial hierarchy: product evidence first, existing brand retained. */
-.landing-body .hero h1{font-size:clamp(40px,4.4vw,68px);line-height:1.05;letter-spacing:-.045em;max-width:17ch}
+.landing-body .hero h1{font-size:clamp(36px,3.8vw,58px);line-height:1.05;letter-spacing:-.045em;max-width:17ch}
 .landing-body .hero-image>img{opacity:1;filter:none;object-fit:cover}
 .landing-body .hero-image{min-height:380px}
 .landing-body .product-screens{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px}
@@ -7,7 +7,7 @@
 .screenshot-open img{display:block;width:100%;height:auto}
 .landing-body .screen-card{min-width:0;margin:0}
 .landing-body .plans-section{position:relative}
-.landing-body .plans-heading{display:flex;align-items:end;justify-content:space-between;gap:40px;margin-bottom:42px}
+.landing-body .plans-heading{display:flex;align-items:end;justify-content:space-between;gap:32px;margin-bottom:30px}
 .landing-body .plans-heading .section-heading{margin-bottom:0;max-width:720px}
 .landing-body .plans-heading .section-heading h2{max-width:600px}
 .pricing-controls{display:grid;justify-items:end;gap:12px;color:var(--muted);font-size:13px;white-space:nowrap}
@@ -15,27 +15,26 @@
 .pricing-toggle button{border:0;border-radius:999px;padding:9px 15px;background:transparent;color:var(--muted);font:inherit;cursor:pointer}
 .pricing-toggle button.is-selected{background:var(--accent);color:#101216;font-weight:700}
 .pricing-toggle em{font-style:normal;font-size:10px;margin-left:4px}
-.landing-body .plans-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;border:0}
+.landing-body .plans-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;border:0}
 .landing-body .plans-list article{display:flex;min-width:0;min-height:0;padding:0;border:1px solid rgba(174,183,196,.28);border-radius:28px;background:#12161d;overflow:hidden}
 .landing-body .plans-list article.plan-featured{position:relative;background:#171e2c;box-shadow:none}
 .landing-body .plans-list article.plan-featured:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#7daeff,#c3d9ff)}
-.price-card-content{display:flex;flex-direction:column;width:100%;padding:32px 30px 30px}
-.landing-body .plans-list h3{margin:6px 0 10px;font-size:25px;letter-spacing:-.035em}
+.price-card-content{display:flex;flex-direction:column;width:100%;padding:24px 22px 22px}
+.landing-body .plans-list h3{margin:6px 0 10px;font-size:22px;letter-spacing:-.035em}
 .landing-body .plans-list .plan-label{letter-spacing:.08em;font-size:10px;line-height:1.3;text-transform:uppercase}
-.price-card-content>p:not(.plan-label){min-height:48px;margin:0;color:var(--muted);line-height:1.45}
-.plan-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:25px 0 20px}
-.plan-price strong{font-size:clamp(36px,4vw,50px);line-height:1;letter-spacing:-.06em;color:var(--ink)}
+.price-card-content>p:not(.plan-label){min-height:58px;margin:0;color:var(--muted);font-size:14px;line-height:1.4}
+.plan-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;margin:20px 0 16px}
+.plan-price strong{font-size:clamp(27px,2.6vw,38px);line-height:1;letter-spacing:-.06em;color:var(--ink)}
 .plan-price small,.plan-price span{color:var(--muted);font-size:12px}.plan-price span{flex-basis:100%;margin-top:4px}
 .plan-button{display:block;width:100%;padding:13px 16px;border:1px solid rgba(174,183,196,.38);border-radius:12px;background:transparent;color:var(--ink);font-weight:700;text-align:center;text-decoration:none;transition:background .2s ease,border-color .2s ease}
 .plan-featured .plan-button,.price-card:first-child .plan-button{background:var(--accent);border-color:var(--accent);color:#101216}
 .plan-button:hover{border-color:var(--accent);background:rgba(168,199,250,.14)}.plan-featured .plan-button:hover,.price-card:first-child .plan-button:hover{background:#c7dcff}
-.plan-divider{height:1px;margin:25px 0 20px;background:rgba(174,183,196,.22)}
-.landing-body .plans-list ul,.enterprise-card ul{display:grid;gap:13px;margin:0;padding:0;list-style:none;color:#d5d7dc;font-size:14px}
+.plan-divider{height:1px;margin:20px 0 17px;background:rgba(174,183,196,.22)}
+.landing-body .plans-list ul,.enterprise-card ul{display:grid;gap:10px;margin:0;padding:0;list-style:none;color:#d5d7dc;font-size:13px}
 .landing-body .plans-list li:before,.enterprise-card li:before{display:inline-block;width:20px;margin-right:2px;text-align:left;font-weight:800}
 .landing-body .plans-list li.included:before,.enterprise-card li.included:before{content:"✓";color:var(--green)}
 .landing-body .plans-list li.excluded{color:#7f8998}.landing-body .plans-list li.excluded:before{content:"—";color:#7f8998}
-.enterprise-card{display:flex;align-items:center;justify-content:space-between;gap:40px;margin-top:24px;padding:28px 30px;border:1px solid rgba(174,183,196,.28);border-radius:28px;background:#12161d}
-.enterprise-card h3{margin:4px 0 8px;font-size:25px}.enterprise-card p{margin:0;color:var(--muted)}.enterprise-details{display:flex;align-items:center;gap:40px}.enterprise-details ul{min-width:300px}.enterprise-details .plan-button{min-width:190px}
+.enterprise-card h3{margin:6px 0 10px;font-size:22px}.enterprise-card p{margin:0;color:var(--muted)}
 .plans-note{margin:18px 0 0;color:var(--muted);font-size:12px}
 .landing-body .audience-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 .landing-body .audience-list li:nth-child(n){padding:24px;border-left:0}
@@ -50,5 +49,5 @@
 #screenshotDialog::backdrop{background:rgb(0 0 0 / .85)}
 #screenshotDialog img{display:block;width:100%;height:auto;margin-top:14px}
 #closeScreenshot{font:inherit;padding:12px 20px;background:#a8c7fa;color:#101216;border:0;cursor:pointer}
-@media(max-width:1100px){.landing-body .plans-list{grid-template-columns:repeat(2,minmax(0,1fr))}.enterprise-card{align-items:flex-start;flex-direction:column}.enterprise-details{width:100%;justify-content:space-between}}
-@media(max-width:700px){.landing-body .product-screens,.landing-body .plans-list,.landing-body .integration-layout,.landing-body .audience-list{grid-template-columns:1fr}.landing-body .hero-image{min-height:250px}.landing-body .hero h1{font-size:42px}.landing-body .nav-account a:first-child{display:inline;font-size:12px}.landing-body .site-nav{gap:8px}.landing-body .nav-account{gap:10px}.landing-body .wordmark-logo img{width:64px;height:64px}.landing-body .nav-account .button{padding:12px;font-size:12px}.landing-body .plans-heading{display:block}.pricing-controls{justify-items:start;margin-top:24px}.pricing-toggle{width:100%}.pricing-toggle button{flex:1}.price-card-content{padding:28px 24px 24px}.enterprise-card{padding:26px 24px}.enterprise-details{display:grid;gap:24px}.enterprise-details ul{min-width:0}.enterprise-details .plan-button{min-width:0}}
+@media(max-width:1100px){.landing-body .plans-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.landing-body .product-screens,.landing-body .plans-list,.landing-body .integration-layout,.landing-body .audience-list{grid-template-columns:1fr}.landing-body .hero-image{min-height:250px}.landing-body .hero h1{font-size:42px}.landing-body .nav-account a:first-child{display:inline;font-size:12px}.landing-body .site-nav{gap:8px}.landing-body .nav-account{gap:10px}.landing-body .wordmark-logo img{width:64px;height:64px}.landing-body .nav-account .button{padding:12px;font-size:12px}.landing-body .plans-heading{display:block}.pricing-controls{justify-items:start;margin-top:24px}.pricing-toggle{width:100%}.pricing-toggle button{flex:1}.price-card-content{padding:28px 24px 24px}}
