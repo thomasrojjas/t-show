@@ -55,7 +55,7 @@
         return result.data;
     }
     if ($('inviteDetails')) {
-        if (!invite) { message('El enlace está incompleto. Solicita una nueva invitación.'); return; }
+        if (!invite) { $('inviteDetails').textContent = 'No se encontró una invitación en este enlace.'; message('El enlace está incompleto. Solicita una nueva invitación.'); return; }
         details().then(data => {
             const target = $('inviteDetails'); target.replaceChildren();
             for (const text of [data.project_name, data.email, data.role === 'editor' ? 'Director' : 'Observador']) {
@@ -64,7 +64,7 @@
             $('existingAccount').href = 'login.html?invite=' + encodeURIComponent(invite);
             $('newAccount').href = 'register.html?invite=' + encodeURIComponent(invite);
             $('inviteActions').hidden = false;
-        }).catch(error => message(error.message));
+        }).catch(error => { $('inviteDetails').textContent = 'No se pudo validar la invitación.'; message(error.message); });
     }
     if ($('loginForm')) {
         if (invite) $('registerLink').href = 'register.html?invite=' + encodeURIComponent(invite);

@@ -109,7 +109,8 @@ const Auth = (() => {
     async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
     function pendingInvitation() {
         const params = new URLSearchParams(location.search);
-        const incoming = params.get('invite') || (location.pathname.endsWith('invite.html') ? params.get('token') : null);
+        const invitationPage = /^\/invite(?:\.html)?\/?$/.test(location.pathname);
+        const incoming = params.get('invite') || (invitationPage ? params.get('token') : null);
         try {
             if (incoming) sessionStorage.setItem('tshow_pending_invite', incoming);
             return incoming || sessionStorage.getItem('tshow_pending_invite');
