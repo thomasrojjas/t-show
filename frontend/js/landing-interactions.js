@@ -1,4 +1,23 @@
 (function () {
+  const billingButtons=[...document.querySelectorAll('[data-billing]')];
+  const planSection=document.getElementById('planes');
+  const contactMessage=document.querySelector('#contactForm textarea[name="message"]');
+  const billingPeriod=()=>document.querySelector('[data-billing].is-selected')?.dataset.billing||'monthly';
+  const updatePrices=period=>{
+    planSection?.querySelectorAll('[data-monthly][data-annual]').forEach(node=>{node.textContent=node.dataset[period];});
+    planSection?.querySelectorAll('.plan-price small[data-monthly]').forEach(node=>{node.textContent=node.dataset[period];});
+    planSection?.querySelectorAll('.plan-price span[data-annual]').forEach(node=>{node.hidden=period!=='annual';});
+  };
+  billingButtons.forEach(button=>button.addEventListener('click',()=>{
+    const period=button.dataset.billing;
+    billingButtons.forEach(item=>{const selected=item===button;item.classList.toggle('is-selected',selected);item.setAttribute('aria-pressed',String(selected));});
+    updatePrices(period);
+  }));
+  updatePrices('monthly');
+  document.querySelectorAll('[data-plan]').forEach(button=>button.addEventListener('click',()=>{
+    if(!contactMessage||contactMessage.value.trim())return;
+    contactMessage.value=`Me interesa el plan ${button.dataset.plan} (${billingPeriod()==='annual'?'modalidad anual':'modalidad mensual'}).`;
+  }));
   const dialog=document.getElementById('screenshotDialog');
   let opener=null;
   document.querySelectorAll('.screenshot-open').forEach(button=>button.addEventListener('click',()=>{
