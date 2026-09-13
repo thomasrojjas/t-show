@@ -71,8 +71,9 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
     await page.waitForFunction(()=>document.querySelectorAll('#projectCarousel .project-card[data-project-id]').length===7);
     for(const [w,h] of [[390,844],[768,1024],[1366,900]]){
       await page.setViewportSize({width:w,height:h}); await page.waitForTimeout(250);
-      const geometry=await page.evaluate(()=>{const cards=[...document.querySelectorAll('#projectCarousel .project-card')];return {scrollWidth:document.getElementById('projectCarousel').scrollWidth,clientWidth:document.getElementById('projectCarousel').clientWidth,positions:cards.slice(0,4).map(n=>({x:Math.round(n.offsetLeft),y:Math.round(n.offsetTop),w:Math.round(n.offsetWidth)})),create:document.getElementById('createProjectAction')?.parentElement===document.querySelector('.project-selector-stage')};});
+      const geometry=await page.evaluate(()=>{const carousel=document.getElementById('projectCarousel'),cards=[...carousel.querySelectorAll('.project-card')];return {scrollWidth:carousel.scrollWidth,clientWidth:carousel.clientWidth,focused:carousel.querySelectorAll('.project-card.is-focused').length,positions:cards.slice(0,4).map(n=>({x:Math.round(n.offsetLeft),y:Math.round(n.offsetTop),w:Math.round(n.offsetWidth)})),create:document.getElementById('createProjectAction')?.parentElement===document.querySelector('.project-selector-stage')};});
       assert(geometry.scrollWidth>geometry.clientWidth,'selector pages '+w);
+      assert.equal(geometry.focused,1,'selector has one focused card '+w);
       assert(geometry.create,'create action is independent');
       if(w===390)assert(geometry.positions[0].y<geometry.positions[1].y&&geometry.positions[2].y>geometry.positions[1].y&&geometry.positions[3].x>geometry.positions[0].x,'mobile groups of three');
       if(w===1366)assert(geometry.positions[0].y===geometry.positions[1].y&&geometry.positions[2].y===geometry.positions[0].y&&geometry.positions[3].x>geometry.positions[2].x,'desktop groups of three');
