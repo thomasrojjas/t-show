@@ -3,6 +3,7 @@ const SummaryView = (() => {
     let generation = 0, timer, context, running = false;
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const markup = () => `<header class="shell-page-head compact-page-head"><div class="shell-page-head-copy"><span class="shell-eyebrow">Resumen del evento</span><h1 id="overviewTitle">Cargando evento…</h1><p id="overviewIdentity"></p></div><div class="shell-page-actions"><button class="btn btn-primary" data-go="schedule">Abrir escaleta</button><a class="btn btn-secondary" id="summaryLiveLink">Operación en vivo</a></div></header>
+      <nav class="overview-shortcuts" aria-label="Accesos rápidos"><button data-go="notes">Guion</button><button data-go="team">Equipo</button><button data-go="files">Archivos</button><button data-go="metrics">Métricas</button></nav>
       <div id="overviewError" role="status"></div><section class="overview-times" id="overviewTimes" aria-label="Horarios clave"></section>
       <div class="overview-grid"><section class="panel overview-section"><h2>Estado de ejecución</h2><div id="overviewLive" aria-live="polite">Consultando sesión…</div></section>
       <section class="panel overview-section"><h2>Preparación de la pauta</h2><div id="overviewPreparation"></div></section>

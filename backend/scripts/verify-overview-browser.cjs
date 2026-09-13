@@ -33,12 +33,32 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
     await page.goto('https://tshow.test/summary?project=qa');
     await page.waitForFunction(()=>document.querySelector('#overviewLive')?.textContent.includes('En espera'));
-    for(const [w,h] of [[390,844],[768,1024],[1366,900],[1920,1080]]){
+    for(const [w,h] of [[360,800],[390,844],[404,844],[768,1024],[844,390],[1024,768],[1366,900],[1920,1080]]){
       await page.setViewportSize({width:w,height:h});
       await page.waitForTimeout(350);
       if(w===390) assert.equal(await page.locator('.workspace-shell').evaluate(n=>Math.round(n.getBoundingClientRect().width)),390);
       await page.screenshot({path:path.join(output,'summary-'+w+'.png'),fullPage:true});
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'summary overflow '+w);
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.locator('.mobile-shell-bar [data-mobile-route="more"]').click();
+    assert(await page.locator('.mobile-shell-sheet').evaluate(n=>n.open),'mobile menu opens');
+    for(const label of ['Equipo','Archivos','Métricas','Configuración','Cambiar evento','Ayuda y tutoriales','Cerrar sesión'])assert(await page.locator('.mobile-sheet-items').getByText(label,{exact:true}).count(),'menu '+label);
+    await page.keyboard.press('Escape');
+    assert(await page.locator('[data-mobile-route="more"]').evaluate(n=>n===document.activeElement),'restore menu focus');
+    await page.locator('[data-mobile-route="notes"]').click();
+    await page.waitForFunction(()=>document.querySelector('[data-mobile-route="notes"]').getAttribute('aria-current')==='page');
+    await page.goBack();
+    await page.waitForFunction(()=>document.querySelector('[data-mobile-route="summary"]').getAttribute('aria-current')==='page');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await page.locator('.mobile-shell-header .motion-logo img').evaluate(n=>getComputedStyle(n).animationName),'none');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    for(const route of ['team','files','settings','metrics','schedule']){
+      await page.evaluate(route=>WorkspaceShell.navigate(route,true),route);
+      await page.waitForTimeout(250);
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile overflow '+route);
+      await page.screenshot({path:path.join(output,'mobile-'+route+'.png'),fullPage:true});
+      if(route==='schedule')await page.locator('.timing-table tbody tr').first().screenshot({path:path.join(output,'mobile-timing-card.png')});
     }
     await page.evaluate(()=>WorkspaceShell.navigate('notes',true));
     await page.waitForFunction(()=>!document.querySelector('#view-summary').classList.contains('is-leaving'));
@@ -73,6 +93,21 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
       await page.evaluate(t=>document.body.dataset.visualTheme=t,theme);
       assert.match(await page.locator('#overviewTitle').evaluate(n=>getComputedStyle(n).fontFamily),/IBM Plex/);
     }
+    liveStatus='idle';
+    await page.goto('https://tshow.test/live.html?project=qa');
+    await page.waitForFunction(()=>document.getElementById('eventName').textContent.includes('Show de aniversario'));
+    for(const width of [360,390,404,768,1366]){
+      await page.setViewportSize({width,height:844});
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'live overflow '+width);
+    }
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.locator('.mobile-shell-header .motion-logo img').evaluate(n=>getComputedStyle(n).animationName),'none');
+    await page.locator('#stageButton').click();
+    assert(await page.locator('#stageDialog').evaluate(n=>n.open));
+    assert(!await page.locator('.mobile-shell-bar').isVisible(),'stage hides navigation');
+    await page.locator('#closeStage').click();
+    assert(await page.locator('.mobile-shell-bar').isVisible());
+    await page.screenshot({path:path.join(output,'mobile-live.png'),fullPage:true});
     assert.deepEqual(errors,[]);
     console.log('PASS: responsive overview, heading order, unsaved edits, independent failures, six themes. Screenshots: '+output);
   }finally{await browser.close();}

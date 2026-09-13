@@ -31,7 +31,7 @@
   const body = document.body;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const revealTargets = document.querySelectorAll(
-    '.hero-copy > *, .hero-image, .hero-scroll-cue, main > section:not(.hero), .feature-list article, .audience-list li, .steps li, .faq-list details, .contact-form label, .closing > *'
+    '.hero-copy > *, .hero-image, .hero-scroll-cue, main > section:not(.hero)'
   );
 
   body.classList.add('landing-enhanced');
