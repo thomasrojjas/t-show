@@ -18,8 +18,8 @@ class LiveApp {
         this.$('backLink').href = `/schedule?project=${encodeURIComponent(this.projectId)}`;
         if (!await Auth.requireSession()) return;
         this.project = await ApiClient.getProject(this.projectId);
-        const liveThemes = { nocturne:'#a8c7fa', violet:'#c084fc', cobalt:'#38bdf8', ember:'#ffb340', emerald:'#39ff88', monochrome:'#f2f4f7' };
-        const visualTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'nocturne';
+        const liveThemes = { light:'#315ea8', nocturne:'#a8c7fa', violet:'#c084fc', cobalt:'#38bdf8', ember:'#ffb340', emerald:'#39ff88', monochrome:'#f2f4f7' };
+        const visualTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'light';
         document.body.dataset.visualTheme = visualTheme;
         document.documentElement.style.setProperty('--accent', liveThemes[visualTheme]);
         this.permission = this.project.permission || 'viewer';

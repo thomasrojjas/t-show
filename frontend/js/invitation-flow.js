@@ -67,7 +67,8 @@
         }).catch(error => { $('inviteDetails').textContent = 'No se pudo validar la invitación.'; message(error.message); });
     }
     if ($('loginForm')) {
-        if (invite) $('registerLink').href = 'register.html?invite=' + encodeURIComponent(invite);
+        const destination = new URLSearchParams(location.search).get('redirect');
+        if (invite || destination) { const registerUrl = new URL('register.html', location.href); if (invite) registerUrl.searchParams.set('invite', invite); if (destination) registerUrl.searchParams.set('redirect', Auth.safeInternalRedirect(destination)); $('registerLink').href = registerUrl.href; }
         Auth.currentUser().then(user => { if (user) finish(); });
         $('loginForm').onsubmit = async event => {
             event.preventDefault(); if (busy) return;
@@ -96,7 +97,7 @@
             button.disabled = true; busy = true;
             try {
                 const values = Object.fromEntries(['firstName','lastName','rut','email','phone','password'].map(key => [key,$(key).value]));
-                const data = await Auth.register({ ...values, invite });
+                const data = await Auth.register({ ...values, invite, redirect: new URLSearchParams(location.search).get('redirect') });
                 busy = false;
                 if (data.session) await finish();
                 else message('Cuenta creada. Confirma tu correo y continúa desde el enlace para aceptar la invitación.');

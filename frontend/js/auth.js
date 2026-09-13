@@ -79,7 +79,13 @@ const Auth = (() => {
             });
         });
     }
-    async function register({ email, password, firstName, lastName, rut, phone, invite }) {
+    function safeInternalRedirect(value, fallback = '/projects') {
+        try {
+            const target = new URL(value || fallback, window.location.origin);
+            return target.origin === window.location.origin ? `${target.pathname}${target.search}${target.hash}` : fallback;
+        } catch (_) { return fallback; }
+    }
+    async function register({ email, password, firstName, lastName, rut, phone, invite, redirect }) {
         if (!isValidName(firstName) || !isValidName(lastName)) throw new Error('Nombre y apellido deben contener solo letras y tener al menos 2 caracteres.');
         if (!/^\S+@\S+\.\S+$/.test(String(email || '').trim())) throw new Error('Ingresa un correo válido.');
         if (!isStrongPassword(password)) throw new Error(passwordHint(password) || 'La contraseña no cumple la política de seguridad.');
@@ -87,11 +93,14 @@ const Auth = (() => {
         if (!isValidRut(normalizedRut)) throw new Error('Ingresa un RUT válido con dígito verificador, por ejemplo 12345678-9.');
         const normalizedPhone = normalizePhone(phone);
         if (!normalizedPhone) throw new Error('Ingresa un teléfono chileno válido, por ejemplo +56912345678.');
-        const inviteQuery = invite ? `?invite=${encodeURIComponent(invite)}` : '';
-        const { data, error } = await (await client()).auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: `${window.location.origin}/login.html${inviteQuery}`, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: normalizedPhone } } });
+        const callback = new URL('/login.html', window.location.origin);
+        if (invite) callback.searchParams.set('invite', invite);
+        if (redirect) callback.searchParams.set('redirect', safeInternalRedirect(redirect));
+        const { data, error } = await (await client()).auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: callback.href, data: { first_name: firstName.trim(), last_name: lastName.trim(), rut: normalizedRut, phone: normalizedPhone } } });
         if (error) {
             if (/already registered|already exists/i.test(error.message)) throw new Error('Este correo ya está registrado. Inicia sesión o recupera tu contraseña.');
             if (/password/i.test(error.message)) throw new Error('Supabase rechazó la contraseña configurada. Revisa la política de autenticación del proyecto.');
+            if (/database error saving new user|error saving new user/i.test(error.message)) throw new Error('No pudimos crear el perfil con esos datos. Revisa que el RUT y el teléfono no estén asociados a otra cuenta e inténtalo nuevamente.');
             throw error;
         }
         if (data.session) {
@@ -123,8 +132,8 @@ const Auth = (() => {
         try { sessionStorage.removeItem('tshow_pending_invite'); } catch (_) {}
         return accepted;
     }
-    async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return null; } return user; }
+    async function requireSession() { const user = await currentUser(); if (!user) { window.location.href = `login.html?redirect=${encodeURIComponent(safeInternalRedirect(location.pathname + location.search))}`; return null; } return user; }
     async function requireGlobalRole(roles) { const user = await requireSession(); if (!user) return null; const profile = await getProfile().catch(() => null); if (!profile || !roles.includes(profile.role)) { window.location.href = 'app.html'; return null; } return profile; }
-    return { client, token, api, login, register, acceptInvitation, pendingInvitation, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, passwordHint, bindPasswordToggles, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
+    return { client, token, api, login, register, acceptInvitation, pendingInvitation, safeInternalRedirect, normalizeRut, isValidRut, normalizePhone, isValidName, isStrongPassword, passwordHint, bindPasswordToggles, completeProfile, currentUser, getProfile, forgotPassword, updatePassword, logout, requireSession, requireGlobalRole };
 })();
 document.addEventListener('DOMContentLoaded', () => Auth.bindPasswordToggles());

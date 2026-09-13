@@ -37,7 +37,7 @@ const cleanIdentity = body => {
   const eventDate = String(body.eventDate || '').trim();
   const location = String(body.location || '').trim();
   const accentColor = accentColors.has(body.accentColor) ? body.accentColor : 'blue';
-  const visualTheme = visualThemes.has(body.visualTheme) ? body.visualTheme : 'nocturne';
+  const visualTheme = visualThemes.has(body.visualTheme) ? body.visualTheme : null;
   const backgroundKey = body.backgroundKey == null || body.backgroundKey === '' ? null : String(body.backgroundKey).trim();
   if (!eventName || eventName.length > 180) throw new Error('El nombre del proyecto es inválido.');
   if (eventDate && (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate) || Number.isNaN(Date.parse(`${eventDate}T00:00:00Z`)))) throw new Error('La fecha del evento es inválida.');

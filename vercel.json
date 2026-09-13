@@ -48,6 +48,7 @@
     { "source": "/summary.html", "destination": "/summary", "permanent": true },
     { "source": "/metrics.html", "destination": "/metrics", "permanent": true },
     { "source": "/schedule.html", "destination": "/schedule", "permanent": true },
+    { "source": "/notes.html", "destination": "/notes", "permanent": true },
     { "source": "/team.html", "destination": "/team", "permanent": true },
     { "source": "/files.html", "destination": "/files", "permanent": true },
     { "source": "/settings.html", "destination": "/settings", "permanent": true }
@@ -67,6 +68,10 @@
     },
     {
       "source": "/schedule",
+      "destination": "/app"
+    },
+    {
+      "source": "/notes",
       "destination": "/app"
     },
     {
