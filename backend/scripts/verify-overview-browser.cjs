@@ -5,7 +5,7 @@ const path=require('node:path');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'../..'), output=path.join(require('node:os').tmpdir(),'tshow-overview-qa');
 mkdirSync(output,{recursive:true});
-const project={id:'qa',eventName:'Show de aniversario · Producción y escenario principal',eventDate:'2026-09-11',location:'Antofagasta',projectType:'concert',visualTheme:'emerald',permission:'owner',convocatoriaTime:'18:30',convocatoriaDuration:30,doorsTime:'20:00',doorsDuration:60,showStartMode:'fixed',showStartTimeInput:'21:00',blocks:Array.from({length:17},(_,i)=>({id:'b'+i,type:i%2?'ANIMACIÓN':'SHOW',title:'Presentación del bloque '+(i+1),duration:20,bis:i===0?10:0,animator_script:i%2?'':'Guion de bienvenida',notes:'Confirmar micrófonos'}))};
+const project={id:'qa',eventName:'Show de aniversario · Producción y escenario principal',eventDate:'2026-09-11',location:'Antofagasta',projectType:'concert',visualTheme:null,permission:'owner',convocatoriaTime:'18:30',convocatoriaDuration:30,doorsTime:'20:00',doorsDuration:60,showStartMode:'fixed',showStartTimeInput:'21:00',blocks:Array.from({length:17},(_,i)=>({id:'b'+i,type:i%2?'ANIMACIÓN':'SHOW',title:'Presentación del bloque '+(i+1),duration:20,bis:i===0?10:0,animator_script:i%2?'':'Guion de bienvenida',notes:'Confirmar micrófonos'}))};
 const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUser:async()=>({id:'qa-user'}),getProfile:async()=>({id:'qa-user',first_name:'Equipo',last_name:'Producción',role:'account_owner'}),token:async()=>'qa',api:async(p,o)=>{const r=await fetch(p,o);const b=await r.json();if(!r.ok){const e=Error(b.message);e.code=b.code;throw e;}return b;},logout:async()=>{}};`;
 (async()=>{
   const browser=await chromium.launch({headless:true});
@@ -13,13 +13,14 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
     const context=await browser.newContext();const errors=[];
     await context.addInitScript(()=>localStorage.setItem('tshow_onboarding_v1:qa-user','done'));
     let liveStatus='idle',failTeam=false;
+    const projectFixtures=[project,...Array.from({length:6},(_,i)=>({...project,id:'qa-'+(i+2),eventName:'Producción de prueba '+(i+2),permission:i%2?'editor':'viewer'}))];
     await context.route('**/*',route=>{
       const url=new URL(route.request().url()),p=url.pathname;
       if(url.hostname!=='tshow.test')return route.fulfill({body:''});
       if(p==='/js/auth.js')return route.fulfill({contentType:'application/javascript',body:authStub});
       if(p==='/js/config.js')return route.fulfill({contentType:'application/javascript',body:'window.SHOWTIME_API_URL=location.origin;'});
       if(p.startsWith('/api/')){
-        if(p==='/api/projects')return route.fulfill({json:{data:[{id:project.id,event_name:project.eventName,payload:project,member_role:'owner'}],meta:{ownedCount:1,limit:20,remaining:19}}});
+        if(p==='/api/projects')return route.fulfill({json:{data:projectFixtures.map(item=>({id:item.id,event_name:item.eventName,payload:item,member_role:item.permission==='owner'?'owner':item.permission})),meta:{ownedCount:1,limit:20,remaining:19}}});
         if(p==='/api/projects/qa')return route.fulfill({json:{data:{id:'qa',event_name:project.eventName,payload:project,permission:project.permission}}});
         if(p.endsWith('/live'))return route.fulfill({json:{data:{status:liveStatus},version:0,serverNow:'2026-09-12T00:05:00Z'}});
         if(p.endsWith('/members'))return route.fulfill(failTeam?{status:503,json:{message:'test failure'}}:{json:{data:[{role:'owner',profiles:{id:'qa-user',first_name:'Equipo',last_name:'Producción',email:'qa@example.invalid'}}]}});
@@ -66,6 +67,17 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
     const rects=await page.locator('#view-notes .shell-page-head').evaluate(h=>[...h.querySelectorAll('.shell-eyebrow,h1,p')].map(x=>({y:x.getBoundingClientRect().y,b:x.getBoundingClientRect().bottom})));
     assert(rects[0].b<=rects[1].y && rects[1].b<=rects[2].y,'heading vertical order');
     await page.screenshot({path:path.join(output,'notes.png'),fullPage:true});
+    await page.evaluate(()=>WorkspaceShell.navigate('projects',true));
+    await page.waitForFunction(()=>document.querySelectorAll('#projectCarousel .project-card[data-project-id]').length===7);
+    for(const [w,h] of [[390,844],[768,1024],[1366,900]]){
+      await page.setViewportSize({width:w,height:h}); await page.waitForTimeout(250);
+      const geometry=await page.evaluate(()=>{const cards=[...document.querySelectorAll('#projectCarousel .project-card')];return {scrollWidth:document.getElementById('projectCarousel').scrollWidth,clientWidth:document.getElementById('projectCarousel').clientWidth,positions:cards.slice(0,4).map(n=>({x:Math.round(n.offsetLeft),y:Math.round(n.offsetTop),w:Math.round(n.offsetWidth)})),create:document.getElementById('createProjectAction')?.parentElement===document.querySelector('.project-selector-stage')};});
+      assert(geometry.scrollWidth>geometry.clientWidth,'selector pages '+w);
+      assert(geometry.create,'create action is independent');
+      if(w===390)assert(geometry.positions[0].y<geometry.positions[1].y&&geometry.positions[2].y>geometry.positions[1].y&&geometry.positions[3].x>geometry.positions[0].x,'mobile groups of three');
+      if(w===1366)assert(geometry.positions[0].y===geometry.positions[1].y&&geometry.positions[2].y===geometry.positions[0].y&&geometry.positions[3].x>geometry.positions[2].x,'desktop groups of three');
+      await page.screenshot({path:path.join(output,'projects-'+w+'.png'),fullPage:true});
+    }
     await page.evaluate(()=>WorkspaceShell.navigate('schedule',true));
     await page.waitForFunction(()=>!document.querySelector('#view-notes').classList.contains('is-leaving'));
     await page.screenshot({path:path.join(output,'schedule.png'),fullPage:true});

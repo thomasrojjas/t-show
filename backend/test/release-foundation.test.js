@@ -46,5 +46,13 @@ test('deployment manifest includes security headers and authenticated routes', (
   const rewrites = JSON.stringify(manifest.rewrites);
   assert.match(headers, /Content-Security-Policy/);
   assert.match(headers, /Strict-Transport-Security/);
-  for (const route of ['/projects', '/summary', '/schedule', '/team', '/settings']) assert.match(rewrites, new RegExp(route.replace('/', '\\/')));
+  for (const route of ['/projects', '/summary', '/schedule', '/notes', '/team', '/settings']) assert.match(rewrites, new RegExp(route.replace('/', '\\/')));
+});
+
+test('registration migration canonicalizes phone validation and tolerates incomplete profile metadata', () => {
+  const migration = read('backend/db/migrations/027_profile_registration_hardening.sql');
+  assert.match(migration, /drop constraint if exists profiles_phone_check/i);
+  assert.match(migration, /check \(phone ~ E'\^\\\\\+569\[0-9\]\{8\}\$'\)/i);
+  assert.match(migration, /phone_value/);
+  assert.match(migration, /on conflict \(id\) do nothing/i);
 });
