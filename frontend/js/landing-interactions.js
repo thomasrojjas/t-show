@@ -3,6 +3,8 @@
   const planSection=document.getElementById('planes');
   const contactMessage=document.querySelector('#contactForm textarea[name="message"]');
   const billingPeriod=()=>document.querySelector('[data-billing].is-selected')?.dataset.billing||'monthly';
+  const subscriptionButtons=[...document.querySelectorAll('[data-subscribe-plan]')];
+  const updateSubscriptionLinks=period=>subscriptionButtons.forEach(button=>{button.href=`billing.html?plan=${encodeURIComponent(button.dataset.subscribePlan)}&interval=${period==='annual'?'year':'month'}`;});
   const updatePrices=period=>{
     planSection?.querySelectorAll('[data-monthly][data-annual]').forEach(node=>{node.textContent=node.dataset[period];});
     planSection?.querySelectorAll('.plan-price small[data-monthly]').forEach(node=>{node.textContent=node.dataset[period];});
@@ -12,8 +14,10 @@
     const period=button.dataset.billing;
     billingButtons.forEach(item=>{const selected=item===button;item.classList.toggle('is-selected',selected);item.setAttribute('aria-pressed',String(selected));});
     updatePrices(period);
+    updateSubscriptionLinks(period);
   }));
   updatePrices('monthly');
+  updateSubscriptionLinks('monthly');
   document.querySelectorAll('[data-plan]').forEach(button=>button.addEventListener('click',()=>{
     if(!contactMessage||contactMessage.value.trim())return;
     contactMessage.value=`Me interesa el plan ${button.dataset.plan} (${billingPeriod()==='annual'?'modalidad anual':'modalidad mensual'}).`;

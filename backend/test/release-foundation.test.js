@@ -32,6 +32,19 @@ test('payment activation remains behind provider reconciliation', () => {
   assert.match(billing, /timingSafeEqual/);
 });
 
+test('commercial plans start recurring Mercado Pago subscriptions', () => {
+  const landing = read('frontend/index.html');
+  const billing = read('frontend/billing.html');
+  const interactions = read('frontend/js/landing-interactions.js');
+  assert.match(landing, /data-subscribe-plan="pro"/);
+  assert.match(landing, /data-subscribe-plan="max"/);
+  assert.doesNotMatch(landing, /data-subscribe-plan="(?:pro|max)"[^>]+href="#contacto"/);
+  assert.match(interactions, /interval=\$\{period==='annual'\?'year':'month'\}/);
+  assert.match(billing, /mercadopago\/subscriptions/);
+  assert.match(billing, /idempotencyKey: crypto\.randomUUID\(\)/);
+  assert.match(billing, /Se renovará automáticamente/);
+});
+
 test('R2 uploads require finalize verification and private signed downloads', () => {
   const storage = read('backend/routes/storage.js');
   assert.match(storage, /HeadObjectCommand/);
