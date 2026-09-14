@@ -7,6 +7,17 @@
         const node = $('loginError') || $('message') || $('inviteMessage');
         node.textContent = text; node.style.display = 'block'; node.setAttribute('role', 'status');
     }
+    function registrationNotice() {
+        document.querySelector('.auth-toast')?.remove();
+        const notice = document.createElement('section');
+        notice.className = 'auth-toast';
+        notice.setAttribute('role', 'status');
+        notice.setAttribute('aria-live', 'polite');
+        notice.innerHTML = '<button type="button" aria-label="Cerrar aviso">×</button><strong>Cuenta creada correctamente</strong><p>Revisa y verifica tu correo electrónico. Luego inicia sesión para continuar.</p>';
+        notice.querySelector('button').onclick = () => notice.remove();
+        document.body.append(notice);
+        setTimeout(() => notice.remove(), 12000);
+    }
     function recovery(error) {
         message(error.message + (error.requestId ? ' Referencia: ' + error.requestId : ''));
         let actions = $('acceptRecovery');
@@ -100,7 +111,11 @@
                 const data = await Auth.register({ ...values, invite, redirect: new URLSearchParams(location.search).get('redirect') });
                 busy = false;
                 if (data.session) await finish();
-                else message('Cuenta creada. Confirma tu correo y continúa desde el enlace para aceptar la invitación.');
+                else {
+                    const messageNode = $('message');
+                    if (messageNode) { messageNode.textContent = ''; messageNode.style.display = 'none'; }
+                    registrationNotice();
+                }
             } catch (error) { message(error.message); }
             finally { busy = false; button.disabled = false; }
         };

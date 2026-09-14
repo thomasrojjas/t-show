@@ -27,6 +27,7 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .field-error[data-status="success"] { color:var(--success); }
 .auth-error[data-status="success"] { border-color:rgba(128,226,167,.55); color:var(--success); }
 .auth-error[data-status="warning"] { border-color:rgba(255,209,102,.55); color:var(--warning); }
+.auth-toast{position:fixed;right:24px;bottom:24px;z-index:1000;width:min(390px,calc(100vw - 32px));padding:18px 20px;border:1px solid rgba(128,226,167,.62);border-radius:12px;background:#10241a;color:#effff5;box-shadow:0 20px 54px rgba(0,0,0,.42);animation:auth-toast-in .34s cubic-bezier(.22,1,.36,1) both}.auth-toast strong{display:block;margin-bottom:6px;font-size:15px}.auth-toast p{margin:0;color:#c9ecd7;font-size:13px;line-height:1.5}.auth-toast button{position:absolute;top:8px;right:9px;width:32px;min-height:32px;margin:0;padding:0;border:0;border-radius:7px;background:transparent;color:#c9ecd7;cursor:pointer;font-size:21px}.auth-toast button:hover,.auth-toast button:focus-visible{background:rgba(255,255,255,.12);outline:2px solid var(--accent);outline-offset:1px}@keyframes auth-toast-in{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .auth-hint { display:block; margin-top:8px; color:var(--accent); font-size:12px; line-height:1.4; }
 .form-note[data-status="error"] { color:var(--danger); }
 .form-note[data-status="warning"] { color:var(--warning); }
@@ -40,3 +41,4 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .password-toggle:hover { border-color:var(--accent); background:rgba(25,35,56,.95); }
 .password-toggle:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .invite-actions[hidden] { display:none!important; }
+@media(max-width:480px){.auth-toast{right:16px;bottom:16px}}

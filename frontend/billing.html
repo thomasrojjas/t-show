@@ -35,9 +35,20 @@
       const wantedInterval = params.get('interval') === 'year' ? 'year' : 'month';
       const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
       const setStatus = (text, kind = '') => { status.textContent = text; status.dataset.status = kind; };
+      async function ensureProfile(user) {
+        try { await Auth.getProfile(); return; }
+        catch (error) {
+          if (error.status !== 403 || error.message !== 'Perfil incompleto. Completa tu registro.') throw error;
+          const metadata = user.user_metadata || {};
+          const values = { firstName: metadata.first_name, lastName: metadata.last_name, rut: metadata.rut, phone: metadata.phone };
+          if (!values.firstName || !values.lastName || !values.rut || !values.phone) throw new Error('Tu cuenta necesita completar el perfil antes de contratar. Inicia sesión nuevamente después de verificar tu correo.');
+          await Auth.completeProfile(values);
+        }
+      }
       try {
         const user = await Auth.requireSession();
         if (!user) return;
+        await ensureProfile(user);
         const result = await Auth.api('/api/billing/plans');
         const list = result.data || [];
         if (!list.length) { plans.innerHTML = '<p class="auth-subtitle">Los planes estarán disponibles próximamente.</p>'; return; }

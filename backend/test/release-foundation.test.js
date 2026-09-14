@@ -45,6 +45,19 @@ test('commercial plans start recurring Mercado Pago subscriptions', () => {
   assert.match(billing, /Se renovará automáticamente/);
 });
 
+test('registration confirmation and billing profile recovery remain actionable', () => {
+  const invitationFlow = read('frontend/js/invitation-flow.js');
+  const billing = read('frontend/billing.html');
+  const authStyles = read('frontend/css/auth.css');
+  const workspaceStyles = read('frontend/css/workspace-sober.css');
+  assert.match(invitationFlow, /Cuenta creada correctamente/);
+  assert.match(invitationFlow, /verifica tu correo electrónico/i);
+  assert.match(authStyles, /\.auth-toast\{/);
+  assert.match(billing, /async function ensureProfile/);
+  assert.match(billing, /await Auth\.completeProfile\(values\)/);
+  assert.match(workspaceStyles, /is-collapsed \.workspace-nav-account-menu\{left:calc\(100% \+ 10px\)/);
+});
+
 test('R2 uploads require finalize verification and private signed downloads', () => {
   const storage = read('backend/routes/storage.js');
   assert.match(storage, /HeadObjectCommand/);
