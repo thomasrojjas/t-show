@@ -1,4 +1,6 @@
 /* Shared, scoped motion and mobile chrome. Keep this after legacy screen CSS. */
+/* HTML hidden states must win over visual component rules such as .btn { display: inline-flex }. */
+[hidden]{display:none!important}
 :root{--motion-fast:140ms;--motion-panel:220ms;--motion-enter:350ms;--motion-ease:cubic-bezier(.2,.7,.2,1)}
 button,a,input,select,textarea{transition:background-color var(--motion-fast),border-color var(--motion-fast),color var(--motion-fast)}
 @keyframes tshow-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
