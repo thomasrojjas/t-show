@@ -105,9 +105,9 @@
       const name=document.getElementById('workspaceUserName'),menuName=document.getElementById('workspaceMenuName'),email=document.getElementById('workspaceMenuEmail');
       if(name)name.textContent=fullName;if(menuName)menuName.textContent=fullName;if(email)email.textContent=currentAccount.email;
       if(profile.role==='platform_admin'){
-        const adminLink=document.createElement('a');adminLink.href='/admin.html';adminLink.className='workspace-sidebar-admin';adminLink.innerHTML=`${navIcons.settings}<span>Super admin</span>`;adminLink.title='Administración de cuentas y planes';
+        const adminLink=document.createElement('a');adminLink.href='/admin.html';adminLink.className='workspace-sidebar-admin';adminLink.innerHTML=`${navIcons.settings}<span>Super admin</span>`;adminLink.title='Administración de cuentas y planes';adminLink.setAttribute('aria-label','Abrir Super admin');
         const controlLabel=[...document.querySelectorAll('.workspace-sidebar-label')].find(node=>node.textContent.trim()==='CONTROL');
-        document.querySelector('.workspace-nav [data-route="projects"]')?.after(adminLink);
+        const brandRow=document.querySelector('.workspace-sidebar-brand');brandRow?.classList.add('has-admin-link');brandRow?.querySelector('.workspace-nav-brand')?.after(adminLink);
       }
     }catch(_){/* La navegación sigue siendo utilizable si el perfil tarda o falla. */}
   }
