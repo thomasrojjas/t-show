@@ -101,3 +101,14 @@ body.admin-surface .admin-back-button{width:52px;height:52px;border-radius:15px;
 body.admin-surface .admin-session-actions{justify-content:space-between;gap:8px;font-size:11px}
 }
 }
+
+/* Final sidebar geometry: the compact rail keeps a clear brand mark and lets
+   the account menu escape to the workspace instead of clipping inside 72px. */
+@media screen and (min-width:768px){
+  body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar{overflow:visible!important}
+  body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand{position:relative;height:72px!important;padding:0!important;justify-content:initial!important}
+  body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{position:absolute!important;left:9px!important;top:19px!important;width:32px!important;height:32px!important;min-width:32px!important;background-size:32px 32px!important}
+  body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-toggle{position:absolute!important;right:4px!important;bottom:5px!important;width:23px!important;height:23px!important;padding:0!important;border-radius:6px!important;font-size:17px!important;line-height:20px!important;z-index:2}
+  body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-account-wrap{position:relative!important}
+  body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-account-menu{position:absolute!important;left:calc(100% + 10px)!important;right:auto!important;bottom:0!important;width:280px!important;max-width:calc(100vw - 94px)!important;z-index:250!important}
+}

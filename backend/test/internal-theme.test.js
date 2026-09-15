@@ -45,3 +45,15 @@ test('platform administration link is mounted in the brand row and targets the a
   assert.match(admin, /class="admin-section-link" aria-current="page">Super admin<\/a>/);
   assert.match(admin, /class="admin-session-actions"/);
 });
+
+test('collapsed workspace rail keeps the brand clear and exposes the account menu', () => {
+  const navigation = read('js/workspace-nav.js');
+  const css = read('css/internal-theme.css');
+  assert.match(navigation, /live:'<svg/);
+  assert.match(navigation, /\$\{navIcons\.live\}<span>Modo en vivo/);
+  assert.match(navigation, /files:'<svg[^>]*><path d="M3\.5 6\.5h6/);
+  assert.match(navigation, /settings:'<svg[^>]*><path d="M12 8\.5/);
+  assert.match(css, /\.workspace-sidebar\{overflow:visible!important\}/);
+  assert.match(css, /is-collapsed \.workspace-sidebar-brand \.workspace-nav-brand\{position:absolute!important;left:9px!important/);
+  assert.match(css, /is-collapsed \.workspace-nav-account-menu\{position:absolute!important;left:calc\(100% \+ 10px\)!important/);
+});
