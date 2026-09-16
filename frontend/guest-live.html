@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101216">
+  <script src="js/theme-bootstrap.js"></script><title>Observador en vivo · T-Show</title><link rel="icon" type="image/png" href="assets/branding/tshow-favicon.png"><link rel="stylesheet" href="css/guest-live.css">
+</head>
+<body>
+  <main class="guest-live" data-stage="false">
+    <header class="guest-live-header"><div class="brand"><strong>T-SHOW</strong><span>Observador en vivo</span></div><div class="guest-live-actions"><span id="connection" class="connection">Conectando…</span><button id="stageToggle" type="button">Vista de escenario</button></div></header>
+    <section class="guest-live-main" aria-live="polite"><div><span id="liveState" class="live-state"><i aria-hidden="true"></i><span id="liveLabel">En espera</span></span><h1 id="eventName">Preparando el evento…</h1><p id="currentTitle" class="kicker">Cargando bloque…</p><p id="currentMeta" class="state">Solo lectura</p><p id="guestStatus" class="status-error" role="alert" hidden></p></div><article class="clock-card"><span id="timerLabel" class="clock-label">Tiempo restante</span><div id="timer" class="clock" data-alert="normal">--:--</div><hr><dl><div><dt>Transcurrido</dt><dd id="elapsed">--:--</dd></div><div><dt>Acceso</dt><dd>Solo lectura</dd></div></dl></article><article class="next-card"><span>Siguiente bloque</span><strong id="nextTitle">—</strong><span id="nextMeta">Esperando información…</span></article></section>
+    <footer class="guest-live-footer"><span>Cualquier persona con este enlace puede observar hasta que venza o sea revocado.</span><span>T-Show · Producción en vivo</span></footer>
+  </main>
+  <script src="js/guest-live-app.js"></script>
+</body>
+</html>

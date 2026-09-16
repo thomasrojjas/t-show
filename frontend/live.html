@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101216">
+  <script src="js/theme-bootstrap.js"></script>
   <title>T-Show · En vivo</title>
   <link rel="icon" type="image/png" sizes="512x512" href="assets/branding/tshow-favicon.png">
   <link rel="preload" href="assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -20,7 +21,8 @@
       <button id="stageButton" type="button">Vista escenario <i data-lucide="external-link" aria-hidden="true"></i></button>
       <details id="moreMenu"><summary>Más <i data-lucide="chevron-down" aria-hidden="true"></i></summary>
         <div class="more-panel">
-        <button id="copyLink" type="button">Compartir enlace del evento</button>
+        <button id="copyLink" type="button">Copiar enlace del evento</button>
+          <button id="shareObserver" type="button">Compartir como observador</button>
           <small>Compartir el enlace no concede permisos. Las personas nuevas necesitan una invitación de Equipo.</small>
           <button id="fullscreenButton" type="button">Pantalla completa</button>
           <button id="reportButton" type="button">Ver balance</button>
@@ -60,6 +62,11 @@
       <dl class="timer-details"><div><dt>Transcurrido</dt><dd id="elapsedTimer">--:--</dd></div><div><dt>Duración</dt><dd id="plannedTimer">—</dd></div><div><dt>Fin previsto</dt><dd id="projectedEnd">—</dd></div></dl>
       <div class="next-block"><span>Después</span><strong id="nextTitle">—</strong></div>
     </section>
+    <section class="next-panel panel" aria-labelledby="nextPanelTitle">
+      <div class="next-panel-heading"><div><span class="next-panel-kicker">Continuidad</span><h2 id="nextPanelTitle">Siguiente bloque</h2></div><span id="nextPanelNumber" class="section-index"></span></div>
+      <div class="next-panel-body"><div><strong id="nextPanelName">—</strong><span id="nextPanelMeta" class="muted">Sin siguiente bloque</span></div><div class="next-panel-time"><span id="nextPanelTimeLabel">Inicio programado</span><strong id="nextPanelTime">—</strong></div></div>
+      <a id="nextPanelLink" class="next-panel-link" href="#contextTitle">Ver guion y notas</a>
+    </section>
     <section class="context panel" aria-labelledby="contextTitle">
       <div class="section-heading"><div><span id="selectionHint" class="muted">Consultando el bloque actual</span><h2 id="contextTitle">Guion y notas</h2></div><label class="text-size">Texto<select id="textSize"><option value="18">18 px</option><option value="22">22 px</option><option value="26">26 px</option></select></label></div>
       <div class="context-tabs" role="tablist" aria-label="Contenido del bloque">
@@ -73,7 +80,7 @@
   </main>
   <footer class="live-footer">T-Show / Producción en vivo <span>Salir de la consola no detiene el evento.</span></footer>
   <dialog id="stageDialog" class="stage-dialog" aria-labelledby="stageTitle">
-    <div class="stage-top"><span id="stageStatus">En vivo</span><button id="closeStage" type="button">← Volver a consola</button></div>
+    <div class="stage-top"><span id="stageStatus" class="stage-live-status"><i aria-hidden="true"></i><span>En vivo</span></span><button id="closeStage" type="button">← Volver a consola</button></div>
     <h2 id="stageTitle">Bloque actual</h2><p id="stageTimerLabel">Tiempo restante</p><div id="stageTimer" class="stage-timer">--:--</div>
     <div class="stage-next"><span>Después</span><strong id="stageNext">—</strong></div>
     <small id="stageConnection"></small>
@@ -81,6 +88,7 @@
   <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
     <h2 id="confirmTitle">Confirmar acción</h2><p id="confirmText"></p><form method="dialog"><button value="cancel">Cancelar</button><button value="confirm" class="primary">Confirmar</button></form>
   </dialog>
+  <dialog id="observerDialog" aria-labelledby="observerTitle"><div class="section-heading"><div><span class="shell-eyebrow">Acceso temporal</span><h2 id="observerTitle">Compartir como observador</h2></div><button id="closeObserver" type="button" aria-label="Cerrar">×</button></div><p>La persona podrá observar el bloque actual, el reloj y el siguiente bloque sin crear una cuenta. El acceso vence o se puede revocar.</p><form id="observerForm"><label>Nombre opcional<input id="observerLabel" maxlength="120" placeholder="Equipo técnico"></label><label>Duración<select id="observerDays"><option value="1">24 horas</option><option value="7" selected>7 días</option><option value="30">30 días</option></select></label><button id="observerCreate" class="primary" type="submit">Generar acceso</button></form><div id="observerResult" class="observer-result" hidden><img id="observerQr" alt="Código QR para observar el evento"><p id="observerUrl"></p><div><button id="observerCopy" type="button">Copiar enlace</button><button id="observerDownload" type="button">Descargar QR</button></div></div><section class="observer-active" aria-labelledby="observerActiveTitle"><h3 id="observerActiveTitle">Accesos activos</h3><div id="observerActiveList"><p class="muted">Cargando accesos…</p></div></section><p id="observerStatus" role="status"></p></dialog>
   <dialog id="reportDialog" class="report-dialog" aria-labelledby="reportTitle">
     <div class="section-heading"><h2 id="reportTitle">Balance del evento</h2><button id="closeReport" type="button">Cerrar</button></div>
     <p>Los tiempos manuales son registros de operación. El seguimiento por horario muestra la pauta prevista; no acredita la ejecución real.</p>

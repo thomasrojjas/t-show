@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Acceso al evento · T-Show</title>
+  <script src="js/theme-bootstrap.js"></script>
   <link rel="stylesheet" href="css/operations.css">
   <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/motion-mobile.css"><link rel="stylesheet" href="css/internal-theme.css"></head>
@@ -37,6 +38,10 @@
       });
       const exchanged = await exchange.json();
       if (!exchange.ok) throw new Error(exchanged.message || 'Este acceso ya no está disponible.');
+      if (exchanged.accessMode === 'live') {
+        location.replace(`/guest-live.html#session=${encodeURIComponent(exchanged.sessionToken)}`);
+        return;
+      }
       const response = await fetch(`/api/guest-passes/session/${encodeURIComponent(exchanged.sessionToken)}`);
       const body = await response.json();
       if (!response.ok) throw new Error(body.message || 'No pudimos abrir el evento.');

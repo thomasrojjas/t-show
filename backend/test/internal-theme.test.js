@@ -37,6 +37,19 @@ test('authoritative internal theme loads after legacy workspace and operations s
   assert.match(css, /:disabled\{background:#dfe3e1!important;color:#46504c!important/);
 });
 
+test('all seven visual themes have early bootstrap and complete operational palettes', () => {
+  const bootstrap = read('js/theme-bootstrap.js');
+  const css = read('css/internal-theme.css');
+  const live = read('css/live.css');
+  for (const theme of ['light','nocturne','violet','cobalt','ember','emerald','monochrome']) {
+    assert.match(bootstrap, new RegExp(`'${theme}'`));
+    assert.match(css, new RegExp(`html\\[data-tshow-theme="${theme}"\\].*--theme-bg:`));
+    assert.match(live, new RegExp(`html\\[data-tshow-theme="${theme}"\\].*--bg:`));
+  }
+  assert.match(bootstrap, /tshow_visual_theme_v2/);
+  assert.match(bootstrap, /document\.documentElement/);
+});
+
 test('platform administration link is mounted in the brand row and targets the admin page', () => {
   const navigation = read('js/workspace-nav.js');
   const admin = read('admin.html');

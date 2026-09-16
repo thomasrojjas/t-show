@@ -1,8 +1,10 @@
 const crypto = require('crypto');
 const express = require('express');
+const QRCode = require('qrcode');
 const { supabase } = require('../supabaseClient');
 const { requireSupabaseAuth } = require('../middleware/supabaseAuth');
 const { featureEnabled } = require('../services/features');
+const LiveEngine = require('../../frontend/js/live-engine');
 
 const router = express.Router();
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -189,18 +191,24 @@ router.post('/projects/:id/guest-passes', requireSupabaseAuth, async(req,res)=>{
   if(!await featureForProject(req,a,'guest_passes'))return fail(res,403,'El módulo Guest Pass no está habilitado para esta cuenta.');
   const token=crypto.randomBytes(32).toString('hex');
   const days=Math.min(Math.max(Number(req.body.days)||7,1),30);
+  const accessMode=req.body.accessMode==='live'?'live':'snapshot';
   const visibility={date:req.body.visibility?.date!==false,location:req.body.visibility?.location!==false,schedule:req.body.visibility?.schedule!==false,state:req.body.visibility?.state!==false,notes:Boolean(req.body.visibility?.notes),script:Boolean(req.body.visibility?.script)};
   const snapshot=guestSnapshot(a.project,visibility);
-  const {data,error}=await supabase.from('tshow_guest_passes').insert({project_id:req.params.id,token_hash:hash(token),label:clean(req.body.label,120)||null,include_script:visibility.script,expires_at:new Date(Date.now()+days*86400000).toISOString(),created_by:req.user.id,published_snapshot:snapshot,published_version:a.project.document_version||null,visibility}).select('id,project_id,label,include_script,expires_at,created_at,published_version,visibility').single();
+  const {data,error}=await supabase.from('tshow_guest_passes').insert({project_id:req.params.id,token_hash:hash(token),label:clean(req.body.label,120)||null,include_script:visibility.script,access_mode:accessMode,expires_at:new Date(Date.now()+days*86400000).toISOString(),created_by:req.user.id,published_snapshot:snapshot,published_version:a.project.document_version||null,visibility}).select('id,project_id,label,include_script,access_mode,expires_at,created_at,published_version,visibility').single();
   if(error)return fail(res,400,error.message);
-  res.status(201).json({success:true,data,url:`${process.env.FRONTEND_URL||''}/guest#token=${token}`});
+  const base=process.env.FRONTEND_URL||String(process.env.CORS_ORIGIN||'').split(',')[0]||`${req.protocol}://${req.get('host')}`;
+  const url=`${base.replace(/\/$/,'')}/guest?mode=${accessMode}#token=${token}`;
+  let qr;
+  try { qr=await QRCode.toDataURL(url,{errorCorrectionLevel:'M',margin:2,width:640,color:{dark:'#111111',light:'#ffffff'}}); }
+  catch (_) { return fail(res,500,'No pudimos generar el código QR.'); }
+  res.status(201).json({success:true,data,url,qr,accessMode});
 });
-router.get('/projects/:id/guest-passes', requireSupabaseAuth, async(req,res)=>{const a=await projectAccess(req,req.params.id);if(!canManage(a))return fail(res,403,'No tienes permisos para ver accesos.');const {data,error}=await supabase.from('tshow_guest_passes').select('id,project_id,label,include_script,expires_at,revoked_at,created_at,last_accessed_at,access_count').eq('project_id',req.params.id).order('created_at',{ascending:false});if(error)return fail(res,500,error.message);res.json({success:true,data:data||[]});});
+router.get('/projects/:id/guest-passes', requireSupabaseAuth, async(req,res)=>{const a=await projectAccess(req,req.params.id);if(!canManage(a))return fail(res,403,'No tienes permisos para ver accesos.');const {data,error}=await supabase.from('tshow_guest_passes').select('id,project_id,label,include_script,access_mode,expires_at,revoked_at,created_at,last_accessed_at,access_count').eq('project_id',req.params.id).order('created_at',{ascending:false});if(error)return fail(res,500,error.message);res.json({success:true,data:data||[]});});
 router.delete('/projects/:id/guest-passes/:passId', requireSupabaseAuth, async(req,res)=>{const a=await projectAccess(req,req.params.id);if(!canManage(a))return fail(res,403,'No tienes permisos para revocar accesos.');const {error}=await supabase.from('tshow_guest_passes').update({revoked_at:new Date().toISOString()}).eq('id',req.params.passId).eq('project_id',req.params.id);if(error)return fail(res,400,error.message);res.json({success:true});});
 router.post('/guest-passes/exchange', async(req,res)=>{
   const token=String(req.body?.token||'');
   if(!/^[a-f0-9]{64}$/i.test(token))return fail(res,404,'El acceso no es válido.');
-  const {data:pass}=await supabase.from('tshow_guest_passes').select('id,expires_at,revoked_at,locked_until,access_count').eq('token_hash',hash(token)).maybeSingle();
+  const {data:pass}=await supabase.from('tshow_guest_passes').select('id,access_mode,expires_at,revoked_at,locked_until,access_count').eq('token_hash',hash(token)).maybeSingle();
   if(!pass||pass.revoked_at||new Date(pass.expires_at)<=new Date())return fail(res,410,'Este acceso venció o fue revocado.');
   if(pass.locked_until&&new Date(pass.locked_until)>new Date())return fail(res,429,'Este acceso está bloqueado temporalmente.');
   const sessionToken=crypto.randomBytes(32).toString('hex');
@@ -208,16 +216,45 @@ router.post('/guest-passes/exchange', async(req,res)=>{
   const {error}=await supabase.from('tshow_guest_sessions').insert({pass_id:pass.id,session_hash:hash(sessionToken),expires_at:expiresAt});
   if(error)return fail(res,500,'No pudimos abrir el acceso público.');
   await supabase.from('tshow_guest_passes').update({last_accessed_at:new Date().toISOString(),access_count:Number(pass.access_count||0)+1}).eq('id',pass.id);
-  res.json({success:true,sessionToken,expiresAt});
+  res.json({success:true,sessionToken,expiresAt,accessMode:pass.access_mode||'snapshot'});
 });
 router.get('/guest-passes/session/:sessionToken', async(req,res)=>{
   const token=String(req.params.sessionToken||'');
   if(!/^[a-f0-9]{64}$/i.test(token))return fail(res,404,'Sesión inválida.');
-  const {data:session}=await supabase.from('tshow_guest_sessions').select('id,expires_at,tshow_guest_passes(id,expires_at,revoked_at,published_snapshot)').eq('session_hash',hash(token)).maybeSingle();
+  const {data:session}=await supabase.from('tshow_guest_sessions').select('id,expires_at,tshow_guest_passes(id,project_id,access_mode,expires_at,revoked_at,published_snapshot)').eq('session_hash',hash(token)).maybeSingle();
   const pass=Array.isArray(session?.tshow_guest_passes)?session.tshow_guest_passes[0]:session?.tshow_guest_passes;
   if(!session||new Date(session.expires_at)<=new Date()||!pass||pass.revoked_at||new Date(pass.expires_at)<=new Date())return fail(res,410,'La sesión pública venció.');
   await supabase.from('tshow_guest_sessions').update({last_accessed_at:new Date().toISOString()}).eq('id',session.id);
-  res.json({success:true,data:pass.published_snapshot});
+  res.json({success:true,accessMode:pass.access_mode||'snapshot',data:pass.published_snapshot});
+});
+async function liveGuestSession(sessionToken) {
+  const {data:session}=await supabase.from('tshow_guest_sessions').select('id,expires_at,tshow_guest_passes(id,project_id,access_mode,expires_at,revoked_at)').eq('session_hash',hash(sessionToken)).maybeSingle();
+  const pass=Array.isArray(session?.tshow_guest_passes)?session.tshow_guest_passes[0]:session?.tshow_guest_passes;
+  if(!session||new Date(session.expires_at)<=new Date()||!pass||pass.access_mode!=='live'||pass.revoked_at||new Date(pass.expires_at)<=new Date())return null;
+  const {data:project}=await supabase.from('tshow_projects').select('id,event_name,payload,document_version').eq('id',pass.project_id).is('deleted_at',null).maybeSingle();
+  if(!project)return null;
+  const {data:live}=await supabase.from('tshow_live_sessions').select('state,revision').eq('project_id',project.id).maybeSingle();
+  const snapshot=LiveEngine.computeLiveSnapshot(project.payload||{},live?.state||{},Date.now());
+  const compact=item=>item?{num:item.num,title:item.title,type:item.type,start:item.start,duration:item.effectiveDuration}:null;
+  const next=compact(snapshot.nextItem);
+  if(next&&snapshot.trackingMode==='manual'&&snapshot.status!=='idle'&&snapshot.status!=='finished') next.start=LiveEngine.formatTimeSeconds(Date.now()+Math.max(0,snapshot.remainingSeconds)*1000,snapshot.zone).slice(0,5);
+  return {session,pass,project,live,snapshot,compact,next};
+}
+router.get('/guest-passes/live/:sessionToken', async(req,res)=>{
+  const result=await liveGuestSession(String(req.params.sessionToken||''));
+  if(!result)return fail(res,410,'Este acceso de observador venció o fue revocado.');
+  await supabase.from('tshow_guest_sessions').update({last_accessed_at:new Date().toISOString()}).eq('id',result.session.id);
+  res.set('Cache-Control','no-store');
+  const {project,live,snapshot,compact,next}=result;
+  res.json({success:true,data:{eventName:project.event_name,visualTheme:project.payload?.visualTheme||'light',serverNow:new Date().toISOString(),revision:live?.revision||0,status:snapshot.status,trackingMode:snapshot.trackingMode,current:compact(snapshot.currentItem),next,remainingSeconds:snapshot.remainingSeconds,elapsedSeconds:snapshot.elapsedSeconds,alertLevel:snapshot.alertLevel,connection:'connected'}});
+});
+router.post('/guest-passes/live/:sessionToken/renew', async(req,res)=>{
+  const result=await liveGuestSession(String(req.params.sessionToken||''));
+  if(!result)return fail(res,410,'Este acceso de observador venció o fue revocado.');
+  const expiresAt=new Date(Math.min(new Date(result.pass.expires_at).getTime(),Date.now()+60*60*1000)).toISOString();
+  const {error}=await supabase.from('tshow_guest_sessions').update({expires_at:expiresAt,last_accessed_at:new Date().toISOString()}).eq('id',result.session.id);
+  if(error)return fail(res,500,'No pudimos renovar el acceso.');
+  res.set('Cache-Control','no-store');res.json({success:true,expiresAt});
 });
 router.get('/guest-passes/:token', async(req,res)=>fail(res,410,'Este enlace usa un formato anterior. Solicita un nuevo Guest Pass.'));
 

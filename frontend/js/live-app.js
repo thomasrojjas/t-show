@@ -5,6 +5,7 @@ class LiveApp {
         this.state = LiveEngine.defaults(); this.version = 0; this.rows = new Map();
         this.connected = false; this.busy = false; this.follow = true; this.tab = 'script'; this.offset = 0;
         this.permission = 'viewer'; this.selection = null; this.readingKey = ''; this.syncing = null;
+        this.observerPass = null;
         this.bind();
         this.init().catch(error => this.message(error.message, true, true));
     }
@@ -16,12 +17,17 @@ class LiveApp {
     async init() {
         if (!this.projectId) { location.replace('/projects'); return; }
         this.$('backLink').href = `/schedule?project=${encodeURIComponent(this.projectId)}`;
+        // The bootstrap paints the cached project theme before auth/network work. Keep it
+        // active until the complete server identity is confirmed below.
+        window.TShowTheme?.apply(window.TShowTheme.current || 'light', { persist:false });
         if (!await Auth.requireSession()) return;
         this.project = await ApiClient.getProject(this.projectId);
         const liveThemes = { light:'#315ea8', nocturne:'#a8c7fa', violet:'#c084fc', cobalt:'#38bdf8', ember:'#ffb340', emerald:'#39ff88', monochrome:'#f2f4f7' };
         const visualTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'light';
+        window.TShowTheme?.apply(visualTheme, { projectId:this.projectId });
         document.body.dataset.visualTheme = visualTheme;
         document.documentElement.style.setProperty('--accent', liveThemes[visualTheme]);
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', visualTheme === 'light' ? '#f3f4f4' : '#101216');
         this.permission = this.project.permission || 'viewer';
         this.text('eventName', this.project.eventName || 'Evento');
         document.title = `T-Show · ${this.project.eventName || 'En vivo'}`;
@@ -32,6 +38,7 @@ class LiveApp {
             if (['18', '22', '26'].includes(size)) { this.$('textSize').value = size; this.setTextSize(); }
         } catch (_) { /* Preferences are optional. */ }
         await this.refresh();
+        if (new URLSearchParams(location.search).get('observer') === '1' && this.manager) this.openObserver();
         this.timer = setInterval(() => this.render(), 1000);
         this.healthTimer = setInterval(() => this.refresh(), 15000);
         this.listen();
@@ -153,6 +160,18 @@ class LiveApp {
             try { await navigator.clipboard.writeText(url.href); this.message('Enlace copiado. La persona necesita acceso al proyecto.'); }
             catch (_) { this.message('No se pudo copiar. Copia la dirección desde la barra del navegador.', true); }
         };
+        this.$('shareObserver').onclick = () => this.openObserver();
+        this.$('closeObserver').onclick = () => this.$('observerDialog').close();
+        this.$('observerForm').onsubmit = event => { event.preventDefault(); this.createObserverPass(); };
+        this.$('observerCopy').onclick = async () => {
+            if (!this.observerPass?.url) return;
+            try { await navigator.clipboard.writeText(this.observerPass.url); this.$('observerStatus').textContent = 'Enlace copiado.'; }
+            catch (_) { this.$('observerStatus').textContent = 'No se pudo copiar el enlace.'; }
+        };
+        this.$('observerDownload').onclick = () => {
+            if (!this.observerPass?.qr) return;
+            const link = document.createElement('a'); link.href = this.observerPass.qr; link.download = 'tshow-observador.png'; link.click();
+        };
         document.addEventListener('click', event => { if (!this.$('moreMenu').contains(event.target)) this.$('moreMenu').open = false; });
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape') this.$('moreMenu').open = false;
@@ -178,6 +197,48 @@ class LiveApp {
             this.$(name + 'Tab').tabIndex = name === tab ? 0 : -1;
             this.$(name + 'Panel').hidden = name !== tab;
         }
+    }
+    openObserver() {
+        if (!this.manager) { this.message('Solo el propietario o administrador puede compartir como observador.', true); return; }
+        this.$('moreMenu').open = false;
+        this.$('observerStatus').textContent = '';
+        this.$('observerDialog').showModal();
+        this.$('observerLabel').focus();
+        this.loadObserverPasses();
+    }
+    async loadObserverPasses() {
+        try {
+            const result = await Auth.api(`/api/projects/${encodeURIComponent(this.projectId)}/guest-passes`);
+            const now = Date.now(), list = (result.data || []).filter(pass => !pass.revoked_at && Date.parse(pass.expires_at) > now);
+            this.$('observerActiveList').innerHTML = list.length ? list.map(pass => `<article class="observer-pass"><div><strong>${String(pass.label || 'Observador sin nombre').replace(/[&<>"']/g, '')}</strong><small>${pass.access_mode === 'live' ? 'En vivo' : 'Copia publicada'} · vence ${new Date(pass.expires_at).toLocaleString('es-CL')}</small></div><button type="button" data-revoke-observer="${pass.id}">Revocar</button></article>`).join('') : '<p class="muted">No hay accesos activos.</p>';
+            this.$('observerActiveList').querySelectorAll('[data-revoke-observer]').forEach(button => button.onclick = async () => {
+                if (!await this.confirm('Revocar acceso', 'La persona dejará de ver el evento en el próximo intento de actualización.')) return;
+                button.disabled = true;
+                try { await Auth.api(`/api/projects/${encodeURIComponent(this.projectId)}/guest-passes/${encodeURIComponent(button.dataset.revokeObserver)}`, { method:'DELETE' }); this.loadObserverPasses(); this.$('observerStatus').textContent = 'Acceso revocado.'; }
+                catch (error) { button.disabled = false; this.$('observerStatus').textContent = error.message || 'No pudimos revocar el acceso.'; }
+            });
+        } catch (error) { this.$('observerActiveList').innerHTML = `<p class="muted">${String(error.message || 'No se pudieron cargar los accesos.').replace(/[&<>"']/g, '')}</p>`; }
+    }
+    async createObserverPass() {
+        const submit = this.$('observerCreate');
+        submit.disabled = true; this.$('observerStatus').dataset.status = 'warning'; this.$('observerStatus').textContent = 'Generando acceso seguro…';
+        try {
+            const result = await Auth.api(`/api/projects/${encodeURIComponent(this.projectId)}/guest-passes`, {
+                method:'POST',
+                body:JSON.stringify({
+                    accessMode:'live', label:this.$('observerLabel').value.trim(), days:Number(this.$('observerDays').value),
+                    visibility:{ date:false, location:false, schedule:false, state:true, notes:false, script:false }
+                })
+            });
+            this.observerPass = { ...(result.data || {}), url:result.url, qr:result.qr, accessMode:result.accessMode };
+            this.$('observerQr').src = this.observerPass.qr;
+            this.$('observerUrl').textContent = this.observerPass.url;
+            this.$('observerResult').hidden = false;
+            this.$('observerStatus').dataset.status = 'success'; this.$('observerStatus').textContent = 'Acceso creado. Puedes revocarlo desde Equipo.';
+            this.loadObserverPasses();
+        } catch (error) {
+            this.$('observerStatus').dataset.status = 'error'; this.$('observerStatus').textContent = error.message || 'No pudimos generar el acceso.';
+        } finally { submit.disabled = false; }
     }
     createRow(row) {
         const element = document.createElement('article'); element.className = 'cue'; element.dataset.key = row.key;
@@ -242,7 +303,29 @@ class LiveApp {
         this.text('projectedEnd', snap.projectedEndMs ? LiveEngine.formatTimeSeconds(snap.projectedEndMs, snap.zone).slice(0,5) : '—');
         this.$('blockProgress').value = snap.progressPercent;
         this.text('nextTitle', snap.nextItem?.title || 'Cierre del evento');
-        this.text('stageStatus', labels[this.state.status]); this.text('stageTitle', current?.title || 'Sin bloques');
+        const next = snap.nextItem;
+        this.text('nextPanelNumber', next ? `#${String(next.num).padStart(2,'0')}` : '');
+        this.text('nextPanelName', next?.title || (snap.items.length ? (this.state.status === 'finished' ? 'Evento finalizado' : 'Último bloque · después finaliza el evento') : 'No hay bloques disponibles'));
+        this.text('nextPanelMeta', next ? `${next.type || 'Bloque'} · ${next.effectiveDuration} min` : (this.state.status === 'idle' ? 'El seguimiento todavía no ha comenzado.' : 'No hay un bloque posterior disponible.'));
+        this.text('nextPanelTimeLabel', next ? (snap.trackingMode === 'manual' ? 'Inicio estimado' : 'Inicio programado') : 'Estado');
+        const nextStart = next && snap.trackingMode === 'manual' && this.state.status !== 'idle' && this.state.status !== 'finished'
+            ? LiveEngine.formatTimeSeconds(this.now() + Math.max(0, snap.remainingSeconds) * 1000, snap.zone).slice(0,5)
+            : next?.start;
+        this.text('nextPanelTime', nextStart || (this.state.status === 'finished' ? 'Finalizado' : '—'));
+        const nextLink = this.$('nextPanelLink');
+        nextLink.hidden = !next;
+        nextLink.onclick = event => {
+            event.preventDefault(); if (!next) return;
+            this.follow = false; this.$('followLive').checked = false; this.selection = next.key; this.render();
+            this.$('contextTitle').scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block:'start' });
+        };
+        const stageStatus = this.$('stageStatus');
+        if (stageStatus) {
+            const label = stageStatus.querySelector('span');
+            if (label) label.textContent = labels[this.state.status]; else stageStatus.textContent = labels[this.state.status];
+            stageStatus.dataset.active = String(this.state.status === 'live' && !snap.waiting && !snap.scheduleEnded && this.connected);
+        }
+        this.text('stageTitle', current?.title || 'Sin bloques');
         this.text('stageTimerLabel', timerLabel); this.text('stageTimer', timer); this.$('stageTimer').dataset.alert = snap.alertLevel;
         this.text('stageNext', snap.nextItem?.title || 'Cierre del evento');
         if (this.follow || !snap.items.some(row => row.key === this.selection)) this.selection = current?.key || snap.items[0]?.key;
