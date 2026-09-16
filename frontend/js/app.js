@@ -156,7 +156,9 @@ class App {
         const timelineBar = document.getElementById('timelineBar');
         if (timelineBar) {
             timelineBar.innerHTML = '';
-            const totalMinutes = Math.max(1, result.totalDurationMinutes);
+            // The bar represents the blocks themselves. The event span remains in the
+            // header, but setup gaps must not become a misleading empty tail in the bar.
+            const totalMinutes = Math.max(1, result.tableRows.reduce((sum, row) => sum + Math.max(0, Number(row.duration) || 0), 0));
 
             result.tableRows.forEach(r => {
                 const pct = (r.duration / totalMinutes) * 100;

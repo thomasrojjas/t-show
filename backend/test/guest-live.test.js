@@ -40,9 +40,24 @@ test('live console exposes the observer action and a separate next-block panel',
   const html = read('frontend/live.html');
   const app = read('frontend/js/live-app.js');
   assert.match(html, /id="shareObserver"/);
-  assert.match(html, /id="nextPanel"|class="next-panel panel"/);
+  assert.match(html, /class="block-neighbors"/);
+  assert.match(html, /id="previousPanelName"/);
+  assert.match(html, /id="nextPanelName"/);
+  assert.match(html, /id="stagePrevious"/);
   assert.match(html, /id="observerQr"/);
   assert.match(app, /accessMode:'live'/);
+  assert.match(app, /const previous = snap.currentItem/);
+  assert.match(app, /previousPanelName/);
   assert.match(app, /nextPanelName/);
   assert.match(app, /stageStatus\.dataset\.active/);
+});
+
+test('stage view is isolated and timeline widths use visible block content', () => {
+  const liveCss = read('frontend/css/live.css');
+  const app = read('frontend/js/app.js');
+  assert.match(liveCss, /\.stage-dialog\{position:fixed;inset:0/);
+  assert.match(liveCss, /\.stage-dialog::backdrop\{background:var\(--bg\)\}/);
+  assert.match(liveCss, /\.stage-dialog\[open\].*animation:none!important/);
+  assert.match(liveCss, /\.block-neighbors\{grid-area:neighbors/);
+  assert.match(app, /result\.tableRows\.reduce\(\(sum, row\) => sum \+ Math\.max/);
 });

@@ -1,83 +1,11 @@
-/* Timeline Component Styles */
-.timeline-container {
-    margin-top: 20px;
-    background: var(--bg-secondary);
-    border-radius: 0;
-    padding: 18px;
-    border: 1px solid var(--border-color);
-}
-
-.timeline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-}
-
-.timeline-bar {
-    display: flex;
-    height: 32px;
-    border-radius: 0;
-    overflow: hidden;
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.timeline-segment {
-    height: 100%;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: #ffffff;
-    white-space: nowrap;
-    padding: 0 6px;
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.timeline-segment:hover {
-    filter: brightness(1.25);
-    z-index: 10;
-}
-
-.timeline-segment::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #090d16;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 0;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, transform 0.2s;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--border-color);
-}
-
-.timeline-segment:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-4px);
-}
-
-.print-legend { display:none; }
-
-.timeline-container { background:#080a0f; border:1px solid #272a32; border-radius: 0; box-shadow:none; }
-.timeline-bar { height:36px; border-radius: 0; background:#050609; box-shadow:none; }
-.timeline-segment::after { border-radius: 0; box-shadow:none; }
+/* Timeline: a compact distribution of the blocks that never leaves a fake tail. */
+.timeline-container{margin-top:20px;padding:18px;background:var(--ui-surface,var(--theme-surface,var(--bg-secondary)));border:1px solid var(--ui-border,var(--theme-border,var(--border-color)));border-radius:8px;color:var(--ui-text,var(--theme-text,var(--text-main)))}
+.timeline-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ui-muted,var(--theme-muted,var(--text-muted)));letter-spacing:.5px}.timeline-header>*{min-width:0}.timeline-total{overflow-wrap:anywhere;text-align:right}
+.timeline-bar{display:flex;width:100%;height:36px;overflow:hidden;flex-wrap:nowrap;background:var(--ui-surface-raised,var(--theme-surface-strong,var(--bg-input)));border:1px solid var(--ui-border,var(--theme-border,var(--border-color)));border-radius:6px;box-shadow:none}
+.timeline-segment{position:relative;flex:0 0 auto;height:100%;display:flex;align-items:center;justify-content:center;padding:0 6px;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;border-right:1px solid color-mix(in srgb,#000 22%,transparent);cursor:pointer;transition:filter .16s ease;min-width:0}
+.timeline-segment:hover{filter:brightness(1.18);z-index:1}.timeline-segment:focus-visible{outline:2px solid var(--theme-accent,var(--accent-primary));outline-offset:-2px}
+.timeline-segment::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(3px);max-width:min(360px,80vw);padding:6px 10px;overflow:hidden;background:var(--theme-elevated,var(--bg-secondary));color:var(--theme-text,var(--text-main));border:1px solid var(--theme-border,var(--border-color));border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;text-overflow:ellipsis;z-index:10;opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease;box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.timeline-segment:hover::after,.timeline-segment:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0)}
+.print-legend{display:none}
+@media(max-width:640px){.timeline-container{padding:14px}.timeline-header{align-items:flex-start;flex-direction:column;gap:4px}.timeline-total{text-align:left}.timeline-bar{height:40px}.timeline-segment{padding:0 4px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.timeline-segment,.timeline-segment::after{transition:none}}

@@ -62,11 +62,18 @@
       <dl class="timer-details"><div><dt>Transcurrido</dt><dd id="elapsedTimer">--:--</dd></div><div><dt>Duración</dt><dd id="plannedTimer">—</dd></div><div><dt>Fin previsto</dt><dd id="projectedEnd">—</dd></div></dl>
       <div class="next-block"><span>Después</span><strong id="nextTitle">—</strong></div>
     </section>
-    <section class="next-panel panel" aria-labelledby="nextPanelTitle">
-      <div class="next-panel-heading"><div><span class="next-panel-kicker">Continuidad</span><h2 id="nextPanelTitle">Siguiente bloque</h2></div><span id="nextPanelNumber" class="section-index"></span></div>
-      <div class="next-panel-body"><div><strong id="nextPanelName">—</strong><span id="nextPanelMeta" class="muted">Sin siguiente bloque</span></div><div class="next-panel-time"><span id="nextPanelTimeLabel">Inicio programado</span><strong id="nextPanelTime">—</strong></div></div>
-      <a id="nextPanelLink" class="next-panel-link" href="#contextTitle">Ver guion y notas</a>
-    </section>
+    <div class="block-neighbors" aria-label="Continuidad de la escaleta">
+      <section class="neighbor-panel previous-panel panel" aria-labelledby="previousPanelTitle">
+        <div class="next-panel-heading"><div><span class="next-panel-kicker">Continuidad</span><h2 id="previousPanelTitle">Bloque anterior</h2></div><span id="previousPanelNumber" class="section-index"></span></div>
+        <div class="next-panel-body"><div><strong id="previousPanelName">Inicio del evento</strong><span id="previousPanelMeta" class="muted">No hay un bloque anterior.</span></div><div class="next-panel-time"><span id="previousPanelTimeLabel">Inicio</span><strong id="previousPanelTime">—</strong></div></div>
+        <a id="previousPanelLink" class="next-panel-link" href="#contextTitle" hidden>Ver guion y notas</a>
+      </section>
+      <section class="neighbor-panel next-panel panel" aria-labelledby="nextPanelTitle">
+        <div class="next-panel-heading"><div><span class="next-panel-kicker">Continuidad</span><h2 id="nextPanelTitle">Siguiente bloque</h2></div><span id="nextPanelNumber" class="section-index"></span></div>
+        <div class="next-panel-body"><div><strong id="nextPanelName">—</strong><span id="nextPanelMeta" class="muted">Sin siguiente bloque</span></div><div class="next-panel-time"><span id="nextPanelTimeLabel">Inicio programado</span><strong id="nextPanelTime">—</strong></div></div>
+        <a id="nextPanelLink" class="next-panel-link" href="#contextTitle" hidden>Ver guion y notas</a>
+      </section>
+    </div>
     <section class="context panel" aria-labelledby="contextTitle">
       <div class="section-heading"><div><span id="selectionHint" class="muted">Consultando el bloque actual</span><h2 id="contextTitle">Guion y notas</h2></div><label class="text-size">Texto<select id="textSize"><option value="18">18 px</option><option value="22">22 px</option><option value="26">26 px</option></select></label></div>
       <div class="context-tabs" role="tablist" aria-label="Contenido del bloque">
@@ -82,7 +89,7 @@
   <dialog id="stageDialog" class="stage-dialog" aria-labelledby="stageTitle">
     <div class="stage-top"><span id="stageStatus" class="stage-live-status"><i aria-hidden="true"></i><span>En vivo</span></span><button id="closeStage" type="button">← Volver a consola</button></div>
     <h2 id="stageTitle">Bloque actual</h2><p id="stageTimerLabel">Tiempo restante</p><div id="stageTimer" class="stage-timer">--:--</div>
-    <div class="stage-next"><span>Después</span><strong id="stageNext">—</strong></div>
+    <div class="stage-adjacent" aria-label="Continuidad de la escaleta"><div><span>Bloque anterior</span><strong id="stagePrevious">—</strong></div><div><span>Siguiente bloque</span><strong id="stageNext">—</strong></div></div>
     <small id="stageConnection"></small>
   </dialog>
   <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">

@@ -145,8 +145,19 @@ class LiveApp {
         this.$('scriptTab').onclick = () => this.selectTab('script');
         this.$('notesTab').onclick = () => this.selectTab('notes');
         this.$('textSize').onchange = () => this.setTextSize();
-        this.$('stageButton').onclick = () => { this.$('stageDialog').showModal(); this.render(); };
+        this.$('stageButton').onclick = () => {
+            const dialog = this.$('stageDialog');
+            document.body.classList.add('stage-open');
+            dialog.showModal();
+            this.render();
+        };
         this.$('closeStage').onclick = () => this.$('stageDialog').close();
+        this.$('stageDialog').addEventListener('close', () => document.body.classList.remove('stage-open'));
+        this.$('stageDialog').addEventListener('cancel', event => {
+            event.preventDefault();
+            event.currentTarget.close();
+            this.$('stageButton').focus();
+        });
         this.$('reportButton').onclick = () => this.openReport();
         this.$('closeReport').onclick = () => this.$('reportDialog').close();
         this.$('printReport').onclick = () => window.print();
@@ -174,7 +185,11 @@ class LiveApp {
         };
         document.addEventListener('click', event => { if (!this.$('moreMenu').contains(event.target)) this.$('moreMenu').open = false; });
         document.addEventListener('keydown', event => {
-            if (event.key === 'Escape') this.$('moreMenu').open = false;
+            if (event.key === 'Escape') {
+                this.$('moreMenu').open = false;
+                const stage = this.$('stageDialog');
+                if (stage?.open) { stage.close(); this.$('stageButton').focus(); return; }
+            }
             if (event.target.getAttribute('role') === 'tab' && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
                 event.preventDefault(); this.selectTab(event.key === 'Home' ? 'script' : event.key === 'End' ? 'notes' : this.tab === 'script' ? 'notes' : 'script');
                 this.$(this.tab + 'Tab').focus();
@@ -303,6 +318,19 @@ class LiveApp {
         this.text('projectedEnd', snap.projectedEndMs ? LiveEngine.formatTimeSeconds(snap.projectedEndMs, snap.zone).slice(0,5) : '—');
         this.$('blockProgress').value = snap.progressPercent;
         this.text('nextTitle', snap.nextItem?.title || 'Cierre del evento');
+        const previous = snap.currentItem ? snap.executable[snap.currentIndex - 1] : null;
+        this.text('previousPanelNumber', previous ? `#${String(previous.num).padStart(2,'0')}` : '');
+        this.text('previousPanelName', previous?.title || (snap.currentItem ? 'Inicio del evento' : 'Sin bloque anterior'));
+        this.text('previousPanelMeta', previous ? `${previous.type || 'Bloque'} · ${previous.effectiveDuration} min` : (snap.currentItem ? 'Este es el primer bloque en seguimiento.' : 'El seguimiento todavía no ha comenzado.'));
+        this.text('previousPanelTimeLabel', previous ? 'Inicio programado' : 'Estado');
+        this.text('previousPanelTime', previous?.start || (snap.currentItem ? 'Primero' : '—'));
+        const previousLink = this.$('previousPanelLink');
+        previousLink.hidden = !previous;
+        previousLink.onclick = event => {
+            event.preventDefault(); if (!previous) return;
+            this.follow = false; this.$('followLive').checked = false; this.selection = previous.key; this.render();
+            this.$('contextTitle').scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block:'start' });
+        };
         const next = snap.nextItem;
         this.text('nextPanelNumber', next ? `#${String(next.num).padStart(2,'0')}` : '');
         this.text('nextPanelName', next?.title || (snap.items.length ? (this.state.status === 'finished' ? 'Evento finalizado' : 'Último bloque · después finaliza el evento') : 'No hay bloques disponibles'));
@@ -327,7 +355,8 @@ class LiveApp {
         }
         this.text('stageTitle', current?.title || 'Sin bloques');
         this.text('stageTimerLabel', timerLabel); this.text('stageTimer', timer); this.$('stageTimer').dataset.alert = snap.alertLevel;
-        this.text('stageNext', snap.nextItem?.title || 'Cierre del evento');
+        this.text('stagePrevious', previous?.title || (snap.currentItem ? 'Inicio del evento' : '—'));
+        this.text('stageNext', snap.nextItem?.title || (this.state.status === 'finished' ? 'Evento finalizado' : 'Cierre del evento'));
         if (this.follow || !snap.items.some(row => row.key === this.selection)) this.selection = current?.key || snap.items[0]?.key;
         this.text('blockCount', `${snap.items.length} bloques · ${snap.executable.length} en seguimiento`);
         this.$('emptyRundown').hidden = snap.items.length > 0;
