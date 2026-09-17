@@ -22,6 +22,7 @@
       <button id="stageButton" type="button">Vista escenario <i data-lucide="external-link" aria-hidden="true"></i></button>
       <details id="moreMenu"><summary>Más <i data-lucide="chevron-down" aria-hidden="true"></i></summary>
         <div class="more-panel">
+          <button id="camarinesButton" type="button">Vista camarines</button>
         <button id="copyLink" type="button">Copiar enlace del evento</button>
           <button id="shareObserver" type="button">Compartir como observador</button>
           <small>Compartir el enlace no concede permisos. Las personas nuevas necesitan una invitación de Equipo.</small>
@@ -90,6 +91,25 @@
     <h2 id="stageTitle">Bloque actual</h2><p id="stageTimerLabel">Tiempo restante</p><div id="stageTimer" class="stage-timer">--:--</div>
     <div class="stage-adjacent" aria-label="Continuidad de la escaleta"><div><span>Bloque anterior</span><strong id="stagePrevious">—</strong></div><div><span>Siguiente bloque</span><strong id="stageNext">—</strong></div></div>
     <small id="stageConnection"></small><div class="stage-brand" aria-label="T-SHOW.site"><span>T-SHOW</span><b>.site</b></div>
+  </dialog>
+  <dialog id="camarinesDialog" class="camarines-dialog" aria-labelledby="camarinesTitle">
+    <header class="camarines-header">
+      <div><span class="camarines-kicker">Vista camarines</span><h2 id="camarinesTitle">En vivo</h2></div>
+      <button id="closeCamarines" type="button">← Volver a consola</button>
+    </header>
+    <div class="camarines-layout">
+      <section class="camarines-rundown" aria-labelledby="camarinesRundownTitle">
+        <div class="camarines-section-head"><div><span>Seguimiento operativo</span><h3 id="camarinesRundownTitle">Escaleta en curso</h3></div><span id="camarinesStatus" class="camarines-status">En espera</span></div>
+        <div id="camarinesRows" class="camarines-rows"></div>
+        <p id="camarinesEmpty" class="camarines-empty" hidden>No hay bloques pendientes.</p>
+      </section>
+      <section class="camarines-clock" aria-labelledby="camarinesClockTitle">
+        <span class="camarines-kicker" id="camarinesClockTitle">Tiempo hasta el siguiente bloque</span>
+        <div id="camarinesCountdown" class="camarines-countdown">--:--</div>
+        <span id="camarinesCountdownLabel" class="camarines-countdown-label">Esperando el inicio del seguimiento</span>
+        <div class="camarines-next"><span>Siguiente bloque</span><strong id="camarinesNextTitle">—</strong><small id="camarinesNextMeta">—</small></div>
+      </section>
+    </div>
   </dialog>
   <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
     <h2 id="confirmTitle">Confirmar acción</h2><p id="confirmText"></p><form method="dialog"><button value="cancel">Cancelar</button><button value="confirm" class="primary">Confirmar</button></form>

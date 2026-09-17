@@ -202,6 +202,18 @@ class LiveApp {
             event.currentTarget.close();
             this.$('stageButton').focus();
         });
+        this.$('camarinesButton').onclick = () => {
+            document.body.classList.add('camarines-open');
+            this.$('camarinesDialog').showModal();
+            this.render();
+        };
+        this.$('closeCamarines').onclick = () => this.$('camarinesDialog').close();
+        this.$('camarinesDialog').addEventListener('close', () => document.body.classList.remove('camarines-open'));
+        this.$('camarinesDialog').addEventListener('cancel', event => {
+            event.preventDefault();
+            event.currentTarget.close();
+            this.$('camarinesButton').focus();
+        });
         this.renderThemeSwitcher();
         this.$('reportButton').onclick = () => this.openReport();
         this.$('closeReport').onclick = () => this.$('reportDialog').close();
@@ -234,6 +246,8 @@ class LiveApp {
                 this.$('moreMenu').open = false;
                 const stage = this.$('stageDialog');
                 if (stage?.open) { stage.close(); this.$('stageButton').focus(); return; }
+                const camarines = this.$('camarinesDialog');
+                if (camarines?.open) { camarines.close(); this.$('camarinesButton').focus(); return; }
             }
             if (event.target.getAttribute('role') === 'tab' && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
                 event.preventDefault(); this.selectTab(event.key === 'Home' ? 'script' : event.key === 'End' ? 'notes' : this.tab === 'script' ? 'notes' : 'script');
@@ -329,6 +343,32 @@ class LiveApp {
         const entry = { element, button, num, time, title, meta, status, extra, end, action };
         this.rows.set(row.key, entry); return entry;
     }
+    renderCamarines(snap, current, timer, timerLabel, labels) {
+        const dialog = this.$('camarinesDialog');
+        if (!dialog?.open) return;
+        this.text('camarinesTitle', this.project?.eventName || 'En vivo');
+        this.text('camarinesStatus', labels[this.state.status] || 'En espera');
+        this.$('camarinesStatus').dataset.state = this.state.status;
+        this.text('camarinesCountdown', timer);
+        this.$('camarinesCountdown').dataset.alert = snap.alertLevel;
+        const countdownLabel = this.state.status === 'finished' ? 'Evento finalizado' :
+            this.state.status === 'paused' ? 'Pausado · el tiempo está detenido' :
+            snap.isOvertime ? 'Tiempo de atraso del bloque actual' :
+            this.state.status === 'idle' ? 'Esperando el inicio del seguimiento' : timerLabel;
+        this.text('camarinesCountdownLabel', countdownLabel);
+        this.text('camarinesNextTitle', snap.nextItem?.title || (this.state.status === 'finished' ? 'Evento finalizado' : 'No hay otro bloque'));
+        this.text('camarinesNextMeta', snap.nextItem ? `${snap.nextItem.type || 'Bloque'} · ${snap.nextItem.start || 'Inicio estimado'}` : 'Después finaliza el evento');
+        const startNum = current?.num || 1;
+        const remaining = snap.items.filter(row => row.num >= startNum);
+        const rows = this.$('camarinesRows');
+        rows.innerHTML = remaining.map(row => {
+            const state = row === current ? 'active' : row.rowState;
+            const stateLabel = {active:'En curso',future:'Pendiente',completed:'Completado',muted:'Excluido'}[state] || 'Pendiente';
+            return `<article class="camarines-row" data-state="${state}"><span class="camarines-row-number">${String(row.num).padStart(2,'0')}</span><div class="camarines-row-copy"><strong>${this.escape(row.title)}</strong><small>${this.escape(row.type || 'Bloque')} · ${row.effectiveDuration} min</small></div><div class="camarines-row-time"><span>${this.escape(row.start || '—')}</span><small>${stateLabel}</small></div></article>`;
+        }).join('');
+        this.$('camarinesEmpty').hidden = remaining.length > 0;
+    }
+
     render() {
         if (!this.project) return;
         let snap;
@@ -411,6 +451,7 @@ class LiveApp {
         this.text('stageTimerLabel', timerLabel); this.text('stageTimer', timer); this.$('stageTimer').dataset.alert = snap.alertLevel;
         this.text('stagePrevious', previous?.title || (snap.currentItem ? 'Inicio del evento' : '—'));
         this.text('stageNext', snap.nextItem?.title || (this.state.status === 'finished' ? 'Evento finalizado' : 'Cierre del evento'));
+        this.renderCamarines(snap, current, timer, timerLabel, labels);
         if (this.follow || !snap.items.some(row => row.key === this.selection)) this.selection = current?.key || snap.items[0]?.key;
         this.text('blockCount', `${snap.items.length} bloques · ${snap.executable.length} en seguimiento`);
         this.$('emptyRundown').hidden = snap.items.length > 0;

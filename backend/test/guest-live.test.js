@@ -47,6 +47,9 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(html, /id="stagePrevious"/);
   assert.match(html, /class="stage-brand"/);
   assert.match(html, /id="nextHeaderCountdown"/);
+  assert.match(html, /id="camarinesButton"/);
+  assert.match(html, /id="camarinesRows"/);
+  assert.match(html, /id="camarinesCountdown"/);
   assert.match(html, /Hora actual/);
   assert.doesNotMatch(html, /id="sessionStatus"/);
   assert.doesNotMatch(html, /id="connectionStatus"/);
@@ -59,6 +62,8 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(app, /nextPanelName/);
   assert.match(app, /action:'previous'/);
   assert.match(app, /stageStatus\.dataset\.active/);
+  assert.match(app, /renderCamarines\(snap, current, timer, timerLabel, labels\)/);
+  assert.match(app, /const remaining = snap\.items\.filter\(row => row\.num >= startNum\)/);
 });
 
 test('live theme switcher is local per event and accessible', () => {
