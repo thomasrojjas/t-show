@@ -75,6 +75,7 @@ const LiveEngine = {
             remaining = current.effectiveDuration * 60 - elapsed;
         }
         next = executable[index + 1] || null;
+        const previous = executable[index - 1] || null;
         const progress = current && !waiting ? Math.min(100, elapsed / (current.effectiveDuration * 60) * 100) : 0;
         for (const row of items) {
             const execIndex = executable.indexOf(row);
@@ -85,7 +86,7 @@ const LiveEngine = {
         const projectedEndMs = state.trackingMode === 'manual' && current && state.status !== 'idle' ?
             effectiveNow + (Math.max(0, remaining) + executable.slice(index + 1).reduce((sum, row) => sum + row.effectiveDuration * 60, 0)) * 1000 :
             executable.at(-1)?.endMs;
-        return { status: state.status, trackingMode: state.trackingMode, currentIndex: index, currentItem: current, nextItem: next,
+        return { status: state.status, trackingMode: state.trackingMode, currentIndex: index, currentItem: current, previousItem: previous, nextItem: next,
             elapsedSeconds: elapsed, remainingSeconds: state.status === 'finished' ? 0 : remaining,
             progressPercent: progress, items, executable, waiting, scheduleEnded, zone, projectedEndMs,
             history: state.history, isOvertime: remaining < 0, alertLevel: remaining < 0 ? 'error' : !waiting && remaining <= 60 ? 'warning' : 'normal' };
@@ -136,6 +137,14 @@ const LiveEngine = {
                 state.currentIndex = snap.currentIndex + 1; state.currentBlockId = snap.nextItem.key;
                 state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
             }
+        } else if (action === 'previous') {
+            manualLive();
+            if (!snap.previousItem) throw new Error('No hay un bloque anterior disponible.');
+            record();
+            state.currentIndex = snap.currentIndex - 1;
+            state.currentBlockId = snap.previousItem.key;
+            state.currentBlockStartTime = stamp;
+            state.actualBlockStartedAt = stamp;
         } else if (action === 'extend') {
             manualLive();
             if (![2, 5, 10].includes(command.minutes)) throw new Error('Extensión inválida.');

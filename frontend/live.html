@@ -41,7 +41,7 @@
       <span id="roleLabel" class="role-label">Solo lectura</span>
       <button id="primaryAction" type="button" class="primary" hidden>Iniciar seguimiento</button>
       <div id="manualControls" class="manual-controls" hidden>
-        <button id="nextButton" type="button" class="primary">Siguiente bloque →</button>
+        <button id="previousButton" type="button">← Bloque anterior</button><button id="nextButton" type="button" class="primary">Siguiente bloque →</button>
         <label class="sr-only" for="extendMinutes">Extender tiempo</label><select id="extendMinutes"><option value="2">+2 min</option><option value="5">+5 min</option><option value="10">+10 min</option></select><button id="extendButton" type="button">Extender</button>
         <button id="restartBlock" type="button">Reiniciar tiempo del bloque</button>
       </div>
@@ -91,7 +91,7 @@
     <div class="stage-top"><span id="stageStatus" class="stage-live-status"><i aria-hidden="true"></i><span>En vivo</span></span><button id="closeStage" type="button">← Volver a consola</button></div>
     <h2 id="stageTitle">Bloque actual</h2><p id="stageTimerLabel">Tiempo restante</p><div id="stageTimer" class="stage-timer">--:--</div>
     <div class="stage-adjacent" aria-label="Continuidad de la escaleta"><div><span>Bloque anterior</span><strong id="stagePrevious">—</strong></div><div><span>Siguiente bloque</span><strong id="stageNext">—</strong></div></div>
-    <small id="stageConnection"></small>
+    <small id="stageConnection"></small><div class="stage-brand" aria-label="T-SHOW.site"><span>T-SHOW</span><b>.site</b></div>
   </dialog>
   <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
     <h2 id="confirmTitle">Confirmar acción</h2><p id="confirmText"></p><form method="dialog"><button value="cancel">Cancelar</button><button value="confirm" class="primary">Confirmar</button></form>

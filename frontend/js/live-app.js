@@ -172,6 +172,7 @@ class LiveApp {
                 target.scheduleEnded ? 'El horario original ya concluyó.' : `El horario corresponde a «${target.currentItem?.title || 'sin bloques'}». Al seguir el horario se utilizará ese bloque.`];
             this.execute({ action:'mode', mode }, prompt);
         };
+        this.$('previousButton').onclick = () => this.execute({ action:'previous' });
         this.$('nextButton').onclick = () => this.execute({ action:'next' });
         this.$('extendButton').onclick = () => this.execute({ action:'extend', minutes:Number(this.$('extendMinutes').value) });
         this.$('restartBlock').onclick = () => this.execute({ action:'restart-block' }, ['Reiniciar tiempo del bloque', 'Se registrará el tramo actual y el cronómetro volverá a la duración completa del bloque.']);
@@ -350,6 +351,7 @@ class LiveApp {
         primary.setAttribute('aria-busy', String(this.busy));
         this.text('primaryAction', this.busy ? 'Guardando…' : { idle:'▶ Iniciar seguimiento', live:'Ⅱ Pausar seguimiento', paused:snap.trackingMode === 'schedule' ? '▶ Reanudar según horario' : '▶ Reanudar', finished:'Ver balance' }[this.state.status]);
         this.$('manualControls').hidden = !this.operator || snap.trackingMode !== 'manual' || this.state.status !== 'live';
+        this.$('previousButton').disabled = blocked || !snap.currentItem || snap.currentIndex <= 0;
         for (const id of ['nextButton','extendButton','restartBlock','extendMinutes']) this.$(id).disabled = blocked || !snap.currentItem;
         this.$('finishButton').hidden = !this.manager || !['live','paused'].includes(this.state.status);
         this.$('resetButton').hidden = !this.manager || this.state.status === 'live';
