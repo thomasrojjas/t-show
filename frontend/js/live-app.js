@@ -14,6 +14,48 @@ class LiveApp {
     now() { return Date.now() + this.offset; }
     get operator() { return ['owner', 'admin', 'editor'].includes(this.permission); }
     get manager() { return ['owner', 'admin'].includes(this.permission); }
+    themeDefinitions() {
+        return [
+            ['light', 'Claro'], ['nocturne', 'Nocturne'], ['violet', 'Violet Studio'],
+            ['cobalt', 'Cobalt Stage'], ['ember', 'Ember Cue'], ['emerald', 'Emerald Control'], ['monochrome', 'Monochrome']
+        ];
+    }
+    renderThemeSwitcher() {
+        const options = this.$('liveThemeOptions');
+        if (!options) return;
+        options.innerHTML = '';
+        for (const [theme, label] of this.themeDefinitions()) {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'live-theme-option'; button.dataset.theme = theme;
+            button.setAttribute('aria-label', `${label}. Cambiar tema`); button.title = label;
+            button.innerHTML = `<span aria-hidden="true"></span><b>${label}</b>`;
+            button.onclick = () => this.applyLiveTheme(theme, true);
+            options.appendChild(button);
+        }
+        this.updateThemeSwitcher();
+    }
+    updateThemeSwitcher() {
+        const current = window.TShowTheme?.current || 'light';
+        this.$('liveThemeOptions')?.querySelectorAll('.live-theme-option').forEach(button => {
+            const selected = button.dataset.theme === current;
+            button.setAttribute('aria-pressed', String(selected));
+            button.classList.toggle('is-selected', selected);
+        });
+        const reset = this.$('liveThemeReset');
+        if (reset) reset.hidden = !this.liveThemeOverride;
+    }
+    applyLiveTheme(theme, remember = true) {
+        document.documentElement.classList.add('live-theme-changing');
+        const next = window.TShowTheme?.apply(theme, { persist:false }) || theme;
+        if (remember) {
+            window.TShowTheme?.rememberLive(next, this.projectId);
+            this.liveThemeOverride = true;
+        }
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'light' ? '#f3f4f4' : '#101216');
+        this.updateThemeSwitcher();
+        if (this.project) { document.body.dataset.visualTheme = next; this.render(); }
+        window.requestAnimationFrame?.(() => document.documentElement.classList.remove('live-theme-changing'));
+    }
     async init() {
         if (!this.projectId) { location.replace('/projects'); return; }
         this.$('backLink').href = `/schedule?project=${encodeURIComponent(this.projectId)}`;
@@ -23,11 +65,14 @@ class LiveApp {
         if (!await Auth.requireSession()) return;
         this.project = await ApiClient.getProject(this.projectId);
         const liveThemes = { light:'#315ea8', nocturne:'#a8c7fa', violet:'#c084fc', cobalt:'#38bdf8', ember:'#ffb340', emerald:'#39ff88', monochrome:'#f2f4f7' };
-        const visualTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'light';
-        window.TShowTheme?.apply(visualTheme, { projectId:this.projectId });
+        const eventTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'light';
+        const localTheme = window.TShowTheme?.liveOverrideFor(this.projectId);
+        this.eventTheme = eventTheme; this.liveThemeOverride = Boolean(localTheme);
+        const visualTheme = localTheme || eventTheme;
+        window.TShowTheme?.apply(visualTheme, { persist:false });
         document.body.dataset.visualTheme = visualTheme;
-        document.documentElement.style.setProperty('--accent', liveThemes[visualTheme]);
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', visualTheme === 'light' ? '#f3f4f4' : '#101216');
+        this.updateThemeSwitcher();
         this.permission = this.project.permission || 'viewer';
         this.text('eventName', this.project.eventName || 'Evento');
         document.title = `T-Show · ${this.project.eventName || 'En vivo'}`;
@@ -158,6 +203,12 @@ class LiveApp {
             event.currentTarget.close();
             this.$('stageButton').focus();
         });
+        this.renderThemeSwitcher();
+        this.$('liveThemeReset').onclick = () => {
+            window.TShowTheme?.forgetLive(this.projectId);
+            this.liveThemeOverride = false;
+            this.applyLiveTheme(this.eventTheme || 'light', false);
+        };
         this.$('reportButton').onclick = () => this.openReport();
         this.$('closeReport').onclick = () => this.$('reportDialog').close();
         this.$('printReport').onclick = () => window.print();

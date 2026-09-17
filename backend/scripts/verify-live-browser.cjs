@@ -65,6 +65,17 @@ api:async(path,options)=>{const r=await fetch(path,options);const b=await r.json
     await page.waitForFunction(()=>window.liveApp?.connected, null, {timeout:10000}).catch(async error=>{
       console.error('Browser diagnostics',errors,await page.locator('body').innerText());throw error;
     });
+    const themeButtons=page.locator('.live-theme-option');
+    assert.equal(await themeButtons.count(),7,'live theme selector must expose seven themes');
+    assert.equal(await page.locator('.live-theme-option[aria-pressed=true]').count(),1,'one theme must be selected');
+    const liveBefore=await page.evaluate(()=>({status:liveApp.state.status,connected:liveApp.connected,selection:liveApp.selection}));
+    await themeButtons.nth(2).click();
+    assert.equal(await page.evaluate(()=>document.documentElement.dataset.tshowTheme),'violet');
+    assert.equal(await page.locator('.live-theme-option[aria-pressed=true]').getAttribute('data-theme'),'violet');
+    assert.equal(await page.locator('#liveThemeReset').isVisible(),true);
+    assert.deepEqual(await page.evaluate(()=>({status:liveApp.state.status,connected:liveApp.connected,selection:liveApp.selection})),liveBefore,'theme change must not alter operation state');
+    await page.locator('#liveThemeReset').click();
+    assert.equal(await page.evaluate(()=>document.documentElement.dataset.tshowTheme),'light');
     for(const [width,height] of [[360,800],[390,844],[768,1024],[1024,768],[1366,768],[1920,1080]]){
       await page.setViewportSize({width,height});
       const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);

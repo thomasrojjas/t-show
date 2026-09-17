@@ -52,6 +52,27 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(app, /stageStatus\.dataset\.active/);
 });
 
+test('live theme switcher is local per event and accessible', () => {
+  const html = read('frontend/live.html');
+  const app = read('frontend/js/live-app.js');
+  const bootstrap = read('frontend/js/theme-bootstrap.js');
+  const css = read('frontend/css/live.css');
+  assert.match(html, /data-live-theme="true"/);
+  assert.match(html, /id="liveThemeOptions"/);
+  assert.match(html, /id="liveThemeReset"/);
+  assert.match(app, /aria-pressed/);
+  assert.match(app, /rememberLive/);
+  assert.match(app, /forgetLive/);
+  assert.match(app, /liveOverrideFor/);
+  assert.match(bootstrap, /tshow_live_theme_v1/);
+  assert.match(bootstrap, /value && themes\.has\(value\) \? value : null/);
+  for (const theme of ['light','nocturne','violet','cobalt','ember','emerald','monochrome']) {
+    assert.match(css, new RegExp(`data-theme=${theme}`));
+  }
+  assert.match(css, /\.live-theme-option\{[^}]*min-width:44px/);
+  assert.match(css, /\.neighbor-panel\{[^}]*padding:20px 24px/);
+});
+
 test('stage view is isolated and timeline widths use visible block content', () => {
   const liveCss = read('frontend/css/live.css');
   const app = read('frontend/js/app.js');

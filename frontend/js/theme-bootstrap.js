@@ -2,6 +2,8 @@
   const themes = new Set(['light', 'nocturne', 'violet', 'cobalt', 'ember', 'emerald', 'monochrome']);
   const key = 'tshow_visual_theme_v2';
   const projectId = new URLSearchParams(location.search).get('project') || '';
+  const liveMode = document.currentScript?.dataset.liveTheme === 'true';
+  const liveKey = 'tshow_live_theme_v1';
   const read = (name) => {
     try { return localStorage.getItem(name); } catch (_) { return null; }
   };
@@ -9,8 +11,9 @@
     try { localStorage.setItem(name, value); } catch (_) { /* Storage is optional. */ }
   };
   const valid = value => themes.has(value) ? value : 'light';
+  const cachedLive = liveMode && projectId ? read(`${liveKey}:project:${projectId}`) : null;
   const cached = projectId ? read(`${key}:project:${projectId}`) : read(key);
-  const initial = valid(cached);
+  const initial = valid(cachedLive || cached);
   const root = document.documentElement;
 
   root.dataset.tshowTheme = initial;
@@ -18,6 +21,19 @@
 
   window.TShowTheme = {
     current: initial,
+    liveMode,
+    liveOverrideFor(id = projectId) {
+      const value = liveMode && id ? read(`${liveKey}:project:${id}`) : null;
+      return value && themes.has(value) ? value : null;
+    },
+    rememberLive(theme, id = projectId) {
+      const next = valid(theme);
+      if (liveMode && id) write(`${liveKey}:project:${id}`, next);
+      return next;
+    },
+    forgetLive(id = projectId) {
+      try { if (liveMode && id) localStorage.removeItem(`${liveKey}:project:${id}`); } catch (_) { /* optional */ }
+    },
     valid,
     apply(theme, options = {}) {
       const next = valid(theme);
