@@ -263,7 +263,10 @@ class LiveApp {
         this.$('moreMenu').open = false;
         this.$('observerStatus').textContent = '';
         this.$('observerDialog').showModal();
-        this.$('observerLabel').focus();
+        const result = this.$('observerResult'), form = this.$('observerForm');
+        if (result && form) form.parentNode.insertBefore(result, form);
+        this.$('observerDays').value = '1';
+        this.createObserverPass().finally(() => this.$('observerLabel').focus());
         this.loadObserverPasses();
     }
     async loadObserverPasses() {

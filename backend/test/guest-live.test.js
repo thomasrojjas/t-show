@@ -51,6 +51,7 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.doesNotMatch(html, /id="sessionStatus"/);
   assert.doesNotMatch(html, /id="connectionStatus"/);
   assert.doesNotMatch(html, /id="zoneLabel"/);
+  assert.doesNotMatch(html, /\/ Operación/);
   assert.match(html, /id="observerQr"/);
   assert.match(app, /accessMode:'live'/);
   assert.match(app, /const previous = snap.currentItem/);
