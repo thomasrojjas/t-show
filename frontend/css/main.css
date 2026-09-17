@@ -561,6 +561,9 @@ body { padding:clamp(12px,2vw,32px); background:#000; color:var(--text-main); }
 @media(max-width:900px){.blocks-compact{grid-template-columns:1fr}.block-detail{order:-1}.block-row-main{grid-template-columns:28px 84px minmax(0,1fr) 52px 58px}}
 @media(max-width:600px){.block-row-main{grid-template-columns:28px 72px minmax(0,1fr);gap:6px}.block-row-time,.block-row-duration{display:none}.block-controls{padding-inline:2px}.block-detail{padding:12px}.block-detail .grid-2{grid-template-columns:1fr}}
 .metric-card { transition: border-color .2s ease, background .2s ease; }
+.block-row.is-selected{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch}
+.block-row.is-selected .block-detail{grid-column:1/-1;margin:0 8px 8px}
+@media(max-width:600px){.block-row.is-selected .block-detail{margin-inline:4px}}
 .metric-card:hover { border-color: #60738f; background: #0d1017; }
 @media (max-width: 760px) {
   .now-next-strip { grid-template-columns: 1fr; gap: 16px; }

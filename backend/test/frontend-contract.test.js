@@ -19,3 +19,10 @@ test('direct schedule navigation resolves project context before showing the sel
   assert.match(navigation, /workspace-context-pending/);
   assert.match(styles, /workspace-context-pending[\s\S]*data-route="projects"/);
 });
+
+test('block editing opens inline in the selected rundown card', () => {
+  const manager = fs.readFileSync(path.join(__dirname, '../../frontend/js/blocks-manager.js'), 'utf8');
+  assert.match(manager, /if\(expanded\)this\.renderDetail\(editable,row,i\)/);
+  assert.match(manager, /aria-expanded="\$\{expanded\}"/);
+  assert.doesNotMatch(manager, /this\.container\.appendChild\(detail\)/);
+});
