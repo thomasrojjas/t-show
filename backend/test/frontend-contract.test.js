@@ -26,3 +26,12 @@ test('block editing opens inline in the selected rundown card', () => {
   assert.match(manager, /aria-expanded="\$\{expanded\}"/);
   assert.doesNotMatch(manager, /this\.container\.appendChild\(detail\)/);
 });
+
+test('workspace navigation keeps the active project when opening live mode', () => {
+  const navigation = fs.readFileSync(path.join(__dirname, '../../frontend/js/workspace-nav.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../../frontend/css/internal-theme.css'), 'utf8');
+  assert.match(navigation, /'shellLiveLink','summaryLiveLink','scheduleLive'/);
+  assert.match(navigation, /live\.html\?project=\$\{encodeURIComponent\(currentProject\)\}/);
+  assert.match(styles, /workspace-nav-brand\{background:none!important\}/);
+  assert.match(styles, /workspace-user-copy strong\{color:var\(--workspace-sidebar-text/);
+});

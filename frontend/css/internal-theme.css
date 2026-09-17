@@ -126,3 +126,8 @@ body.admin-surface .admin-session-actions{justify-content:space-between;gap:8px;
   body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-account-wrap{position:relative!important}
   body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-nav-account-menu{position:absolute!important;left:calc(100% + 10px)!important;right:auto!important;bottom:0!important;width:280px!important;max-width:calc(100vw - 94px)!important;z-index:250!important}
 }
+/* The brand is rendered by the inner motion logo; do not paint a second
+   background logo behind it. Keep the account identity legible on the rail. */
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{background:none!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-user-copy strong{color:var(--workspace-sidebar-text,#f5f7fb)!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-user-copy small{color:var(--workspace-sidebar-muted,#9da8ba)!important}
