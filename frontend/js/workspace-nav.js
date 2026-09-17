@@ -65,7 +65,7 @@
     try{setCollapsed(localStorage.getItem('tshow_sidebar_collapsed_v2')==='true');}catch(_){setCollapsed(false);}
     const closeDrawer=()=>{nav.classList.remove('is-drawer-open');document.body.classList.remove('sidebar-open');backdrop.hidden=true;};
     const brand=nav.querySelector('.workspace-nav-brand');
-    brand.innerHTML='<span class="motion-logo"><img src="assets/branding/tshow-favicon.png" width="40" height="40" alt="T-Show"></span>';
+    brand.innerHTML='<span class="motion-logo"><img src="assets/branding/tshow-isotipo.png" width="40" height="40" alt="T-Show"></span>';
     brand.setAttribute('aria-label','T-Show, cambiar evento');
     const mobile=window.MobileShell?.mount({
       icons:navIcons,

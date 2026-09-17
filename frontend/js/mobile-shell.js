@@ -1,6 +1,6 @@
 /* Shared presentation only: routing and authorization remain with the host. */
 (function () {
-  const logo = '<span class="motion-logo"><img src="/assets/branding/tshow-favicon.png" width="40" height="40" alt="T-Show"></span>';
+    const logo = '<span class="motion-logo"><img src="/assets/branding/tshow-isotipo.png" width="40" height="40" alt="T-Show"></span>';
   window.MobileShell = { mount(options) {
     const header = document.createElement('header');
     header.className = 'mobile-shell-header';

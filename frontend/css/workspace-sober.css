@@ -141,8 +141,8 @@ body.workspace-surface .workspace-view [data-status=warning]{color:#f5b942!impor
 body.workspace-surface .workspace-view [data-status=error]{color:#ff8f9a!important;border-color:#74313d!important}
 @media(max-width:767px){body.workspace-surface .workspace-sidebar-shell{background:var(--theme-bg,#050812)!important}.workspace-sidebar-backdrop{background:rgba(0,0,0,.68)!important}}
 @media(prefers-reduced-motion:reduce){body.workspace-surface *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
-.workspace-surface .workspace-sidebar-brand .workspace-nav-brand{display:block;width:94px;height:42px;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat;color:transparent!important;font-size:0!important;letter-spacing:0!important}
-.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px;height:34px;background-image:url('../assets/branding/tshow-favicon.png');background-position:center}
+.workspace-surface .workspace-sidebar-brand .workspace-nav-brand{display:block;width:94px;height:42px;background:url('../assets/branding/tshow-isotipo.png') left center/contain no-repeat;color:transparent!important;font-size:0!important;letter-spacing:0!important}
+.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px;height:34px;background-image:url('../assets/branding/tshow-isotipo.png');background-position:center}
 .workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}
 .workspace-view[data-route="summary"] .shell-projects:last-child .panel-title .shell-eyebrow{font-size:0}
 .workspace-view[data-route="summary"] .shell-projects:last-child .panel-title .shell-eyebrow::after{content:"Resumen del evento";font-size:11px}
@@ -358,8 +358,8 @@ body.workspace-surface{overflow-x:hidden!important;min-height:100vh}
 }
 
 /* Official brand mark remains visible in expanded and collapsed navigation. */
-body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{display:block!important;width:94px!important;height:42px!important;overflow:hidden!important;background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat!important;color:transparent!important;font-size:0!important;letter-spacing:0!important}
-body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px!important;height:34px!important;background-image:url('../assets/branding/tshow-favicon.png')!important;background-position:center!important}
+body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-brand .workspace-nav-brand{display:block!important;width:94px!important;height:42px!important;overflow:hidden!important;background:url('../assets/branding/tshow-isotipo.png') left center/contain no-repeat!important;color:transparent!important;font-size:0!important;letter-spacing:0!important}
+body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand{width:34px!important;height:34px!important;background-image:url('../assets/branding/tshow-isotipo.png')!important;background-position:center!important}
 body.workspace-surface nav.workspace-sidebar-shell.is-collapsed .workspace-sidebar-brand .workspace-nav-brand::before{display:none!important;content:none!important}
 body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page]{color:#f2f4f7!important}
 body.workspace-surface nav.workspace-sidebar-shell .workspace-sidebar-nav>a[aria-current=page] span{color:#f2f4f7!important;font-weight:700}

@@ -33,7 +33,7 @@ a { color:inherit; } a:focus-visible,button:focus-visible,input:focus-visible { 
 .form-note[data-status="warning"] { color:var(--warning); }
 .form-note[data-status="success"] { color:var(--success); }
 .form-note { margin:14px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
-.auth-wordmark { display:inline-flex; align-items:center; width:108px; height:52px; color:transparent; background:url('../assets/branding/tshow-logo.png') left center/contain no-repeat; font-size:0; }
+.auth-wordmark { display:inline-flex; align-items:center; width:180px; height:52px; color:transparent; background:url('../assets/branding/tshow-wordmark.png') left center/contain no-repeat; font-size:0; }
 .auth-wordmark span { display:none; }
 .password-control { display:flex; align-items:stretch; gap:8px; }
 .password-control .form-control { flex:1; min-width:0; }
