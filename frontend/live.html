@@ -16,8 +16,8 @@
   <header class="live-header">
     <a id="backLink" class="back-link" href="/projects"><i data-lucide="arrow-left" aria-hidden="true"></i> Volver a Escaleta</a>
     <div class="event-identity"><span class="wordmark"><img src="assets/branding/tshow-logo.png" width="92" height="40" alt="T-Show"><span>/ Operación</span></span><h1 id="eventName">Cargando evento…</h1></div>
-    <div class="live-theme-switcher" aria-label="Cambiar tema de la consola"><span class="live-theme-label">Tema</span><div id="liveThemeOptions" class="live-theme-options" role="group" aria-label="Temas disponibles"></div></div>
-    <div class="header-meta"><span id="sessionStatus" class="status">En espera</span><span id="connectionStatus" class="connection" role="status">Conectando…</span><time id="masterClock">--:--:--</time><small id="zoneLabel"></small></div>
+    <div class="live-theme-switcher" aria-label="Cambiar tema de la consola"><div id="liveThemeOptions" class="live-theme-options" role="group" aria-label="Temas disponibles"></div></div>
+    <div class="header-meta"><div class="header-status"><span id="sessionStatus" class="status">En espera</span><span id="connectionStatus" class="connection" role="status">Conectando…</span></div><time id="masterClock">--:--:--</time><small id="zoneLabel"></small><div class="header-next-cue" aria-live="polite"><span>Siguiente bloque en</span><strong id="nextHeaderCountdown">—</strong></div></div>
     <div class="header-actions">
       <button id="stageButton" type="button">Vista escenario <i data-lucide="external-link" aria-hidden="true"></i></button>
       <details id="moreMenu"><summary>Más <i data-lucide="chevron-down" aria-hidden="true"></i></summary>
@@ -36,9 +36,7 @@
   <div id="feedback" class="feedback" role="status" hidden><span id="feedbackText"></span><button id="retryButton" type="button" hidden>Recargar sesión</button></div>
   <main class="console" id="console">
     <section class="control-bar" aria-label="Controles de ejecución">
-      <div class="mode-field"><label for="trackingMode">Seguimiento</label><select id="trackingMode" disabled><option value="schedule">Según horario</option><option value="manual">Manual</option></select></div>
-      <p id="modeHelp">El bloque avanza con el horario de la escaleta.</p>
-      <span id="roleLabel" class="role-label">Solo lectura</span>
+      <div class="mode-field"><label class="sr-only" for="trackingMode">Modo de seguimiento</label><select id="trackingMode" aria-label="Modo de seguimiento" disabled><option value="schedule">Según horario</option><option value="manual">Manual</option></select></div>
       <button id="primaryAction" type="button" class="primary" hidden>Iniciar seguimiento</button>
       <div id="manualControls" class="manual-controls" hidden>
         <button id="previousButton" type="button">← Bloque anterior</button><button id="nextButton" type="button" class="primary">Siguiente bloque →</button>

@@ -10,7 +10,7 @@ class LiveApp {
         this.init().catch(error => this.message(error.message, true, true));
     }
     $(id) { return document.getElementById(id); }
-    text(id, value) { const node = this.$(id); if (node.textContent !== String(value)) node.textContent = value; }
+    text(id, value) { const node = this.$(id); if (!node) return; if (node.textContent !== String(value)) node.textContent = value; }
     now() { return Date.now() + this.offset; }
     get operator() { return ['owner', 'admin', 'editor'].includes(this.permission); }
     get manager() { return ['owner', 'admin'].includes(this.permission); }
@@ -336,6 +336,10 @@ class LiveApp {
         const labels = { idle:'En espera', live:snap.scheduleEnded ? 'Horario concluido' : 'En vivo', paused:'Pausado', finished:'Finalizado' };
         this.text('sessionStatus', labels[this.state.status]); this.$('sessionStatus').dataset.state = this.state.status;
         this.text('masterClock', LiveEngine.formatTimeSeconds(this.now(), snap.zone));
+        const nextCountdown = snap.nextItem && this.state.status !== 'finished' && this.state.status !== 'idle'
+            ? LiveEngine.formatDurationSeconds(Math.max(0, snap.remainingSeconds))
+            : this.state.status === 'finished' ? 'Finalizado' : '—';
+        this.text('nextHeaderCountdown', nextCountdown);
         this.$('trackingMode').value = this.state.trackingMode; this.$('trackingMode').disabled = blocked || !this.operator || this.state.status === 'finished';
         this.text('modeHelp', snap.trackingMode === 'schedule' ? 'El horario original continúa durante la pausa.' : 'Al agotarse el tiempo, el bloque continúa hasta avanzar manualmente.');
         const primary = this.$('primaryAction');

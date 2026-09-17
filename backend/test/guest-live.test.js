@@ -46,6 +46,7 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(html, /id="previousButton"/);
   assert.match(html, /id="stagePrevious"/);
   assert.match(html, /class="stage-brand"/);
+  assert.match(html, /id="nextHeaderCountdown"/);
   assert.match(html, /id="observerQr"/);
   assert.match(app, /accessMode:'live'/);
   assert.match(app, /const previous = snap.currentItem/);
