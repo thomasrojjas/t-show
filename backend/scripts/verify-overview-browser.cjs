@@ -72,11 +72,17 @@ const authStub=`window.Auth={requireSession:async()=>({id:'qa-user'}),currentUse
     for(const [w,h] of [[390,844],[768,1024],[1366,900]]){
       await page.setViewportSize({width:w,height:h}); await page.waitForTimeout(250);
       const geometry=await page.evaluate(()=>{const carousel=document.getElementById('projectCarousel'),cards=[...carousel.querySelectorAll('.project-card')],arrows=[...document.querySelectorAll('.project-selector-stage .carousel-arrow')];return {scrollWidth:carousel.scrollWidth,clientWidth:carousel.clientWidth,focused:carousel.querySelectorAll('.project-card.is-focused').length,arrowsVisible:arrows.length===2&&arrows.every(n=>getComputedStyle(n).display==='grid'),positions:cards.slice(0,4).map(n=>({x:Math.round(n.offsetLeft),y:Math.round(n.offsetTop),w:Math.round(n.offsetWidth)})),create:document.getElementById('createProjectAction')?.parentElement===document.querySelector('.project-selector-stage')};});
-      assert(geometry.scrollWidth>geometry.clientWidth,'selector pages '+w);
-      assert.equal(geometry.focused,1,'selector has one focused card '+w);
-      assert(geometry.arrowsVisible,'selector arrows visible '+w);
+      if(w>=768){
+        assert(geometry.scrollWidth>geometry.clientWidth,'selector pages '+w);
+        assert.equal(geometry.focused,1,'selector has one focused card '+w);
+        assert(geometry.arrowsVisible,'selector arrows visible '+w);
+      }else{
+        assert(geometry.scrollWidth<=geometry.clientWidth+1,'mobile list fits');
+        assert.equal(geometry.focused,0,'mobile cards have equal emphasis');
+        assert(!geometry.arrowsVisible,'mobile list has no arrows');
+      }
       assert(geometry.create,'create action is independent');
-      if(w===390)assert(geometry.positions[0].y<geometry.positions[1].y&&geometry.positions[2].y>geometry.positions[1].y&&geometry.positions[3].x>geometry.positions[0].x,'mobile groups of three');
+      if(w===390)assert(geometry.positions.every((p,i)=>p.x===geometry.positions[0].x&&(!i||p.y>geometry.positions[i-1].y)),'mobile vertical list');
       if(w===1366)assert(geometry.positions[0].y===geometry.positions[1].y&&geometry.positions[2].y===geometry.positions[0].y&&geometry.positions[3].x>geometry.positions[2].x,'desktop groups of three');
       if(w===1366){const before=await page.locator('#projectCarousel').evaluate(n=>n.scrollLeft);await page.locator('.carousel-next').click();await page.waitForTimeout(350);const after=await page.locator('#projectCarousel').evaluate(n=>n.scrollLeft);assert(after>before,'next arrow advances selector');}
       await page.screenshot({path:path.join(output,'projects-'+w+'.png'),fullPage:true});

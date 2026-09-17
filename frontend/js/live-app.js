@@ -230,6 +230,20 @@ class LiveApp {
         };
         this.$('shareObserver').onclick = () => this.openObserver();
         this.$('closeObserver').onclick = () => this.$('observerDialog').close();
+        const observerViewport = () => {
+            const dialog = this.$('observerDialog');
+            if (!matchMedia('(max-width:767px)').matches) {
+                dialog.style.removeProperty('--observer-viewport-height');
+                return;
+            }
+            dialog.style.setProperty('--observer-viewport-height', `${window.visualViewport?.height || innerHeight}px`);
+            if (dialog.open && dialog.contains(document.activeElement) && document.activeElement.matches('input,select')) {
+                requestAnimationFrame(() => document.activeElement.scrollIntoView({ block:'nearest', behavior:'instant' }));
+            }
+        };
+        window.visualViewport?.addEventListener('resize', observerViewport);
+        window.addEventListener('resize', observerViewport);
+        observerViewport();
         this.$('observerForm').onsubmit = event => { event.preventDefault(); this.createObserverPass(); };
         this.$('observerCopy').onclick = async () => {
             if (!this.observerPass?.url) return;
@@ -280,7 +294,11 @@ class LiveApp {
         const result = this.$('observerResult'), form = this.$('observerForm');
         if (result && form) form.parentNode.insertBefore(result, form);
         this.$('observerDays').value = '1';
-        this.createObserverPass().finally(() => this.$('observerLabel').focus());
+        const mobile = matchMedia('(max-width:767px)').matches;
+        if (mobile) this.$('closeObserver').focus({ preventScroll:true });
+        this.createObserverPass().finally(() => {
+            if (!mobile && this.$('observerDialog').open) this.$('observerLabel').focus();
+        });
         this.loadObserverPasses();
     }
     async loadObserverPasses() {
@@ -390,7 +408,7 @@ class LiveApp {
         primary.hidden = !this.operator && this.state.status !== 'finished';
         primary.disabled = this.state.status !== 'finished' && (blocked || !snap.executable.length);
         primary.setAttribute('aria-busy', String(this.busy));
-        this.text('primaryAction', this.busy ? 'Guardando…' : { idle:'▶ Iniciar seguimiento', live:'Ⅱ Pausar seguimiento', paused:snap.trackingMode === 'schedule' ? '▶ Reanudar según horario' : '▶ Reanudar', finished:'Ver balance' }[this.state.status]);
+        this.text('primaryAction', this.busy ? 'Guardando…' : { idle:matchMedia('(max-width:767px)').matches ? 'Iniciar seguimiento' : '▶ Iniciar seguimiento', live:'Ⅱ Pausar seguimiento', paused:snap.trackingMode === 'schedule' ? '▶ Reanudar según horario' : '▶ Reanudar', finished:'Ver balance' }[this.state.status]);
         this.$('manualControls').hidden = !this.operator || snap.trackingMode !== 'manual' || this.state.status !== 'live';
         this.$('previousButton').disabled = blocked || !snap.currentItem || snap.currentIndex <= 0;
         for (const id of ['nextButton','extendButton','restartBlock','extendMinutes']) this.$(id).disabled = blocked || !snap.currentItem;

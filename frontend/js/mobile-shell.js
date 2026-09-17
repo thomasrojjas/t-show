@@ -11,7 +11,7 @@
     items.forEach(([route,label]) => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.mobileRoute = route;
       const paths={summary:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',schedule:'M5 5h14M5 12h14M5 19h14M8 3v4M13 10v4M17 17v4',live:'m8 4 12 8-12 8z',notes:'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5',more:'M4 12h2M11 12h2M18 12h2'};
-      button.innerHTML = `${options.icons?.[route] || (route==='more' ? options.icons?.more : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[route]}"/></svg>`)}<span>${label}</span>`;
+      button.innerHTML = `${options.icons?.[route] || `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[route]}"/></svg>`}<span>${label}</span>`;
       bar.append(button);
     });
     const sheet = document.createElement('dialog'); sheet.className = 'mobile-shell-sheet';

@@ -1,0 +1,85 @@
+/* Phone-only layout corrections. Loaded after the legacy desktop rules. */
+@media screen and (max-width:767px) {
+  body.workspace-surface.project-selector-active,
+  body.workspace-surface.project-selector-active .workspace-shell,
+  body.workspace-surface.project-selector-active .workspace-view[data-route="projects"] {
+    height:auto!important; max-height:none!important; overflow:visible!important;
+  }
+  body.workspace-surface.project-selector-active .workspace-shell {
+    padding:76px 16px 24px!important; min-height:100dvh!important;
+  }
+  body.workspace-surface.project-selector-active .workspace-view[data-route="projects"] {
+    display:block!important; min-height:0!important; padding:0!important;
+  }
+  body.workspace-surface.project-selector-active .project-selector-head {
+    position:static!important; margin:16px 0 24px!important; width:100%!important;
+  }
+  body.workspace-surface.project-selector-active .project-selector-head h1 {
+    font-size:36px!important; line-height:1.1!important;
+  }
+  body.workspace-surface.project-selector-active .project-selector-stage {
+    display:flex!important; flex-direction:column; align-items:stretch;
+    height:auto!important; padding:0!important; gap:16px;
+  }
+  body.workspace-surface.project-selector-active .create-project-action {order:-1;align-self:flex-start}
+  body.workspace-surface.project-selector-active .carousel-arrow,
+  body.workspace-surface.project-selector-active .project-carousel-status {display:none!important}
+  body.workspace-surface.project-selector-active .project-carousel {
+    display:flex!important; flex-direction:column; gap:16px!important;
+    height:auto!important; overflow:visible!important; padding:0!important;
+    scroll-snap-type:none!important;
+  }
+  body.workspace-surface.project-selector-active .project-card,
+  body.workspace-surface.project-selector-active .project-selector-stage.is-exiting .project-card {
+    height:auto!important; min-height:0!important; flex:none!important; width:100%!important;
+    transform:none!important; opacity:1!important; filter:none!important; animation:none!important;
+  }
+  body.workspace-surface.project-selector-active .project-card-art {
+    height:auto!important; min-height:176px!important; padding:72px 16px 20px!important;
+    overflow:visible!important;
+  }
+  body.workspace-surface.project-selector-active .project-card-copy {position:static!important;padding:0!important}
+  body.workspace-surface.project-selector-active .project-card-copy h2 {line-height:1.25!important;overflow-wrap:anywhere}
+  body.workspace-surface.project-selector-active .project-card footer {flex-wrap:wrap;padding:12px 8px!important;gap:8px}
+  body.workspace-surface.project-selector-active .project-card-skeleton {min-height:176px!important}
+
+  body.workspace-surface .workspace-view[data-route="schedule"] :is(.segment-card,.block-detail) .grid-2 {
+    grid-template-columns:minmax(0,1fr)!important;gap:16px!important;
+  }
+  body.workspace-surface .workspace-view[data-route="schedule"] :is(.segment-card,.block-detail) :is(.form-group,.form-label) {
+    min-width:0;max-width:100%;white-space:normal;
+  }
+  body.workspace-surface .workspace-view[data-route="schedule"] :is(.segment-card,.block-detail) :is(input,select,textarea) {
+    display:block;width:100%!important;min-width:0!important;max-width:100%;
+    box-sizing:border-box;min-height:44px;font-size:16px!important;
+  }
+  .block-detail-actions {flex-wrap:wrap;gap:12px}
+
+  .live-body .live-header {display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:14px;}
+  .live-body .live-header .back-link {grid-column:1;grid-row:1}
+  .live-body .live-header .event-identity {grid-column:1;grid-row:2;min-width:0}
+  .live-body .event-identity h1 {white-space:normal;overflow-wrap:anywhere}
+  .live-body .live-header .header-meta {grid-column:1;grid-row:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .live-body .header-meta :is(.header-clock,.header-next-cue) {grid-column:auto;grid-row:auto;min-width:0;margin:0;height:100%}
+  .live-body .header-meta time {margin:0}
+  .live-body .live-header .header-actions {grid-column:1;grid-row:4;display:flex;flex-wrap:wrap;gap:12px}
+  .live-body .live-header .live-theme-switcher {grid-column:1;grid-row:5;justify-self:start;max-width:100%}
+  .live-body .live-theme-options {flex-wrap:wrap}
+  .live-body .control-bar {flex-wrap:wrap}
+
+  #observerDialog {box-sizing:border-box;width:calc(100% - 32px);max-width:calc(100% - 32px);
+    max-height:calc(var(--observer-viewport-height,100dvh) - 32px);padding:20px;margin:auto;
+    overflow:auto;scroll-padding:16px;}
+  #observerDialog .section-heading {padding:0;gap:12px;align-items:flex-start}
+  #observerDialog .section-heading>div {min-width:0}
+  #closeObserver {flex-shrink:0;min-width:44px;position:sticky;top:0}
+  #observerForm {display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  #observerForm label {display:grid;gap:6px;min-width:0}
+  #observerForm :is(input,select,button) {width:100%;min-width:0;max-width:100%;min-height:44px;font:inherit;font-size:16px;box-sizing:border-box}
+  #observerLabel {border:1px solid var(--border);border-radius:6px;padding:10px;background:var(--surface);color:var(--text);scroll-margin:16px}
+  #observerDialog .observer-result {min-width:0}
+  #observerDialog .observer-result img {width:min(200px,100%)}
+  #observerDialog .observer-result p {min-width:0;overflow-wrap:anywhere}
+  #observerDialog .observer-pass {flex-wrap:wrap}
+  #observerDialog .observer-pass>div {flex:1 1 180px}
+}
