@@ -98,7 +98,7 @@ class LiveApp {
         this.connected = status === 'connected';
         const label = { connected:'Conectado', reconnecting:'Reconectando…', offline:'Sin conexión · reloj estimado' }[status];
         this.text('connectionStatus', label); this.text('stageConnection', label);
-        this.$('connectionStatus').dataset.state = status;
+        if (this.$('connectionStatus')) this.$('connectionStatus').dataset.state = status;
         if (this.project) this.render();
     }
     accept(result) {
@@ -334,7 +334,8 @@ class LiveApp {
         this.snapshot = snap;
         const blocked = !this.connected || this.busy;
         const labels = { idle:'En espera', live:snap.scheduleEnded ? 'Horario concluido' : 'En vivo', paused:'Pausado', finished:'Finalizado' };
-        this.text('sessionStatus', labels[this.state.status]); this.$('sessionStatus').dataset.state = this.state.status;
+        this.text('sessionStatus', labels[this.state.status]);
+        if (this.$('sessionStatus')) this.$('sessionStatus').dataset.state = this.state.status;
         this.text('masterClock', LiveEngine.formatTimeSeconds(this.now(), snap.zone));
         const nextCountdown = snap.nextItem && this.state.status !== 'finished' && this.state.status !== 'idle'
             ? LiveEngine.formatDurationSeconds(Math.max(0, snap.remainingSeconds))
