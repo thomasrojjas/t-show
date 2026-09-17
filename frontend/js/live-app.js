@@ -41,8 +41,6 @@ class LiveApp {
             button.setAttribute('aria-pressed', String(selected));
             button.classList.toggle('is-selected', selected);
         });
-        const reset = this.$('liveThemeReset');
-        if (reset) reset.hidden = !this.liveThemeOverride;
     }
     applyLiveTheme(theme, remember = true) {
         document.documentElement.classList.add('live-theme-changing');
@@ -205,11 +203,6 @@ class LiveApp {
             this.$('stageButton').focus();
         });
         this.renderThemeSwitcher();
-        this.$('liveThemeReset').onclick = () => {
-            window.TShowTheme?.forgetLive(this.projectId);
-            this.liveThemeOverride = false;
-            this.applyLiveTheme(this.eventTheme || 'light', false);
-        };
         this.$('reportButton').onclick = () => this.openReport();
         this.$('closeReport').onclick = () => this.$('reportDialog').close();
         this.$('printReport').onclick = () => window.print();

@@ -62,10 +62,10 @@ test('live theme switcher is local per event and accessible', () => {
   const css = read('frontend/css/live.css');
   assert.match(html, /data-live-theme="true"/);
   assert.match(html, /id="liveThemeOptions"/);
-  assert.match(html, /id="liveThemeReset"/);
+  assert.doesNotMatch(html, /liveThemeReset/);
   assert.match(app, /aria-pressed/);
   assert.match(app, /rememberLive/);
-  assert.match(app, /forgetLive/);
+  assert.match(bootstrap, /forgetLive/);
   assert.match(app, /liveOverrideFor/);
   assert.match(bootstrap, /tshow_live_theme_v1/);
   assert.match(bootstrap, /value && themes\.has\(value\) \? value : null/);
