@@ -802,3 +802,4 @@ body:has(.onboarding-modal:not([hidden])) .onboarding-card { z-index:1102; }
   .workspace-surface[data-visual-theme] textarea,
   .workspace-surface[data-visual-theme] input { background: rgba(3, 5, 13, .86) !important; }
 }
+body.workspace-context-pending .workspace-view[data-route="projects"]{display:none!important}

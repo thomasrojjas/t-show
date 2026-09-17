@@ -354,6 +354,23 @@
     addEventListener('popstate',()=>{currentProject=new URLSearchParams(location.search).get('project')||'';currentProjectData=projectsCache.find(project=>project.id===currentProject)||null;navigate(routeFromLocation(),false);});
   }
   async function init(){document.body.classList.add('workspace-surface');mountBackground();mountNav();mountViews();enhanceGuidance();bindActions();await loadAccountSummary();currentRoute=routeFromLocation();routes.forEach(route=>views[route].classList.remove('is-active'));if(currentRoute!=='projects'&&!currentProject)history.replaceState({route:'projects'},'','/projects');await navigate(currentRoute!=='projects'&&!currentProject?'projects':currentRoute,false);try{if(localStorage.getItem(`tshow_onboarding_v1:${currentAccount?.id||'user'}`)!=='done')setTimeout(startTutorial,550);}catch(_){} }
+  const navigateWithContext = navigate;
+  navigate = async function(route,push){
+    const needsContext = route !== 'projects' && currentProject && !projectsCache.length;
+    if(!needsContext)return navigateWithContext(route,push);
+    document.body.classList.add('workspace-context-pending');
+    try{
+      const project = await ApiClient.getProject(currentProject);
+      if(currentProject){
+        projectsCache=[project];
+        currentProjectData=project;
+        currentProjectName=project.eventName||currentProjectName;
+        applyProjectIdentity(project);
+      }
+    }catch(_){/* navigate will use the normal project-list fallback if needed. */}
+    try{return await navigateWithContext(route,push);}
+    finally{document.body.classList.remove('workspace-context-pending');}
+  };
   window.WorkspaceShell={navigate,setProject,setSchedulePreview,refreshNotes:()=>{notesLoadedProject='';},get projectId(){return currentProject;},get canEdit(){return !currentProjectData||['owner','admin','editor'].includes(currentProjectData.permission);},get canReorder(){return !currentProjectData||['owner','admin'].includes(currentProjectData.permission);}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   async function loadNotes(){const generation=navigationGeneration,project=currentProject;const status=document.getElementById('notesStatus'),list=document.getElementById('notesList'),filter=document.getElementById('notesFilter');if(!currentProject)return navigate('projects',true);try{const result=await Auth.api(`/api/projects/${encodeURIComponent(currentProject)}/notes`);if(generation!==navigationGeneration||project!==currentProject)return;const notes=result.data||[];const render=()=>{const mode=filter.value;const visible=notes.filter(item=>mode==='script'?item.animator_script.trim():mode==='upcoming'?item.notes.trim()||item.animator_script.trim():true);list.innerHTML=visible.map((item,index)=>`<article class="note-block"><div class="note-block-meta"><span>${String(index+1).padStart(2,'0')}</span><strong>${esc(item.start||'Sin hora')}</strong><span>${esc(item.type||'BLOQUE')}</span></div><h3>${esc(item.title||'Bloque sin nombre')}</h3><div class="note-copy"><div><span class="shell-eyebrow">Guion del animador</span><p>${esc(item.animator_script||'Sin guion definido.')}</p></div><div><span class="shell-eyebrow">Notas operativas</span><p>${esc(item.notes||'Sin notas adicionales.')}</p></div></div></article>`).join('')||emptyState('No encontramos contenido','Prueba otro filtro o agrega el guion desde la Escaleta.','<button class="btn btn-secondary" type="button" data-go="schedule">Abrir Escaleta</button>');};status.textContent=`${notes.length} bloque${notes.length===1?'':'s'} disponible${notes.length===1?'':'s'} en modo lectura.`;render();filter.onchange=render;}catch(error){if(generation!==navigationGeneration||project!==currentProject)return;status.textContent=error.message;status.dataset.status='error';list.innerHTML='';}}
