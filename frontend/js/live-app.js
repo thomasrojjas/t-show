@@ -130,11 +130,16 @@ class LiveApp {
     }
     async execute(command, prompt) {
         if (this.busy || !this.connected || !this.operator) return;
+        const expectedVersion = this.version;
         if (prompt && !await this.confirm(prompt[0], prompt[1])) return;
         if (this.busy || !this.connected) return;
+        if (this.version !== expectedVersion) {
+            this.message('La sesión cambió mientras confirmabas. Revisa el estado antes de repetir la acción.', true);
+            return;
+        }
         this.busy = true; this.render(); this.message('Guardando cambio…');
         try {
-            const result = await LiveSync.pushLiveState(this.projectId, command, this.version);
+            const result = await LiveSync.pushLiveState(this.projectId, command, expectedVersion);
             this.accept(result);
             this.message('Cambio guardado y compartido con el equipo.');
             if (this.state.status === 'finished') this.openReport();
@@ -175,6 +180,12 @@ class LiveApp {
         this.$('extendButton').onclick = () => this.execute({ action:'extend', minutes:Number(this.$('extendMinutes').value) });
         this.$('restartBlock').onclick = () => this.execute({ action:'restart-block' }, ['Reiniciar tiempo del bloque', 'Se registrará el tramo actual y el cronómetro volverá a la duración completa del bloque.']);
         this.$('finishButton').onclick = () => this.execute({ action:'finish' }, ['Finalizar evento', 'La sesión quedará finalizada y conservará los tiempos registrados.']);
+        this.$('reopenButton').onclick = () => {
+            const target = LiveEngine.computeLiveSnapshot(this.project, { ...this.state, status:'live', trackingMode:'schedule' }, this.now());
+            const description = target.scheduleEnded ? 'El horario del proyecto ya concluyó. Revisa la fecha y los horarios en la Escaleta antes de continuar.' :
+                `Se seguirá el horario del ${this.project.eventDate || 'evento sin fecha'}, en «${target.currentItem?.title || 'sin bloques'}».`;
+            this.execute({ action:'reopen' }, ['Reabrir según horario', `${description} Se conservará el historial, sin reiniciar la sesión. Esto no recupera el avance manual anterior.`]);
+        };
         this.$('resetButton').onclick = () => this.execute({ action:'reset' }, ['Reiniciar sesión', 'Se borrarán los tiempos, exclusiones y ajustes de esta sesión. La escaleta original se conserva.']);
         this.$('retryButton').onclick = async () => {
             if (!this.project) { location.reload(); return; }
@@ -412,7 +423,11 @@ class LiveApp {
         this.$('manualControls').hidden = !this.operator || snap.trackingMode !== 'manual' || this.state.status !== 'live';
         this.$('previousButton').disabled = blocked || !snap.currentItem || snap.currentIndex <= 0;
         for (const id of ['nextButton','extendButton','restartBlock','extendMinutes']) this.$(id).disabled = blocked || !snap.currentItem;
+        this.$('nextButton').disabled = blocked || !snap.nextItem;
+        this.text('nextButton', snap.nextItem ? 'Siguiente bloque →' : 'Último bloque');
         this.$('finishButton').hidden = !this.manager || !['live','paused'].includes(this.state.status);
+        this.$('reopenButton').hidden = !this.manager || this.state.status !== 'finished';
+        this.$('reopenButton').disabled = blocked || !snap.executable.length || !this.project.eventDate;
         this.$('resetButton').hidden = !this.manager || this.state.status === 'live';
         this.$('finishButton').disabled = blocked; this.$('resetButton').disabled = blocked;
         const current = snap.currentItem;

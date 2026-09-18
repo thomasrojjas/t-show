@@ -297,7 +297,7 @@ router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
   const { expectedVersion, action } = req.body || {};
   if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0 || !action)
     return res.status(409).json({ success: false, code: 'LIVE_RELOAD_REQUIRED', message: 'Actualiza la consola antes de operar.' });
-  if (['finish', 'reset'].includes(action) && !['owner', 'admin'].includes(granted.role))
+  if (['finish', 'reset', 'reopen'].includes(action) && !['owner', 'admin'].includes(granted.role))
     return res.status(403).json({ success: false, message: 'Solo el propietario o administrador puede realizar esta acción.' });
   const current = await supabase.from('tshow_live_sessions').select('state,revision').eq('project_id', req.params.id).maybeSingle();
   if (current.error) return res.status(503).json({ success: false, message: 'No se pudo consultar la sesión. Reintenta.' });

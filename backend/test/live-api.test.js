@@ -48,7 +48,17 @@ test('live API authenticates, authorizes transitions, and rejects stale writes',
     assert.equal((await request('owner',{action:'finish',expectedVersion:2})).status,200);
     response=await request('viewer');
     const body=await response.json();assert.equal(body.data.status,'finished');assert.equal(body.version,3);
-    assert.equal((await request('admin',{action:'reset',expectedVersion:3})).status,200);
+    assert.equal((await request('editor',{action:'reopen',expectedVersion:3})).status,403);
+    assert.equal((await request('owner',{action:'reopen',expectedVersion:2})).status,409);
+    assert.equal((await request('owner',{action:'reopen',expectedVersion:3})).status,200);
+    assert.equal(session.state.status,'live');
+    assert.equal(session.state.reopenHistory.length,1);
+    assert.equal((await request('owner',{action:'mode',mode:'manual',expectedVersion:4})).status,200);
+    const beforeNext=JSON.stringify(session);
+    assert.equal((await request('editor',{action:'next',expectedVersion:5})).status,400);
+    assert.equal(JSON.stringify(session),beforeNext,'legacy clients cannot finish through next');
+    assert.equal((await request('owner',{action:'finish',expectedVersion:5})).status,200);
+    assert.equal((await request('admin',{action:'reset',expectedVersion:6})).status,200);
     assert.equal(session.state.status,'idle');
   }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });

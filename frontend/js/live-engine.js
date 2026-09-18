@@ -131,12 +131,11 @@ const LiveEngine = {
             } else { record(); state.currentBlockId = null; }
             state.trackingMode = command.mode;
         } else if (action === 'next') {
-            manualLive(); record();
-            if (!snap.nextItem) { state.status = 'finished'; state.finishedAt = stamp; }
-            else {
-                state.currentIndex = snap.currentIndex + 1; state.currentBlockId = snap.nextItem.key;
-                state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
-            }
+            manualLive();
+            if (!snap.nextItem) throw new Error('Estás en el último bloque. Para cerrar la sesión usa Finalizar evento.');
+            record();
+            state.currentIndex = snap.currentIndex + 1; state.currentBlockId = snap.nextItem.key;
+            state.currentBlockStartTime = stamp; state.actualBlockStartedAt = stamp;
         } else if (action === 'previous') {
             manualLive();
             if (!snap.previousItem) throw new Error('No hay un bloque anterior disponible.');
@@ -163,6 +162,21 @@ const LiveEngine = {
         } else if (action === 'finish') {
             if (!manager) throw new Error('Solo el propietario o administrador puede finalizar.');
             requireState('live', 'paused'); record(); state.status = 'finished'; state.finishedAt = stamp;
+        } else if (action === 'reopen') {
+            if (!manager) throw new Error('Solo el propietario o administrador puede reabrir.');
+            requireState('finished');
+            if (!snap.executable.length) throw new Error('Agrega bloques antes de reabrir.');
+            if (!project.eventDate) throw new Error('Confirma la fecha del evento en la Escaleta antes de reabrir.');
+            // Explicit recovery: follow the confirmed project date, never guess a manual cue.
+            // Keep the previous closure and all execution records for audit and reporting.
+            state.reopenHistory = [...(state.reopenHistory || []), {
+                reopenedAt: stamp, previousFinishedAt: state.finishedAt || null,
+                previousEventDate: state.eventDate || null, previousTrackingMode: state.trackingMode,
+                previousBlockId: state.currentBlockId || null
+            }];
+            state.status = 'live'; state.trackingMode = 'schedule'; state.eventDate = project.eventDate;
+            state.finishedAt = null; state.pausedAt = null; state.currentBlockId = null;
+            state.currentIndex = 0; state.currentBlockStartTime = null; state.actualBlockStartedAt = null;
         } else if (action === 'reset') {
             if (!manager) throw new Error('Solo el propietario o administrador puede reiniciar.');
             requireState('idle', 'paused', 'finished');

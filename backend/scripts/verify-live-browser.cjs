@@ -128,6 +128,27 @@ api:async(path,options)=>{const r=await fetch(path,options);const b=await r.json
     assert(await page.locator('#reportDialog').isVisible());await page.locator('#closeReport').click();
     assert.equal(await page.locator('#backLink').getAttribute('href'),'/schedule?project=live-qa');
     await page.reload();await page.waitForFunction(()=>liveApp.connected);assert.equal(await page.evaluate(()=>liveApp.state.status),'finished');
+    const historyBeforeReopen=JSON.stringify(state.history);
+    await page.locator('#moreMenu summary').click();await page.locator('#reopenButton').click();
+    await page.locator('#confirmDialog [value=cancel]').click();assert.equal(state.status,'finished');
+    await page.locator('#moreMenu summary').click();await page.locator('#reopenButton').click();
+    await page.locator('#confirmDialog [value=confirm]').click();await page.waitForFunction(()=>liveApp.state.status==='live');
+    assert.equal(state.trackingMode,'schedule');assert.equal(JSON.stringify(state.history),historyBeforeReopen);
+    assert.equal(state.reopenHistory.length,1);
+    // Simulate another operator changing the revision while a destructive confirmation is open.
+    await page.locator('#moreMenu summary').click();await page.locator('#finishButton').click();
+    version++;await page.evaluate(()=>liveApp.refresh());
+    await page.locator('#confirmDialog [value=confirm]').click();
+    await page.waitForTimeout(200);assert.equal(state.status,'live');
+    assert((await page.locator('#feedbackText').innerText()).includes('mientras confirmabas'));
+    // Last cue: Next must not silently finish, including after a reload.
+    state={...state,trackingMode:'manual',currentBlockId:'b104',currentIndex:104,currentBlockStartTime:new Date().toISOString()};version++;
+    await page.reload();await page.waitForFunction(()=>liveApp.connected);
+    assert(await page.locator('#nextButton').isDisabled());
+    assert.equal(await page.locator('#nextButton').innerText(),'Último bloque');
+    await page.locator('#moreMenu summary').click();await page.locator('#finishButton').click();
+    await page.locator('#confirmDialog [value=confirm]').click();await page.waitForFunction(()=>liveApp.state.status==='finished');
+    await page.locator('#closeReport').click();
     await page.locator('#moreMenu summary').click();await page.locator('#resetButton').click();
     await page.locator('#confirmDialog [value=confirm]').click();await page.waitForFunction(()=>liveApp.state.status==='idle');
     await page.locator('.cue-select').nth(2).click();await page.locator('.cue-extra button').nth(2).click();
@@ -145,6 +166,10 @@ api:async(path,options)=>{const r=await fetch(path,options);const b=await r.json
       assert.equal(await page.locator('#primaryAction').isVisible(),role==='editor');
       assert.equal(await page.locator('#finishButton').isVisible(),false);
       assert(await page.locator('#backLink').isVisible());
+      state={...state,status:'finished',finishedAt:new Date().toISOString()};version++;
+      await page.reload();await page.waitForFunction(()=>liveApp.connected);
+      await page.locator('#moreMenu summary').click();
+      assert.equal(await page.locator('#reopenButton').isVisible(),false);
     }
     await page.setViewportSize({width:683,height:384}); // equivalent layout viewport to 1366 @ 200% zoom
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

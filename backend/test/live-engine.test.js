@@ -35,7 +35,11 @@ test('manual switch preserves elapsed and explicit next uses actual scheduled in
   assert.equal(engine.computeLiveSnapshot(project,state,at('20:15')).remainingSeconds,300);
   state = command(state,'next','20:16');
   assert.equal(state.currentBlockId,'three'); assert.equal(state.history[0].key,'two');
-  state = command(state,'next','20:20');
+  const before = JSON.stringify(state);
+  assert.throws(()=>command(state,'next','20:20'),/último bloque/);
+  assert.equal(JSON.stringify(state),before);
+  assert.equal(state.status,'live');
+  state = command(state,'finish','20:20');
   assert.equal(state.status,'finished'); assert.equal(state.history.length,2);
 });
 test('manual pause excludes paused time on resume and extension is effective', () => {
@@ -57,11 +61,35 @@ test('finish is finished, preserves history; live reset is forbidden', () => {
 });
 test('permissions are enforced on all transitions', () => {
   const state = command({},'start');
-  for (const action of ['start','pause','resume','next','extend','finish','reset','exclude','mode','restart-block'])
+  for (const action of ['start','pause','resume','next','extend','finish','reset','reopen','exclude','mode','restart-block'])
     assert.throws(()=>command(state,action,'20:05',{},'viewer'));
   assert.throws(()=>command(state,'finish','20:05',{},'editor'));
   assert.throws(()=>command({...state,status:'paused'},'reset','20:05',{},'editor'));
   assert.equal(command(state,'pause','20:05',{},'editor').status,'paused');
+});
+
+test('reopen follows the project date and preserves history, exclusions and extensions', () => {
+  const finished = {status:'finished',trackingMode:'manual',eventDate:'2026-09-09',currentIndex:2,currentBlockId:'three',
+    startedAt:'2026-09-09T23:00:00Z',finishedAt:'2026-09-11T23:10:00Z',pausedAt:null,
+    currentBlockStartTime:'2026-09-11T23:00:00Z',history:[{key:'three',actualEnd:'2026-09-11T23:10:00Z'}],
+    blockExtensions:{three:5},mutedBlockIds:['three']};
+  const copy = JSON.stringify(finished);
+  const reopened = command(finished,'reopen','20:15');
+  assert.equal(reopened.status,'live'); assert.equal(reopened.trackingMode,'schedule');
+  assert.equal(reopened.eventDate,project.eventDate);
+  assert.equal(reopened.finishedAt,null); assert.equal(reopened.currentBlockStartTime,null);
+  assert.equal(engine.computeLiveSnapshot(project,reopened,at('20:15')).currentItem.key,'two');
+  assert.deepEqual(reopened.history,finished.history);
+  assert.deepEqual(reopened.blockExtensions,finished.blockExtensions);
+  assert.deepEqual(reopened.mutedBlockIds,finished.mutedBlockIds);
+  assert.equal(reopened.reopenHistory[0].previousFinishedAt,finished.finishedAt);
+  assert.equal(JSON.stringify(finished),copy);
+  assert.throws(()=>command(finished,'reopen','20:15',{},'editor'),/administrador/);
+  assert.throws(()=>command(reopened,'reopen','20:15'),/estado actual/);
+  assert.throws(()=>engine.transition({...project,eventDate:''},finished,{action:'reopen'},'owner',at('20:15')),/fecha/);
+  const late = command(finished,'reopen','23:00');
+  assert.equal(engine.computeLiveSnapshot(project,late,at('23:00')).scheduleEnded,true);
+  assert.equal(late.status,'live');
 });
 test('only future cues may be excluded or restored', () => {
   let state = command({},'start');
