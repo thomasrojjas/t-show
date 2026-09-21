@@ -14,8 +14,8 @@ const LiveSync = {
         return result;
     },
     fetchLiveState(projectId) { return this.request(projectId); },
-    pushLiveState(projectId, command, version) {
-        return this.request(projectId, { method:'PUT', body: JSON.stringify({ ...command, expectedVersion: version }) });
+    pushLiveState(projectId, command, version, projectVersion) {
+        return this.request(projectId, { method:'PUT', body: JSON.stringify({ ...command, expectedVersion: version, expectedProjectVersion: projectVersion }) });
     },
     async startListening(projectId, onUpdate, onStatus) {
         this.stopListening();

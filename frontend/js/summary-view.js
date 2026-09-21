@@ -42,7 +42,7 @@ const SummaryView = (() => {
             const result = await Auth.api('/api/projects/'+encodeURIComponent(ctx.project.id)+'/live');
             if (token !== generation) return;
             const snapshot = LiveEngine.computeLiveSnapshot(ctx.project,result.data || {},result.serverNow ? Date.parse(result.serverNow) : Date.now());
-            const labels = {idle:'En espera',live:'En vivo',paused:'Pausado',finished:'Finalizado'};
+            const labels = {idle:'En espera',scheduled:'Programado','schedule-invalidated':'Programación desactualizada',live:'En vivo',paused:'Pausado',finished:'Finalizado'};
             const currentLabel = snapshot.status==='idle'?'Primer bloque previsto':snapshot.scheduleEnded?'Último bloque previsto':snapshot.waiting?'Próximo inicio previsto':'Bloque actual';
             const cue = row => row ? esc(row.start+' · '+row.title) : 'Sin bloques';
             set('overviewLive', `<p class="overview-state">${labels[snapshot.status] || 'No disponible'} <small>${snapshot.trackingMode==='manual'?'Manual':'Según horario'}</small></p>${snapshot.scheduleEnded?'<p>Horario concluido</p>':''}<dl class="overview-cues"><dt>${currentLabel}</dt><dd>${cue(snapshot.currentItem)}</dd><dt>Siguiente</dt><dd>${snapshot.nextItem?cue(snapshot.nextItem):'Sin siguiente bloque'}</dd></dl><small>Estado consultado a las ${esc(new Date().toLocaleTimeString('es-CL'))}</small>`);

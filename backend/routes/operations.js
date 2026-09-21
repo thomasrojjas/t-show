@@ -234,7 +234,7 @@ async function liveGuestSession(sessionToken) {
   const {data:project}=await supabase.from('tshow_projects').select('id,event_name,payload,document_version').eq('id',pass.project_id).is('deleted_at',null).maybeSingle();
   if(!project)return null;
   const {data:live}=await supabase.from('tshow_live_sessions').select('state,revision').eq('project_id',project.id).maybeSingle();
-  const snapshot=LiveEngine.computeLiveSnapshot(project.payload||{},live?.state||{},Date.now());
+  const snapshot=LiveEngine.computeLiveSnapshot({...project.payload,documentVersion:project.document_version},live?.state||{},Date.now());
   const compact=item=>item?{num:item.num,title:item.title,type:item.type,start:item.start,duration:item.effectiveDuration}:null;
   const next=compact(snapshot.nextItem);
   if(next&&snapshot.trackingMode==='manual'&&snapshot.status!=='idle'&&snapshot.status!=='finished') next.start=LiveEngine.formatTimeSeconds(Date.now()+Math.max(0,snapshot.remainingSeconds)*1000,snapshot.zone).slice(0,5);

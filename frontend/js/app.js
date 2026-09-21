@@ -86,7 +86,17 @@ class App {
             doorsDuration: parseInt(document.getElementById('doorsDuration').value) || 0,
             showStartMode: document.getElementById('showStartMode').value || 'auto',
             showStartTimeInput: document.getElementById('showStartTimeInput').value || '20:30',
-            blocks: this.blocksManager.getBlocks()
+            blocks: this.blocksManager.getBlocks(),
+            // The schedule editor is a partial editor. Keep project identity
+            // attached so saving blocks cannot erase the event date or zone.
+            ...(this.currentProject ? {
+                eventDate: this.currentProject.eventDate || '',
+                timeZone: this.currentProject.timeZone || this.currentProject.timezone || 'America/Santiago',
+                projectType: this.currentProject.projectType || 'other',
+                location: this.currentProject.location || '',
+                accentColor: this.currentProject.accentColor || 'blue',
+                visualTheme: this.currentProject.visualTheme || null
+            } : {})
         };
     }
 
@@ -180,6 +190,7 @@ class App {
             const res = await ApiClient.saveProject(data);
             this.currentProjectId = res.data?.id || this.currentProjectId;
             this.documentVersion = res.data?.document_version ?? this.documentVersion;
+            this.currentProject = { ...(this.currentProject || {}), ...data, id: this.currentProjectId, documentVersion: this.documentVersion };
             window.WorkspaceShell?.setProject(this.currentProjectId, data.eventName);
             window.WorkspaceShell?.refreshNotes();
             if (!options.silent) PrintExportManager.showToast(res.message || 'Proyecto guardado con éxito', 'success');
@@ -208,6 +219,7 @@ class App {
             this.blocksManager.setBlocks(project.blocks || []);
             this.toggleShowStartMode();
             this.currentProjectId = project.id;
+            this.currentProject = project;
             this.documentVersion = project.documentVersion;
             window.WorkspaceShell?.setProject(project.id, project.eventName || 'Proyecto activo');
             PrintExportManager.showToast(`Proyecto "${project.eventName}" cargado`, 'info');

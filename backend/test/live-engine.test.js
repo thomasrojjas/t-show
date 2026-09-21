@@ -29,6 +29,37 @@ test('schedule completion does not fabricate executions or restart', () => {
   const snap = engine.computeLiveSnapshot(project,state,at('20:45'));
   assert.equal(snap.scheduleEnded,true); assert.equal(snap.remainingSeconds,0); assert.equal(snap.history.length,0);
 });
+
+test('scheduled start becomes live from the first scheduled row without a console timer', () => {
+  const scheduledProject = {...project, documentVersion:12};
+  const run = (state, action, time, extra={}) => engine.transition(scheduledProject, state, {action,...extra}, 'owner', engine.zonedTime(scheduledProject.eventDate, time, scheduledProject.timeZone));
+  const scheduled = run({}, 'schedule', '19:00');
+  assert.equal(scheduled.status,'scheduled');
+  assert.equal(scheduled.scheduledProjectVersion,12);
+  const before = engine.computeLiveSnapshot(scheduledProject, scheduled, at('19:59'));
+  assert.equal(before.status,'scheduled'); assert.equal(before.waiting,true);
+  const after = engine.computeLiveSnapshot(scheduledProject, scheduled, at('20:01'));
+  assert.equal(after.status,'live'); assert.equal(after.currentItem.key,'one');
+});
+
+test('scheduled execution is invalidated by a pauta version change and can be cancelled', () => {
+  const scheduledProject = {...project, documentVersion:12};
+  const run = (state, action, time, extra={}) => engine.transition(scheduledProject, state, {action,...extra}, 'owner', engine.zonedTime(scheduledProject.eventDate, time, scheduledProject.timeZone));
+  const scheduled = run({}, 'schedule', '19:00');
+  const changed = engine.computeLiveSnapshot({...scheduledProject, documentVersion:13, blocks:[{...project.blocks[0],duration:11}, project.blocks[1], project.blocks[2]]}, scheduled, at('19:00'));
+  assert.equal(changed.status,'schedule-invalidated'); assert.equal(changed.scheduleInvalidated,true);
+  const cancelled = engine.transition({...scheduledProject, documentVersion:13, blocks:[{...project.blocks[0],duration:11}, project.blocks[1], project.blocks[2]]}, scheduled, {action:'cancel-schedule'}, 'owner', engine.zonedTime(scheduledProject.eventDate, '19:00', scheduledProject.timeZone));
+  assert.equal(cancelled.status,'idle'); assert.equal(cancelled.scheduledAt,undefined);
+});
+
+test('late schedule start requires explicit confirmation and follows the current scheduled block', () => {
+  const scheduledProject = {...project, documentVersion:12};
+  const run = (extra={}) => engine.transition(scheduledProject, {}, {action:'schedule',...extra}, 'owner', engine.zonedTime(scheduledProject.eventDate, '20:05', scheduledProject.timeZone));
+  assert.throws(()=>run(),/Confirma iniciar ahora/);
+  const started = run({startNow:true});
+  assert.equal(started.status,'live'); assert.equal(started.trackingMode,'schedule');
+  assert.equal(engine.computeLiveSnapshot(scheduledProject,started,at('20:15')).currentItem.key,'two');
+});
 test('manual switch preserves elapsed and explicit next uses actual scheduled index', () => {
   let state = command({},'start');
   state = command(state,'mode','20:15',{mode:'manual'});

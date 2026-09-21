@@ -2,7 +2,7 @@
 class LiveApp {
     constructor() {
         this.projectId = new URLSearchParams(location.search).get('project');
-        this.state = LiveEngine.defaults(); this.version = 0; this.rows = new Map();
+        this.state = LiveEngine.defaults(); this.version = 0; this.projectVersion = 0; this.rows = new Map();
         this.connected = false; this.busy = false; this.follow = true; this.tab = 'script'; this.offset = 0;
         this.permission = 'viewer'; this.selection = null; this.readingKey = ''; this.syncing = null;
         this.observerPass = null;
@@ -61,7 +61,7 @@ class LiveApp {
         // active until the complete server identity is confirmed below.
         window.TShowTheme?.apply(window.TShowTheme.current || 'light', { persist:false });
         if (!await Auth.requireSession()) return;
-        this.project = await ApiClient.getProject(this.projectId);
+        this.project = await ApiClient.getProject(this.projectId); this.projectVersion = this.project.documentVersion || 0;
         const liveThemes = { light:'#315ea8', nocturne:'#a8c7fa', violet:'#c084fc', cobalt:'#38bdf8', ember:'#ffb340', emerald:'#39ff88', monochrome:'#f2f4f7' };
         const eventTheme = liveThemes[this.project.visualTheme] ? this.project.visualTheme : 'light';
         const localTheme = window.TShowTheme?.liveOverrideFor(this.projectId);
@@ -103,15 +103,23 @@ class LiveApp {
     }
     accept(result) {
         if ((result.version || 0) < this.version) return;
-        this.state = LiveEngine.defaults(result.data || {}); this.version = result.version || 0;
+        const serverNow = result.serverNow ? Date.parse(result.serverNow) : this.now();
+        this.state = this.project ? LiveEngine.resolveState(this.project, result.data || {}, serverNow) : LiveEngine.defaults(result.data || {});
+        this.version = result.version || 0;
         if (result.serverNow) this.offset = Date.parse(result.serverNow) - Date.now();
+        if (result.projectVersion !== undefined) this.projectVersion = Number(result.projectVersion) || 0;
         this.render();
     }
     async refresh() {
         if (!this.project || this.syncing || this.busy) return;
         this.syncing = (async () => {
             try {
-                this.accept(await LiveSync.fetchLiveState(this.projectId));
+                const result = await LiveSync.fetchLiveState(this.projectId);
+                if (result.projectVersion !== undefined && Number(result.projectVersion) !== Number(this.projectVersion)) {
+                    const refreshedProject = await ApiClient.getProject(this.projectId);
+                    this.project = refreshedProject; this.projectVersion = refreshedProject.documentVersion || 0;
+                }
+                this.accept(result);
                 this.connection('connected');
                 this.$('retryButton').hidden = true;
             } catch (error) { this.connection('offline'); this.message(error.message + ' Recarga para recuperar el estado.', true, true); }
@@ -139,7 +147,7 @@ class LiveApp {
         }
         this.busy = true; this.render(); this.message('Guardando cambio…');
         try {
-            const result = await LiveSync.pushLiveState(this.projectId, command, expectedVersion);
+            const result = await LiveSync.pushLiveState(this.projectId, command, expectedVersion, this.projectVersion);
             this.accept(result);
             this.message('Cambio guardado y compartido con el equipo.');
             if (this.state.status === 'finished') this.openReport();
@@ -175,6 +183,17 @@ class LiveApp {
                 target.scheduleEnded ? 'El horario original ya concluyó.' : `El horario corresponde a «${target.currentItem?.title || 'sin bloques'}». Al seguir el horario se utilizará ese bloque.`];
             this.execute({ action:'mode', mode }, prompt);
         };
+        this.$('scheduleStartButton').onclick = async () => {
+            let late = false;
+            let schedule;
+            try { schedule = LiveEngine.scheduleStart(this.project); late = Date.parse(schedule.startAt) <= this.now(); } catch (_) { /* server returns the validation message */ }
+            const exactStart = schedule ? new Intl.DateTimeFormat('es-CL', { timeZone:schedule.zone, dateStyle:'full', timeStyle:'short' }).format(new Date(schedule.startAt)) : 'la fecha y hora configuradas';
+            const firstTitle = schedule?.first?.title || 'el primer bloque';
+            const prompt = late ? ['Iniciar seguimiento horario ahora', 'La hora programada ya pasó. Se mostrará el bloque correspondiente a este momento, usando la hora del servidor y conservando la pauta.'] :
+                ['Programar inicio automático', `Comenzará el ${exactStart}, en «${firstTitle}». La consola puede cerrarse y el estado se resolverá al volver a consultar.`];
+            this.execute({ action:'schedule', ...(late ? { startNow:true } : {}) }, prompt);
+        };
+        this.$('cancelScheduleButton').onclick = () => this.execute({ action:'cancel-schedule' }, ['Cancelar programación', 'El evento volverá a quedar en espera. La escaleta y el historial se conservarán.']);
         this.$('previousButton').onclick = () => this.execute({ action:'previous' });
         this.$('nextButton').onclick = () => this.execute({ action:'next' });
         this.$('extendButton').onclick = () => this.execute({ action:'extend', minutes:Number(this.$('extendMinutes').value) });
@@ -376,16 +395,17 @@ class LiveApp {
         const dialog = this.$('camarinesDialog');
         if (!dialog?.open) return;
         this.text('camarinesTitle', this.project?.eventName || 'En vivo');
-        this.text('camarinesStatus', labels[this.state.status] || 'En espera');
-        this.$('camarinesStatus').dataset.state = this.state.status;
+        this.text('camarinesStatus', labels[snap.status] || 'En espera');
+        this.$('camarinesStatus').dataset.state = snap.status;
         this.text('camarinesCountdown', timer);
         this.$('camarinesCountdown').dataset.alert = snap.alertLevel;
-        const countdownLabel = this.state.status === 'finished' ? 'Evento finalizado' :
-            this.state.status === 'paused' ? 'Pausado · el tiempo está detenido' :
+        const countdownLabel = snap.status === 'finished' ? 'Evento finalizado' :
+            snap.status === 'scheduled' ? 'Inicio programado' :
+            snap.status === 'paused' ? 'Pausado · el tiempo está detenido' :
             snap.isOvertime ? 'Tiempo de atraso del bloque actual' :
-            this.state.status === 'idle' ? 'Esperando el inicio del seguimiento' : timerLabel;
+            snap.status === 'idle' ? 'Esperando el inicio del seguimiento' : timerLabel;
         this.text('camarinesCountdownLabel', countdownLabel);
-        this.text('camarinesNextTitle', snap.nextItem?.title || (this.state.status === 'finished' ? 'Evento finalizado' : 'No hay otro bloque'));
+        this.text('camarinesNextTitle', snap.nextItem?.title || (snap.status === 'finished' ? 'Evento finalizado' : 'No hay otro bloque'));
         this.text('camarinesNextMeta', snap.nextItem ? `${snap.nextItem.type || 'Bloque'} · ${snap.nextItem.start || 'Inicio estimado'}` : 'Después finaliza el evento');
         const startNum = current?.num || 1;
         const remaining = snap.items.filter(row => row.num >= startNum);
@@ -405,38 +425,43 @@ class LiveApp {
         catch (error) { this.message(error.message, true); return; }
         this.snapshot = snap;
         const blocked = !this.connected || this.busy;
-        const labels = { idle:'En espera', live:snap.scheduleEnded ? 'Horario concluido' : 'En vivo', paused:'Pausado', finished:'Finalizado' };
-        this.text('sessionStatus', labels[this.state.status]);
-        if (this.$('sessionStatus')) this.$('sessionStatus').dataset.state = this.state.status;
+        const status = snap.status;
+        const labels = { idle:'En espera', scheduled:'Programado', 'schedule-invalidated':'Programación desactualizada', live:snap.scheduleEnded ? 'Horario concluido' : 'En vivo', paused:'Pausado', finished:'Finalizado' };
+        this.text('sessionStatus', labels[status]);
+        if (this.$('sessionStatus')) this.$('sessionStatus').dataset.state = status;
         this.text('masterClock', LiveEngine.formatTimeSeconds(this.now(), snap.zone));
-        const nextCountdown = snap.nextItem && this.state.status !== 'finished' && this.state.status !== 'idle'
+        const nextCountdown = status !== 'finished' && status !== 'idle' && snap.currentItem
             ? LiveEngine.formatDurationSeconds(Math.max(0, snap.remainingSeconds))
-            : this.state.status === 'finished' ? 'Finalizado' : '—';
+            : status === 'finished' ? 'Finalizado' : '—';
         this.text('nextHeaderCountdown', nextCountdown);
-        this.$('trackingMode').value = this.state.trackingMode; this.$('trackingMode').disabled = blocked || !this.operator || this.state.status === 'finished';
+        this.$('trackingMode').value = this.state.trackingMode; this.$('trackingMode').disabled = blocked || !this.operator || ['finished','scheduled','schedule-invalidated'].includes(status);
         this.text('modeHelp', snap.trackingMode === 'schedule' ? 'El horario original continúa durante la pausa.' : 'Al agotarse el tiempo, el bloque continúa hasta avanzar manualmente.');
         const primary = this.$('primaryAction');
-        primary.hidden = !this.operator && this.state.status !== 'finished';
-        primary.disabled = this.state.status !== 'finished' && (blocked || !snap.executable.length);
+        primary.hidden = !this.operator || ['scheduled','schedule-invalidated'].includes(status);
+        primary.disabled = status !== 'finished' && (blocked || !snap.executable.length);
         primary.setAttribute('aria-busy', String(this.busy));
-        this.text('primaryAction', this.busy ? 'Guardando…' : { idle:matchMedia('(max-width:767px)').matches ? 'Iniciar seguimiento' : '▶ Iniciar seguimiento', live:'Ⅱ Pausar seguimiento', paused:snap.trackingMode === 'schedule' ? '▶ Reanudar según horario' : '▶ Reanudar', finished:'Ver balance' }[this.state.status]);
-        this.$('manualControls').hidden = !this.operator || snap.trackingMode !== 'manual' || this.state.status !== 'live';
+        this.text('primaryAction', this.busy ? 'Guardando…' : { idle:matchMedia('(max-width:767px)').matches ? 'Iniciar seguimiento' : '▶ Iniciar seguimiento', live:'Ⅱ Pausar seguimiento', paused:snap.trackingMode === 'schedule' ? '▶ Reanudar según horario' : '▶ Reanudar', finished:'Ver balance' }[status]);
+        this.$('manualControls').hidden = !this.operator || snap.trackingMode !== 'manual' || status !== 'live';
         this.$('previousButton').disabled = blocked || !snap.currentItem || snap.currentIndex <= 0;
         for (const id of ['nextButton','extendButton','restartBlock','extendMinutes']) this.$(id).disabled = blocked || !snap.currentItem;
         this.$('nextButton').disabled = blocked || !snap.nextItem;
         this.text('nextButton', snap.nextItem ? 'Siguiente bloque →' : 'Último bloque');
-        this.$('finishButton').hidden = !this.manager || !['live','paused'].includes(this.state.status);
-        this.$('reopenButton').hidden = !this.manager || this.state.status !== 'finished';
+        this.$('finishButton').hidden = !this.manager || !['live','paused'].includes(status);
+        this.$('reopenButton').hidden = !this.manager || status !== 'finished';
         this.$('reopenButton').disabled = blocked || !snap.executable.length || !this.project.eventDate;
-        this.$('resetButton').hidden = !this.manager || this.state.status === 'live';
+        this.$('resetButton').hidden = !this.manager || ['live','scheduled'].includes(status);
         this.$('finishButton').disabled = blocked; this.$('resetButton').disabled = blocked;
+        this.$('scheduleStartButton').hidden = !this.manager || !['idle','schedule-invalidated'].includes(status);
+        this.$('scheduleStartButton').disabled = blocked || !this.project.eventDate || !snap.executable.length;
+        this.$('cancelScheduleButton').hidden = !this.manager || !['scheduled','schedule-invalidated'].includes(status);
+        this.$('cancelScheduleButton').disabled = blocked;
         const current = snap.currentItem;
         this.text('currentTitle', current?.title || 'Aún no hay bloques');
-        this.text('currentContext', this.state.status === 'idle' ? 'Primer bloque' : this.state.status === 'finished' ? 'Sesión finalizada' : snap.scheduleEnded ? 'Horario concluido' : snap.waiting ? 'Próximo inicio' : 'Bloque en curso');
+        this.text('currentContext', status === 'idle' ? 'Primer bloque' : status === 'scheduled' ? 'Inicio programado' : status === 'schedule-invalidated' ? 'Programación desactualizada' : status === 'finished' ? 'Sesión finalizada' : snap.scheduleEnded ? 'Horario concluido' : snap.waiting ? 'Próximo inicio' : 'Bloque en curso');
         this.text('currentNumber', current ? `#${String(current.num).padStart(2,'0')}` : '');
         this.text('currentType', current?.type || 'Prepara el evento desde la Escaleta');
-        const timerLabel = this.state.status === 'finished' ? 'Evento finalizado' : this.state.status === 'paused' ? 'Pausado · lectura congelada' :
-            snap.scheduleEnded ? 'Horario concluido' : snap.waiting ? 'Comienza en…' : snap.isOvertime ? 'Tiempo de atraso' : this.state.status === 'idle' ? 'Duración prevista' : 'Tiempo restante';
+        const timerLabel = status === 'finished' ? 'Evento finalizado' : status === 'scheduled' ? 'Comienza en…' : status === 'schedule-invalidated' ? 'Revisa la pauta' : status === 'paused' ? 'Pausado · lectura congelada' :
+            snap.scheduleEnded ? 'Horario concluido' : snap.waiting ? 'Comienza en…' : snap.isOvertime ? 'Tiempo de atraso' : status === 'idle' ? 'Duración prevista' : 'Tiempo restante';
         const timer = (snap.isOvertime ? '+' : '') + LiveEngine.formatDurationSeconds(Math.abs(snap.remainingSeconds));
         this.text('timerLabel', timerLabel); this.text('remainingTimer', timer);
         this.$('remainingTimer').dataset.alert = snap.alertLevel;
@@ -460,13 +485,13 @@ class LiveApp {
         };
         const next = snap.nextItem;
         this.text('nextPanelNumber', next ? `#${String(next.num).padStart(2,'0')}` : '');
-        this.text('nextPanelName', next?.title || (snap.items.length ? (this.state.status === 'finished' ? 'Evento finalizado' : 'Último bloque · después finaliza el evento') : 'No hay bloques disponibles'));
-        this.text('nextPanelMeta', next ? `${next.type || 'Bloque'} · ${next.effectiveDuration} min` : (this.state.status === 'idle' ? 'El seguimiento todavía no ha comenzado.' : 'No hay un bloque posterior disponible.'));
+        this.text('nextPanelName', next?.title || (snap.items.length ? (status === 'finished' ? 'Evento finalizado' : 'Último bloque · después finaliza el evento') : 'No hay bloques disponibles'));
+        this.text('nextPanelMeta', next ? `${next.type || 'Bloque'} · ${next.effectiveDuration} min` : (status === 'idle' ? 'El seguimiento todavía no ha comenzado.' : 'No hay un bloque posterior disponible.'));
         this.text('nextPanelTimeLabel', next ? (snap.trackingMode === 'manual' ? 'Inicio estimado' : 'Inicio programado') : 'Estado');
-        const nextStart = next && snap.trackingMode === 'manual' && this.state.status !== 'idle' && this.state.status !== 'finished'
+        const nextStart = next && snap.trackingMode === 'manual' && status !== 'idle' && status !== 'finished'
             ? LiveEngine.formatTimeSeconds(this.now() + Math.max(0, snap.remainingSeconds) * 1000, snap.zone).slice(0,5)
             : next?.start;
-        this.text('nextPanelTime', nextStart || (this.state.status === 'finished' ? 'Finalizado' : '—'));
+        this.text('nextPanelTime', nextStart || (status === 'finished' ? 'Finalizado' : '—'));
         const nextLink = this.$('nextPanelLink');
         nextLink.hidden = !next;
         nextLink.onclick = event => {
@@ -477,8 +502,8 @@ class LiveApp {
         const stageStatus = this.$('stageStatus');
         if (stageStatus) {
             const label = stageStatus.querySelector('span');
-            if (label) label.textContent = labels[this.state.status]; else stageStatus.textContent = labels[this.state.status];
-            stageStatus.dataset.active = String(this.state.status === 'live' && !snap.waiting && !snap.scheduleEnded && this.connected);
+            if (label) label.textContent = labels[status]; else stageStatus.textContent = labels[status];
+            stageStatus.dataset.active = String(status === 'live' && !snap.waiting && !snap.scheduleEnded && this.connected);
         }
         this.text('stageTitle', current?.title || 'Sin bloques');
         this.text('stageTimerLabel', timerLabel); this.text('stageTimer', timer); this.$('stageTimer').dataset.alert = snap.alertLevel;

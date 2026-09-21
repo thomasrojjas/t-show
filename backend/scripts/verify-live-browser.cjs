@@ -73,6 +73,16 @@ api:async(path,options)=>{const r=await fetch(path,options);const b=await r.json
     assert.equal(await page.evaluate(()=>document.documentElement.dataset.tshowTheme),'violet');
     assert.equal(await page.locator('.live-theme-option[aria-pressed=true]').getAttribute('data-theme'),'violet');
     assert.deepEqual(await page.evaluate(()=>({status:liveApp.state.status,connected:liveApp.connected,selection:liveApp.selection})),liveBefore,'theme change must not alter operation state');
+    // A future event can be scheduled, cancelled, and rescheduled without a tab timer.
+    state={status:'idle',trackingMode:'schedule'};version++;
+    project.eventDate=engine.dateInZone(now+86400000,zone);project.showStartTimeInput='20:00';
+    await page.reload();await page.waitForFunction(()=>liveApp.connected);
+    await page.locator('#moreMenu summary').click();await page.locator('#scheduleStartButton').click();await page.locator('#confirmDialog [value=confirm]').click();
+    await page.waitForFunction(()=>liveApp.state.status==='scheduled');
+    await page.locator('#moreMenu summary').click();assert(await page.locator('#cancelScheduleButton').isVisible());await page.locator('#cancelScheduleButton').click();await page.locator('#confirmDialog [value=confirm]').click();
+    await page.waitForFunction(()=>liveApp.state.status==='idle');
+    project.eventDate=day;project.showStartTimeInput=start;state={status:'live',trackingMode:'schedule'};version++;
+    await page.reload();await page.waitForFunction(()=>liveApp.connected);
     for(const [width,height] of [[360,800],[390,844],[768,1024],[1024,768],[1366,768],[1920,1080]]){
       await page.setViewportSize({width,height});
       const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);

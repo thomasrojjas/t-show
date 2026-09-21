@@ -12,6 +12,25 @@ test('schedule rows retain block ids for compact rundown alignment', () => {
   assert.equal(result.tableRows.find(row => row.title === 'Intervención').blockId, 'block-script');
 });
 
+test('schedule dates are resolved in America/Santiago and retain full instants across midnight', () => {
+  const result = TimingEngine.computeSchedule({
+    eventDate: '2026-09-17', timeZone: 'America/Santiago', convocatoriaTime: '23:30', convocatoriaDuration: 30,
+    doorsTime: '00:10', doorsDuration: 20, showStartMode: 'manual', showStartTimeInput: '00:40'
+  }, [{ id:'overnight', type:'SHOW', title:'Trasnoche', duration:30 }]);
+  assert.equal(result.tableRows[0].start, '23:30');
+  assert.equal(result.tableRows[1].start, '00:10');
+  assert.equal(result.tableRows[2].start, '00:40');
+  assert.equal(result.tableRows[1].startAt, '2026-09-18T03:10:00.000Z');
+  assert.equal(result.tableRows[2].endAt, '2026-09-18T04:10:00.000Z');
+});
+
+test('schedule editor carries project identity and date when saving blocks', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../../frontend/js/app.js'), 'utf8');
+  assert.match(app, /eventDate: this\.currentProject\.eventDate/);
+  assert.match(app, /timeZone: this\.currentProject\.timeZone/);
+  assert.match(app, /this\.currentProject = \{ \.\.\.\(this\.currentProject/);
+});
+
 test('direct schedule navigation resolves project context before showing the selector', () => {
   const navigation = fs.readFileSync(path.join(__dirname, '../../frontend/js/workspace-nav.js'), 'utf8');
   const styles = fs.readFileSync(path.join(__dirname, '../../frontend/css/glass-workspace.css'), 'utf8');

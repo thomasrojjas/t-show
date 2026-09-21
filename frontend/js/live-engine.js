@@ -17,7 +17,9 @@ const LiveEngine = {
     },
     zonedTime(date, time, zone) {
         const [y, m, d] = date.split('-').map(Number);
-        const [h, min] = time.split(':').map(Number);
+        const value = String(time || '00:00');
+        if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new Error('El horario debe usar el formato HH:MM.');
+        const [h, min] = value.split(':').map(Number);
         const target = Date.UTC(y, m - 1, d, h, min);
         const formatter = new Intl.DateTimeFormat('en-GB', { timeZone: zone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23' });
         let epoch = target;
@@ -37,32 +39,55 @@ const LiveEngine = {
         return (seconds < 0 ? '−' : '') + (n >= 3600 ? String(Math.floor(n / 3600)).padStart(2, '0') + ':' : '') +
             String(Math.floor(n / 60) % 60).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
     },
+    scheduleStart(project) {
+        const schedule = LiveTiming.computeSchedule(project, project.blocks || []);
+        const first = schedule.tableRows[0];
+        if (!first?.startAt) throw new Error('Agrega al menos un bloque o una convocatoria con duración.');
+        return { ...schedule, first, startAt: first.startAt };
+    },
+    scheduleKey(project) {
+        const blocks = (project?.blocks || []).map(block => ({ id:block.id || null, type:block.type || null, duration:Number(block.duration) || 0, bis:Number(block.bis) || 0 }));
+        return JSON.stringify({ eventDate:project?.eventDate || null, timeZone:this.zone(project || {}), convocatoriaTime:project?.convocatoriaTime || '18:30', convocatoriaDuration:Number(project?.convocatoriaDuration) || 0, doorsTime:project?.doorsTime || '19:30', doorsDuration:Number(project?.doorsDuration) || 0, showStartMode:project?.showStartMode || 'auto', showStartTimeInput:project?.showStartTimeInput || '20:30', blocks });
+    },
+    resolveState(project, input = {}, now = Date.now()) {
+        const state = this.defaults(input);
+        if (state.status !== 'scheduled') return state;
+        const scheduledAt = Date.parse(state.scheduledAt || '');
+        const planChanged = state.scheduledPlanKey && state.scheduledPlanKey !== this.scheduleKey(project);
+        if (!Number.isFinite(scheduledAt) || planChanged) {
+            state.status = 'schedule-invalidated';
+            state.scheduleInvalidReason = planChanged ? 'schedule_changed' : 'invalid_schedule';
+            return state;
+        }
+        if (now >= scheduledAt) {
+            state.status = 'live'; state.startedAt = state.startedAt || state.scheduledAt;
+            state.eventDate = project?.eventDate || state.eventDate;
+        }
+        return state;
+    },
     computeLiveSnapshot(project, input = {}, now = Date.now()) {
         if (!project) return null;
-        const state = this.defaults(input), zone = this.zone(project);
+        const state = this.resolveState(project, input, now), zone = this.zone(project);
         const effectiveNow = state.status === 'paused' ? Date.parse(state.pausedAt || new Date(now).toISOString()) :
             state.status === 'finished' ? Date.parse(state.finishedAt || new Date(now).toISOString()) : now;
-        const date = project.eventDate || state.eventDate || this.dateInZone(now, zone);
+        const date = project.eventDate || state.eventDate;
+        if (!date) return { status: state.status === 'idle' ? 'idle' : 'schedule-invalidated', scheduleInvalidated: true, scheduleInvalidReason: 'missing_event_date', trackingMode: state.trackingMode, currentIndex: 0, currentItem: null, previousItem: null, nextItem: null, elapsedSeconds: 0, remainingSeconds: 0, progressPercent: 0, items: [], executable: [], waiting: false, scheduleEnded: false, zone, projectedEndMs: null, history: state.history, isOvertime: false, alertLevel: 'normal' };
         const rows = LiveTiming.computeSchedule(project, project.blocks || []).tableRows;
-        let previousMinutes = -1, day = 0;
         const items = rows.map(row => {
-            const minutes = +row.start.slice(0, 2) * 60 + +row.start.slice(3);
-            if (minutes < previousMinutes) day++;
-            previousMinutes = minutes;
-            const dayDate = new Date(Date.parse(date + 'T12:00:00Z') + day * 86400000).toISOString().slice(0, 10);
-            const startMs = this.zonedTime(dayDate, row.start, zone);
+            const startMs = row.startAt ? Date.parse(row.startAt) : this.zonedTime(date, row.start, zone);
             const raw = row.raw || (project.blocks || []).find(b => b.id && b.id === row.blockId) || {};
             const key = row.blockId || `segment:${row.type}:${row.num}`;
             const isMuted = state.mutedBlockNums.includes(row.num) || (state.mutedBlockIds || []).includes(key);
             const duration = row.duration + (state.trackingMode === 'manual' ? Number(state.blockExtensions[key] ?? state.blockExtensions[row.num] ?? 0) : 0);
-            return { ...row, key, raw, isMuted, effectiveDuration: duration, startMs, endMs: startMs + row.duration * 60000 };
+            return { ...row, key, raw, isMuted, effectiveDuration: duration, startMs, endMs: row.endAt ? Date.parse(row.endAt) : startMs + row.duration * 60000 };
         }).filter(row => !state.omittedItemNums.includes(row.num));
         const executable = items.filter(row => !row.isMuted);
         let index = state.currentBlockId ? executable.findIndex(x => x.key === state.currentBlockId) : state.currentIndex;
         if (index < 0) index = 0;
         let current = executable[index] || executable[0], next = null, elapsed = 0, remaining = current?.effectiveDuration * 60 || 0;
         let waiting = false, scheduleEnded = false;
-        if (state.trackingMode === 'schedule' && state.status !== 'idle') {
+        const running = !['idle', 'schedule-invalidated'].includes(state.status);
+        if (state.trackingMode === 'schedule' && running) {
             index = executable.findIndex(row => effectiveNow < row.endMs);
             scheduleEnded = executable.length > 0 && index === -1;
             if (scheduleEnded) index = executable.length - 1;
@@ -70,7 +95,7 @@ const LiveEngine = {
             waiting = !!current && effectiveNow < current.startMs;
             elapsed = current ? Math.min(current.duration * 60, Math.max(0, (effectiveNow - current.startMs) / 1000)) : 0;
             remaining = current ? Math.max(0, ((waiting ? current.startMs : current.endMs) - effectiveNow) / 1000) : 0;
-        } else if (state.trackingMode === 'manual' && state.status !== 'idle' && current) {
+        } else if (state.trackingMode === 'manual' && running && current) {
             elapsed = Math.max(0, (effectiveNow - Date.parse(state.currentBlockStartTime || new Date(effectiveNow).toISOString())) / 1000);
             remaining = current.effectiveDuration * 60 - elapsed;
         }
@@ -79,22 +104,22 @@ const LiveEngine = {
         const progress = current && !waiting ? Math.min(100, elapsed / (current.effectiveDuration * 60) * 100) : 0;
         for (const row of items) {
             const execIndex = executable.indexOf(row);
-            row.rowState = row.isMuted ? 'muted' : state.status === 'idle' ? 'future' :
+            row.rowState = row.isMuted ? 'muted' : !running ? 'future' :
                 state.trackingMode === 'schedule' ? (effectiveNow >= row.endMs ? 'completed' : row === current && !waiting ? 'active' : 'future') :
                 execIndex < index || row === current && state.status === 'finished' ? 'completed' : row === current ? 'active' : 'future';
         }
-        const projectedEndMs = state.trackingMode === 'manual' && current && state.status !== 'idle' ?
+        const projectedEndMs = state.trackingMode === 'manual' && current && !['idle','scheduled','schedule-invalidated'].includes(state.status) ?
             effectiveNow + (Math.max(0, remaining) + executable.slice(index + 1).reduce((sum, row) => sum + row.effectiveDuration * 60, 0)) * 1000 :
             executable.at(-1)?.endMs;
         return { status: state.status, trackingMode: state.trackingMode, currentIndex: index, currentItem: current, previousItem: previous, nextItem: next,
             elapsedSeconds: elapsed, remainingSeconds: state.status === 'finished' ? 0 : remaining,
             progressPercent: progress, items, executable, waiting, scheduleEnded, zone, projectedEndMs,
-            history: state.history, isOvertime: remaining < 0, alertLevel: remaining < 0 ? 'error' : !waiting && remaining <= 60 ? 'warning' : 'normal' };
+            history: state.history, scheduledAt: state.scheduledAt || null, scheduleInvalidated: state.status === 'schedule-invalidated', isOvertime: remaining < 0, alertLevel: remaining < 0 ? 'error' : !waiting && remaining <= 60 ? 'warning' : 'normal' };
     },
     transition(project, input, command, permission, now = Date.now()) {
         const manager = ['owner', 'admin'].includes(permission);
         if (!manager && permission !== 'editor') throw new Error('No tienes permiso para operar este evento.');
-        const state = this.defaults(JSON.parse(JSON.stringify(input || {})));
+        const state = this.resolveState(project, JSON.parse(JSON.stringify(input || {})), now);
         const snap = this.computeLiveSnapshot(project, state, now);
         const stamp = new Date(now).toISOString(), action = command.action;
         const requireState = (...allowed) => { if (!allowed.includes(state.status)) throw new Error('La acción no está disponible en el estado actual.'); };
@@ -106,7 +131,28 @@ const LiveEngine = {
                 plannedDuration: row.duration, actualStart: state.actualBlockStartedAt || state.currentBlockStartTime,
                 actualEnd: stamp, actualDurationMinutes: snap.elapsedSeconds / 60, diffMinutes: snap.elapsedSeconds / 60 - row.duration, source: 'manual' });
         };
-        if (action === 'start') {
+        if (action === 'schedule') {
+            if (!manager) throw new Error('Solo el propietario o administrador puede programar el inicio.');
+            requireState('idle', 'schedule-invalidated');
+            const schedule = this.scheduleStart(project);
+            const startMs = Date.parse(schedule.startAt);
+            if (!Number.isFinite(startMs)) throw new Error('La fecha y hora de inicio no son válidas.');
+            if (startMs <= now && !command.startNow) throw new Error('La hora de inicio ya pasó. Confirma iniciar ahora para mostrar el bloque correspondiente.');
+            if (startMs <= now) {
+                state.status = 'live'; state.startedAt = stamp; state.eventDate = project.eventDate;
+                state.trackingMode = 'schedule'; state.scheduledAt = stamp; state.scheduleZone = schedule.zone;
+                state.scheduledPlanKey = this.scheduleKey(project); state.scheduledProjectVersion = project.documentVersion ?? null; state.scheduleSource = 'late-start';
+                return state;
+            }
+            state.status = 'scheduled'; state.scheduledAt = schedule.startAt; state.scheduleZone = schedule.zone;
+            state.scheduledPlanKey = this.scheduleKey(project); state.scheduledProjectVersion = project.documentVersion ?? null; state.eventDate = project.eventDate;
+            state.scheduleSource = 'event-start'; state.currentIndex = 0; state.currentBlockId = null;
+        } else if (action === 'cancel-schedule') {
+            if (!manager) throw new Error('Solo el propietario o administrador puede cancelar la programación.');
+            requireState('scheduled', 'schedule-invalidated');
+            state.status = 'idle';
+            delete state.scheduledAt; delete state.scheduleZone; delete state.scheduledPlanKey; delete state.scheduledProjectVersion; delete state.scheduleSource; delete state.scheduleInvalidReason;
+        } else if (action === 'start') {
             requireState('idle');
             if (!snap.executable.length) throw new Error('Agrega bloques con duración antes de iniciar.');
             state.status = 'live'; state.startedAt = stamp;

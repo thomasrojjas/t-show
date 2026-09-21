@@ -16,9 +16,9 @@
     set('currentMeta', data.current ? `${data.current.type || 'Bloque'} · ${data.current.duration || 0} min` : 'Solo lectura');
     set('nextTitle', data.next?.title || (data.status === 'finished' ? 'Después finaliza el evento' : 'Último bloque · después finaliza el evento'));
     set('nextMeta', data.next ? `${data.next.type || 'Bloque'} · ${data.next.duration || 0} min · ${data.next.start || 'Hora por definir'}` : 'No hay un bloque posterior disponible.');
-    const active = data.status === 'live' && data.connection === 'connected'; $('liveState').dataset.active = String(active); set('liveLabel', data.status === 'live' ? 'En vivo' : ({idle:'En espera',paused:'Pausado',finished:'Finalizado'}[data.status] || 'Estado del evento'));
+    const active = data.status === 'live' && data.connection === 'connected'; $('liveState').dataset.active = String(active); set('liveLabel', data.status === 'live' ? 'En vivo' : ({idle:'En espera',scheduled:'Programado','schedule-invalidated':'Programación desactualizada',paused:'Pausado',finished:'Finalizado'}[data.status] || 'Estado del evento'));
     const remaining = Number(data.remainingSeconds || 0) + (active && sampleAt ? (Date.now() - sampleAt) / 1000 : 0);
-    set('timerLabel', data.status === 'finished' ? 'Evento finalizado' : data.status === 'paused' ? 'Pausado' : data.current ? (remaining < 0 ? 'Tiempo de atraso' : 'Tiempo restante') : 'Sin bloques');
+    set('timerLabel', data.status === 'finished' ? 'Evento finalizado' : data.status === 'scheduled' ? 'Comienza en' : data.status === 'paused' ? 'Pausado' : data.current ? (remaining < 0 ? 'Tiempo de atraso' : 'Tiempo restante') : 'Sin bloques');
     set('timer', (remaining < 0 ? '+' : '') + format(remaining)); $('timer').dataset.alert = data.alertLevel || 'normal';
     set('elapsed', format(data.elapsedSeconds)); set('connection', data.connection === 'connected' ? 'Conectado' : 'Sin conexión · reloj estimado');
   };
