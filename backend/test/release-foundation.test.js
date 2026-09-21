@@ -14,6 +14,7 @@ test('release migrations and verifier cover schema versions 21 and 22', () => {
   assert.match(operations, /tshow_schema_versions[\s\S]*22/i);
   assert.match(verifier, /missing_migration', '21'/);
   assert.match(verifier, /missing_migration', '22'/);
+  assert.match(verifier, /tshow_payment_attempt_reservations/);
 });
 
 test('sensitive release functions are not executable by public roles', () => {
@@ -41,8 +42,29 @@ test('commercial plans start recurring Mercado Pago subscriptions', () => {
   assert.doesNotMatch(landing, /data-subscribe-plan="(?:pro|max)"[^>]+href="#contacto"/);
   assert.match(interactions, /interval=\$\{period==='annual'\?'year':'month'\}/);
   assert.match(billing, /mercadopago\/subscriptions/);
-  assert.match(billing, /idempotencyKey: crypto\.randomUUID\(\)/);
+  assert.match(billing, /idempotencyKey/);
+  assert.match(billing, /crypto\.randomUUID\(\)/);
   assert.match(billing, /Se renovará automáticamente/);
+});
+
+test('Mercado Pago billing guards availability, idempotency and real payment confirmation', () => {
+  const billing = read('backend/routes/billing.js');
+  const frontend = read('frontend/billing.html');
+  const server = read('backend/server.js');
+  const migration = read('supabase/migrations/20260921120000_harden_mercadopago_billing.sql');
+  assert.match(billing, /providerGuard\(res, 'mercadopago_subscription'\)/);
+  assert.match(billing, /providerGuard\(res, 'mercadopago_bricks'\)/);
+  assert.match(migration, /tshow_payment_attempt_reservations/);
+  assert.match(billing, /subscription_authorized_payment/);
+  assert.match(billing, /activateVerifiedAttempt\(attempt, paymentId, providerSubscriptionId/);
+  assert.match(billing, /MP_SUBSCRIPTION_CREATE_FAILED/);
+  assert.match(billing, /Retry-After/);
+  assert.match(frontend, /paymentProviders\?\.mercadoPagoSubscriptions/);
+  assert.match(frontend, /billing\/attempts/);
+  assert.match(frontend, /billing\/subscription\/cancel/);
+  assert.match(server, /mercadoPagoSubscriptions/);
+  assert.match(migration, /checkout_url/);
+  assert.match(migration, /primary key \(account_id, provider\)/i);
 });
 
 test('registration confirmation and billing profile recovery remain actionable', () => {

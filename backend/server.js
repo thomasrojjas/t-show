@@ -60,7 +60,10 @@ app.get('/api/config', (req, res) => res.json({
     supabaseUrl: process.env.SUPABASE_URL || null,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY || null,
     mercadoPagoPublicKey: process.env.MP_PUBLIC_KEY || null,
-    paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true'
+    paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true',
+    paymentProviders: {
+      mercadoPagoSubscriptions: process.env.PAYMENTS_ENABLED === 'true' && Boolean(process.env.MP_ACCESS_TOKEN && process.env.MP_PUBLIC_KEY && process.env.MP_WEBHOOK_SECRET && process.env.PUBLIC_API_URL)
+    }
   }
 }));
 

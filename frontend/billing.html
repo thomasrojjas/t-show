@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/motion-mobile.css">
   <style>
-    body{background:#03040a}.billing{max-width:1000px;margin:0 auto;padding:48px 24px}.billing-head{margin-bottom:40px}.billing-head h1{font-size:clamp(42px,7vw,84px);line-height:.9;letter-spacing:-.06em}.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.plan{padding:28px;border:1px solid #2d3342;background:rgba(8,12,24,.8)}.plan h2{margin:0 0 8px}.plan p{color:#a8adbb;min-height:42px}.plan-price{font-size:30px;margin:24px 0;color:#b8d7ff}.plan-price small{font-size:14px;color:#a8adbb}.plan button{width:100%;min-height:48px;margin-top:12px}.plan button[data-selected=true]{background:#b8d7ff;color:#101216}.plan-note{min-height:0!important;margin-top:10px;font-size:13px}.billing-status{margin-top:24px;padding:14px 0;border-top:1px solid #2d3342}.billing-status[data-status=success]{color:#80e2a7}.billing-status[data-status=warning]{color:#ffd166}.billing-status[data-status=error]{color:#ff8e8e}.billing-back{display:inline-block;margin-top:24px;color:#b8d7ff}@media(max-width:700px){.plans{grid-template-columns:1fr}.billing{padding:32px 18px}}
+    body{background:#03040a}.billing{max-width:1000px;margin:0 auto;padding:48px 24px}.billing-head{margin-bottom:40px}.billing-head h1{font-size:clamp(42px,7vw,84px);line-height:.9;letter-spacing:-.06em}.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.plan{padding:28px;border:1px solid #2d3342;background:rgba(8,12,24,.8)}.plan h2{margin:0 0 8px}.plan p{color:#a8adbb;min-height:42px}.plan-price{font-size:30px;margin:24px 0;color:#b8d7ff}.plan-price small{font-size:14px;color:#a8adbb}.plan button{width:100%;min-height:48px;margin-top:12px}.plan button[data-selected=true]{background:#b8d7ff;color:#101216}.plan-note{min-height:0!important;margin-top:10px;font-size:13px}.subscription-card{margin-top:24px;padding:20px;border:1px solid #2d3342;background:rgba(8,12,24,.8)}.subscription-card h2{margin:0 0 8px;font-size:18px}.subscription-card p{margin:6px 0;color:#a8adbb}.subscription-card button{margin-top:12px}.billing-status{margin-top:24px;padding:14px 0;border-top:1px solid #2d3342}.billing-status[data-status=success]{color:#80e2a7}.billing-status[data-status=warning]{color:#ffd166}.billing-status[data-status=error]{color:#ff8e8e}.billing-back{display:inline-block;margin-top:24px;color:#b8d7ff}@media(max-width:700px){.plans{grid-template-columns:1fr}.billing{padding:32px 18px}}
   </style>
 </head>
 <body>
@@ -20,6 +20,7 @@
       <p class="auth-subtitle">Contrata tu plan con Mercado Pago. Los planes Pro y Max se renuevan automáticamente según el período elegido.</p>
     </header>
     <section class="plans" id="plans" aria-live="polite"><p>Cargando planes…</p></section>
+    <section class="subscription-card" id="subscription" aria-live="polite" hidden></section>
     <p id="billingStatus" class="billing-status" role="status"></p>
     <a class="billing-back" href="/projects">Volver al espacio de trabajo</a>
   </main>
@@ -29,6 +30,7 @@
   <script>
     (async function () {
       const plans = document.getElementById('plans');
+      const subscriptionBox = document.getElementById('subscription');
       const status = document.getElementById('billingStatus');
       const params = new URLSearchParams(location.search);
       const wantedCode = String(params.get('plan') || '').toLowerCase();
@@ -45,10 +47,62 @@
           await Auth.completeProfile(values);
         }
       }
+      async function verifyAttempt(attemptId) {
+        setStatus('Verificando el resultado con Mercado Pago…', 'warning');
+        for (let index = 0; index < 12; index += 1) {
+          try {
+            const result = await Auth.api(`/api/billing/attempts/${encodeURIComponent(attemptId)}`);
+            const data = result.data || {};
+            if (data.status === 'approved' || data.subscriptionStatus === 'active') {
+              setStatus('Pago confirmado. Tu plan ya está activo.', 'success');
+              return;
+            }
+            if (['failed', 'rejected', 'cancelled', 'refunded'].includes(data.status)) {
+              setStatus('Mercado Pago no confirmó el pago. Puedes intentarlo nuevamente.', 'error');
+              return;
+            }
+          } catch (error) {
+            setStatus(error.message || 'No pudimos consultar el estado del pago.', 'error');
+            return;
+          }
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        setStatus('El pago sigue en verificación. Puedes revisar el estado nuevamente más tarde.', 'warning');
+      }
+      async function loadSubscription() {
+        const result = await Auth.api('/api/billing/subscription');
+        const subscription = result.data;
+        if (!subscription) return;
+        const plan = Array.isArray(subscription.tshow_plans) ? subscription.tshow_plans[0] : subscription.tshow_plans;
+        const end = subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('es-CL') : 'pendiente de confirmación';
+        const cancellable = subscription.status === 'active' && !subscription.cancel_at_period_end;
+        subscriptionBox.hidden = false;
+        subscriptionBox.innerHTML = `<h2>${escapeHtml(plan?.name || 'Suscripción')}</h2><p>Estado: ${escapeHtml(subscription.status || 'pendiente')}</p><p>Próxima renovación: ${escapeHtml(end)}</p>${subscription.cancel_at_period_end ? '<p>La renovación está cancelada; conservarás el acceso hasta el final del período pagado.</p>' : cancellable ? '<button class="btn" id="cancelSubscription">Cancelar próxima renovación</button>' : ''}`;
+        const cancelButton = document.getElementById('cancelSubscription');
+        if (cancelButton) cancelButton.onclick = async () => {
+          cancelButton.disabled = true;
+          try {
+            await Auth.api('/api/billing/subscription/cancel', { method: 'POST', body: '{}' });
+            setStatus('La próxima renovación fue cancelada. El acceso seguirá activo hasta el final del período.', 'success');
+            await loadSubscription();
+          } catch (error) {
+            setStatus(error.message || 'No pudimos cancelar la renovación.', 'error');
+            cancelButton.disabled = false;
+          }
+        };
+      }
       try {
         const user = await Auth.requireSession();
         if (!user) return;
         await ensureProfile(user);
+        await loadSubscription().catch(() => {});
+        let paymentsEnabled = false;
+        try {
+          const config = await Auth.api('/api/config');
+          paymentsEnabled = config.data?.paymentProviders?.mercadoPagoSubscriptions === true;
+        } catch (_) {
+          paymentsEnabled = false;
+        }
         const result = await Auth.api('/api/billing/plans');
         const list = result.data || [];
         if (!list.length) { plans.innerHTML = '<p class="auth-subtitle">Los planes estarán disponibles próximamente.</p>'; return; }
@@ -57,16 +111,21 @@
           const amount = Number(plan.amount_clp || 0);
           const selectedPlan = selected && selected.id === plan.id;
           const benefits = Array.isArray(plan.benefits) && plan.benefits.length ? plan.benefits.join(' · ') : 'Acceso completo a tu espacio de operación.';
-          const button = amount > 0 ? `<button class="btn" data-plan="${escapeHtml(plan.id)}" data-selected="${selectedPlan}">${selectedPlan ? 'Contratar este plan' : 'Elegir este plan'}</button>` : '<button class="btn" disabled>Incluido</button>';
+          const button = amount > 0 ? `<button class="btn" data-plan="${escapeHtml(plan.id)}" data-selected="${selectedPlan}"${paymentsEnabled ? '' : ' disabled'}>${paymentsEnabled ? (selectedPlan ? 'Contratar este plan' : 'Elegir este plan') : 'Contratación no disponible'}</button>` : '<button class="btn" disabled>Incluido</button>';
           return `<article class="plan"><p class="form-kicker">${plan.interval === 'year' ? 'ANUAL' : 'MENSUAL'}</p><h2>${escapeHtml(plan.name)}</h2><p>${escapeHtml(benefits)}</p><div class="plan-price">${amount > 0 ? '$' + amount.toLocaleString('es-CL') + ' CLP' : 'Gratis'} <small>${plan.interval === 'year' ? 'al año' : 'al mes'}</small></div>${button}${amount > 0 ? '<p class="plan-note">Se renovará automáticamente. Puedes cancelar antes del próximo período.</p>' : ''}</article>`;
         }).join('');
+        if (!paymentsEnabled) setStatus('La contratación está temporalmente no disponible.', 'warning');
         plans.addEventListener('click', async event => {
           const button = event.target.closest('[data-plan]');
           if (!button || button.disabled) return;
           button.disabled = true;
           setStatus('Preparando suscripción segura con Mercado Pago…', 'warning');
           try {
-            const response = await Auth.api('/api/mercadopago/subscriptions', { method: 'POST', body: JSON.stringify({ planId: button.dataset.plan, idempotencyKey: crypto.randomUUID() }) });
+            const storageKey = `tshow:billing-intent:${user.id}:${button.dataset.plan}`;
+            const idempotencyKey = sessionStorage.getItem(storageKey) || crypto.randomUUID();
+            sessionStorage.setItem(storageKey, idempotencyKey);
+            const response = await Auth.api('/api/mercadopago/subscriptions', { method: 'POST', body: JSON.stringify({ planId: button.dataset.plan, idempotencyKey }) });
+            if (response.status === 'approved') { setStatus('Tu plan ya está activo.', 'success'); return; }
             if (!response.initPoint) throw new Error('Mercado Pago no devolvió el enlace de suscripción.');
             location.href = response.initPoint;
           } catch (error) {
@@ -75,6 +134,7 @@
           }
         });
         if (!selected && wantedCode) setStatus('Selecciona el período disponible para ese plan.', 'warning');
+        if (params.get('status') === 'return' && params.get('attemptId')) await verifyAttempt(params.get('attemptId'));
       } catch (error) {
         setStatus(error.message || 'No pudimos cargar los planes.', 'error');
       }

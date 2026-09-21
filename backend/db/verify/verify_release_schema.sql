@@ -6,7 +6,7 @@ with expected_relations(name) as (values
   ('tshow_upload_intents'), ('tshow_project_assets'), ('tshow_organizations'),
   ('tshow_organization_members'), ('tshow_project_approvals'),
   ('tshow_project_requirements'), ('tshow_incidents'), ('tshow_incident_actions'),
-  ('tshow_guest_passes'), ('tshow_guest_sessions'), ('tshow_payment_transitions'),
+  ('tshow_guest_passes'), ('tshow_guest_sessions'), ('tshow_payment_transitions'), ('tshow_payment_attempt_reservations'),
   ('tshow_requirement_templates'), ('tshow_cleanup_jobs'), ('tshow_schema_versions')
 ), actual as (
   select table_name as name from information_schema.tables where table_schema = 'public'
