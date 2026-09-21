@@ -405,13 +405,24 @@ class LiveApp {
             snap.isOvertime ? 'Tiempo de atraso del bloque actual' :
             snap.status === 'idle' ? 'Esperando el inicio del seguimiento' : timerLabel;
         this.text('camarinesCountdownLabel', countdownLabel);
-        this.text('camarinesNextTitle', snap.nextItem?.title || (snap.status === 'finished' ? 'Evento finalizado' : 'No hay otro bloque'));
-        this.text('camarinesNextMeta', snap.nextItem ? `${snap.nextItem.type || 'Bloque'} · ${snap.nextItem.start || 'Inicio estimado'}` : 'Después finaliza el evento');
+        const previousItem = snap.previousItem;
+        const nextItem = snap.nextItem;
+        const previousTitle = previousItem?.title || (snap.currentItem ? 'Inicio del evento' : 'Sin bloque anterior');
+        const previousMeta = previousItem ? `${previousItem.type || 'Bloque'} · ${previousItem.start || 'Inicio programado'}` : (snap.currentItem ? 'Este es el primer bloque en seguimiento.' : 'El seguimiento todavía no ha comenzado.');
+        const nextTitle = nextItem?.title || (snap.status === 'finished' ? 'Evento finalizado' : snap.items.length ? 'Sin siguiente bloque' : 'No hay bloques disponibles');
+        const nextStart = nextItem && snap.trackingMode === 'manual' && snap.status !== 'idle' && snap.status !== 'finished'
+            ? LiveEngine.formatTimeSeconds(this.now() + Math.max(0, snap.remainingSeconds) * 1000, snap.zone).slice(0,5)
+            : nextItem?.start;
+        const nextMeta = nextItem ? `${nextItem.type || 'Bloque'} · ${nextStart || 'Inicio estimado'}` : (snap.status === 'finished' ? 'El evento terminó.' : 'Después finaliza el evento.');
+        this.text('camarinesPreviousTitle', previousTitle);
+        this.text('camarinesPreviousMeta', previousMeta);
+        this.text('camarinesNextTitle', nextTitle);
+        this.text('camarinesNextMeta', nextMeta);
         const startNum = current?.num || 1;
         const remaining = snap.items.filter(row => row.num >= startNum);
         const rows = this.$('camarinesRows');
         rows.innerHTML = remaining.map(row => {
-            const state = row === current ? 'active' : row.rowState;
+            const state = row === current && ['live','paused'].includes(snap.status) && !snap.waiting && !snap.scheduleEnded ? 'active' : row.rowState;
             const stateLabel = {active:'En curso',future:'Pendiente',completed:'Completado',muted:'Excluido'}[state] || 'Pendiente';
             return `<article class="camarines-row" data-state="${state}"><span class="camarines-row-number">${String(row.num).padStart(2,'0')}</span><div class="camarines-row-copy"><strong>${this.escape(row.title)}</strong><small>${this.escape(row.type || 'Bloque')} · ${row.effectiveDuration} min</small></div><div class="camarines-row-time"><span>${this.escape(row.start || '—')}</span><small>${stateLabel}</small></div></article>`;
         }).join('');

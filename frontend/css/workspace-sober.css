@@ -197,27 +197,26 @@ body.workspace-surface .workspace-shell{
 
 /* Selector de eventos: portada independiente, completa y sin scroll. */
 body.workspace-surface.project-selector-active{
-  overflow:hidden!important;
+  overflow:auto!important;
 }
 body.workspace-surface.project-selector-active nav.workspace-sidebar-shell{
   display:none!important;
 }
 body.workspace-surface.project-selector-active .workspace-shell{
   width:100%!important;
-  height:100dvh!important;
+  height:auto!important;
   min-height:100dvh!important;
   margin:0!important;
   padding:0!important;
-  overflow:hidden!important;
+  overflow:visible!important;
 }
 body.workspace-surface.project-selector-active .workspace-view[data-route="projects"]{
-  display:grid!important;
-  grid-template-rows:auto minmax(0,1fr);
+  display:block!important;
   width:100%!important;
-  height:100dvh!important;
-  min-height:0!important;
+  height:auto!important;
+  min-height:100dvh!important;
   padding:clamp(20px,3vh,38px) clamp(16px,3vw,56px) clamp(16px,2.5vh,32px)!important;
-  overflow:hidden!important;
+  overflow:visible!important;
   box-sizing:border-box;
 }
 body.workspace-surface.project-selector-active .project-selector-head{
@@ -242,43 +241,47 @@ body.workspace-surface.project-selector-active .selector-quota{
 }
 body.workspace-surface.project-selector-active .project-selector-stage{
   width:100%!important;
-  height:100%!important;
+  height:auto!important;
   min-height:0!important;
   margin:0!important;
-  padding:clamp(12px,2vh,26px) 0 0!important;
+  padding:clamp(12px,2vh,26px) 0 48px!important;
 }
 body.workspace-surface.project-selector-active .project-carousel{
   display:grid!important;
-  grid-template-columns:repeat(var(--project-grid-columns,4),minmax(0,1fr))!important;
-  grid-template-rows:repeat(var(--project-grid-rows,1),minmax(0,1fr))!important;
-  gap:clamp(10px,1.35vw,24px)!important;
+  grid-auto-flow:column!important;
+  grid-template-rows:auto!important;
+  grid-auto-columns:calc((100% - 48px)/3)!important;
+  gap:24px!important;
   width:100%!important;
-  height:100%!important;
+  height:auto!important;
   min-height:0!important;
   margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-  scroll-snap-type:none!important;
+  padding:0 0 16px!important;
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  scroll-snap-type:x mandatory!important;
+  scroll-padding-inline:0!important;
 }
 body.workspace-surface.project-selector-active .project-card{
   width:100%!important;
-  height:100%!important;
+  height:auto!important;
   min-width:0!important;
   min-height:0!important;
   flex:none!important;
   aspect-ratio:auto!important;
   margin:0!important;
-  opacity:.84!important;
+  opacity:1!important;
   transform:none!important;
+  filter:none!important;
 }
 body.workspace-surface.project-selector-active .project-card.is-focused,
 body.workspace-surface.project-selector-active .project-card:hover,
 body.workspace-surface.project-selector-active .project-card:focus-visible{
   opacity:1!important;
-  transform:translateY(-3px)!important;
+  transform:none!important;
 }
 body.workspace-surface.project-selector-active .project-card-art{
-  height:calc(100% - 38px)!important;
+  height:280px!important;
   min-height:0!important;
 }
 body.workspace-surface.project-selector-active .project-card-copy{
@@ -289,8 +292,8 @@ body.workspace-surface.project-selector-active .project-card-copy h2{
   line-height:1!important;
 }
 body.workspace-surface.project-selector-active .project-card footer{
-  min-height:38px!important;
-  padding:8px clamp(12px,1.4vw,20px)!important;
+  min-height:40px!important;
+  padding:10px 8px!important;
 }
 body.workspace-surface.project-selector-active .project-carousel.is-dense .project-card-copy h2{
   font-size:clamp(15px,1.35vw,23px)!important;
@@ -299,7 +302,33 @@ body.workspace-surface.project-selector-active .project-carousel.is-dense .proje
   display:none!important;
 }
 body.workspace-surface.project-selector-active .carousel-arrow{
-  display:none!important;
+  display:grid!important;
+  place-items:center!important;
+  position:absolute!important;
+  top:calc(50% - 20px)!important;
+  width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:0!important;
+  border:1px solid var(--theme-border,#cbd2cf)!important;
+  border-radius:50%!important;
+  background:var(--theme-surface,#fff)!important;
+  color:var(--theme-text,#202524)!important;
+  font-size:20px!important;
+  line-height:1!important;
+  z-index:5;
+}
+body.workspace-surface.project-selector-active .carousel-prev{left:16px!important}
+body.workspace-surface.project-selector-active .carousel-next{right:16px!important}
+body.workspace-surface.project-selector-active .project-carousel-status{position:relative;grid-column:1/-1;min-height:22px;margin-top:16px;text-align:center}
+@media(max-width:1023px) and (min-width:768px){
+  body.workspace-surface.project-selector-active .project-carousel{grid-auto-columns:calc((100% - 24px)/2)!important;gap:24px!important}
+}
+@media(max-width:767px){
+  body.workspace-surface.project-selector-active .project-carousel{display:flex!important;grid-auto-flow:initial!important;gap:16px!important;padding:0!important;overflow:visible!important;scroll-snap-type:none!important}
+  body.workspace-surface.project-selector-active .project-card{flex:none!important;width:100%!important}
+  body.workspace-surface.project-selector-active .project-card-art{height:auto!important;min-height:176px!important}
+  body.workspace-surface.project-selector-active .carousel-arrow,body.workspace-surface.project-selector-active .project-carousel-status{display:none!important}
 }
 
 /* El estado contraído muestra únicamente iconos; expandido conserva todas las etiquetas. */

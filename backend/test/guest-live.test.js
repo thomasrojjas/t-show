@@ -50,6 +50,9 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(html, /id="camarinesButton"/);
   assert.match(html, /id="camarinesRows"/);
   assert.match(html, /id="camarinesCountdown"/);
+  assert.match(html, /id="camarinesPreviousTitle"/);
+  assert.match(html, /id="camarinesPreviousMeta"/);
+  assert.match(html, /id="camarinesNextTitle"/);
   assert.match(html, /Hora actual/);
   assert.doesNotMatch(html, /id="sessionStatus"/);
   assert.doesNotMatch(html, /id="connectionStatus"/);
@@ -63,7 +66,23 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(app, /action:'previous'/);
   assert.match(app, /stageStatus\.dataset\.active/);
   assert.match(app, /renderCamarines\(snap, current, timer, timerLabel, labels\)/);
+  assert.match(app, /const previousItem = snap\.previousItem/);
+  assert.match(app, /camarinesPreviousTitle/);
+  assert.match(app, /camarinesNextTitle/);
+  assert.match(app, /\['live','paused'\]\.includes\(snap\.status\)/);
   assert.match(app, /const remaining = snap\.items\.filter\(row => row\.num >= startNum\)/);
+});
+
+test('project selector uses equal horizontal pages and hides pagination on mobile', () => {
+  const nav = read('frontend/js/workspace-nav.js');
+  const sober = read('frontend/css/workspace-sober.css');
+  const mobile = read('frontend/css/mobile-repairs.css');
+  assert.match(nav, /const starts=Array\.from\(\{length:totalPages\}/);
+  assert.match(nav, /targetPage=Math\.max\(1,Math\.min\(totalPages,current\+direction\)\)/);
+  assert.match(nav, /width<1024\?2:3/);
+  assert.match(sober, /grid-auto-columns:calc\(\(100% - 48px\)\/3\)/);
+  assert.match(sober, /grid-auto-columns:calc\(\(100% - 24px\)\/2\)/);
+  assert.match(mobile, /body\.workspace-surface\.project-selector-active \.carousel-arrow,\s*body\.workspace-surface\.project-selector-active \.project-carousel-status\s*\{display:none!important\}/);
 });
 
 test('live theme switcher is local per event and accessible', () => {
