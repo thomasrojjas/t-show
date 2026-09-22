@@ -2,6 +2,7 @@
 class LiveApp {
     constructor() {
         this.projectId = new URLSearchParams(location.search).get('project');
+        document.body.dataset.projectId = this.projectId || '';
         this.state = LiveEngine.defaults(); this.version = 0; this.projectVersion = 0; this.rows = new Map();
         this.connected = false; this.busy = false; this.follow = true; this.tab = 'script'; this.offset = 0;
         this.permission = 'viewer'; this.selection = null; this.readingKey = ''; this.syncing = null;
