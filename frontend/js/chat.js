@@ -37,8 +37,7 @@
         }
 
         mount() {
-            if (document.getElementById('chatLauncher')) return;
-            document.body.insertAdjacentHTML('beforeend', `
+            if (!document.getElementById('chatLauncher')) document.body.insertAdjacentHTML('beforeend', `
                 <button id="chatLauncher" class="chat-launcher" type="button" aria-haspopup="dialog" aria-controls="chatPanel" aria-expanded="false">
                     <span class="chat-launcher-icon" aria-hidden="true">✦</span><span>Chat</span><b id="chatGlobalBadge" class="chat-badge" hidden>0</b>
                 </button>
@@ -51,6 +50,24 @@
                     </div>
                 </aside>
                 <div id="chatNotice" class="chat-notice" role="status" aria-live="polite" hidden></div>`);
+            this.mountWorkspaceEntry();
+        }
+
+        mountWorkspaceEntry() {
+            const nav = document.querySelector('.workspace-sidebar-nav');
+            if (!nav || document.getElementById('workspaceChatButton')) return;
+            const label = document.createElement('div');
+            label.className = 'workspace-sidebar-label workspace-chat-label';
+            label.textContent = 'Comunicación';
+            const button = document.createElement('button');
+            button.id = 'workspaceChatButton';
+            button.className = 'workspace-chat-entry';
+            button.type = 'button';
+            button.setAttribute('aria-haspopup', 'dialog');
+            button.setAttribute('aria-controls', 'chatPanel');
+            button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01"/></svg><span>Chat</span><b id="workspaceChatBadge" class="chat-badge" hidden>0</b>';
+            button.addEventListener('click', () => this.open());
+            nav.append(label, button);
         }
 
         bind() {
@@ -83,6 +100,7 @@
         renderSummary() {
             const total = [...this.events.values()].reduce((sum, event) => sum + Number(event.unreadCount || 0), 0);
             const badge = document.getElementById('chatGlobalBadge'); badge.textContent = total > 99 ? '99+' : String(total); badge.hidden = total < 1;
+            const sidebarBadge = document.getElementById('workspaceChatBadge'); if (sidebarBadge) { sidebarBadge.textContent = total > 99 ? '99+' : String(total); sidebarBadge.hidden = total < 1; }
             document.getElementById('chatEventCount').textContent = this.events.size ? `${this.events.size} evento${this.events.size === 1 ? '' : 's'}` : '';
             this.eventList.replaceChildren();
             if (!this.events.size) { this.eventList.innerHTML = '<p class="chat-empty">No tienes eventos disponibles.</p>'; this.updateComposer(); return; }
