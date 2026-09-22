@@ -20,9 +20,14 @@
         }
 
         init() {
-            if (!window.Auth?.api || !document.body.matches('.live-body, [data-workspace-page]')) return;
+            if (!document.body.matches('.live-body, [data-workspace-page]')) return;
             this.mount();
             this.bind();
+            document.body.classList.add('chat-ready');
+            if (!window.Auth?.api) {
+                this.eventList.innerHTML = '<p class="chat-empty chat-error">El chat no está disponible en este momento.</p>';
+                return;
+            }
             this.refreshSummary();
             this.startRealtime();
             this.summaryTimer = setInterval(() => this.refreshSummary(), 30000);
@@ -149,5 +154,9 @@
         loadDraft(projectId) { try { return sessionStorage.getItem(DRAFT_PREFIX + projectId) || ''; } catch (_) { return ''; } }
     }
 
-    document.addEventListener('DOMContentLoaded', () => { window.ChatApp = new ChatApp(); });
+    const boot = () => {
+        if (!window.ChatApp) window.ChatApp = new ChatApp();
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+    else boot();
 })();
