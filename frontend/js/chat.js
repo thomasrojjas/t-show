@@ -23,6 +23,7 @@
             if (!document.body.matches('.live-body, [data-workspace-page]')) return;
             this.mount();
             this.bind();
+            window.addEventListener('tshow:workspace-nav-mounted', () => this.mountWorkspaceEntry(), { once: true });
             document.body.classList.add('chat-ready');
             if (!window.Auth?.api) {
                 this.eventList.innerHTML = '<p class="chat-empty chat-error">El chat no está disponible en este momento.</p>';

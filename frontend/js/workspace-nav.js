@@ -93,6 +93,7 @@
     nav.querySelector('#workspaceHelp').addEventListener('click',startTutorial);
     document.addEventListener('click',event=>{if(!nav.contains(event.target))closeMenus();});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeMenus();closeDrawer();}});
+    window.dispatchEvent(new CustomEvent('tshow:workspace-nav-mounted'));
   }
 
   async function loadAccountSummary(){

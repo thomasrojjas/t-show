@@ -39,6 +39,14 @@ test('production view exposes area management and preserves the selected operati
   assert.match(workspace, /operationalPanel\(activeKey\)/);
 });
 
+test('chat mounts its sidebar entry even when navigation initializes asynchronously', () => {
+  const chat = read('frontend/js/chat.js');
+  const workspace = read('frontend/js/workspace-nav.js');
+  assert.match(chat, /tshow:workspace-nav-mounted/);
+  assert.match(chat, /mountWorkspaceEntry\(\)/);
+  assert.match(workspace, /tshow:workspace-nav-mounted/);
+});
+
 test('payment activation remains behind provider reconciliation', () => {
   const billing = read('backend/routes/billing.js');
   const bricksRoute = billing.slice(billing.indexOf("router.post('/mercadopago/bricks'"), billing.indexOf("router.post('/mercadopago/subscriptions'"));
