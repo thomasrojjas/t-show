@@ -4,12 +4,18 @@ const Auth = (() => {
     async function ensureSupabaseBrowserClient() {
         if (window.supabase && typeof window.supabase.createClient === 'function') return true;
         await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
-            script.async = false;
-            script.onload = resolve;
-            script.onerror = () => reject(new Error('No se pudo cargar el servicio de autenticación desde las fuentes disponibles.'));
-            document.head.appendChild(script);
+            const sources = ['/vendor/supabase.js', 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+            const loadNext = () => {
+                const source = sources.shift();
+                if (!source) return reject(new Error('No se pudo cargar el servicio de autenticación desde las fuentes disponibles.'));
+                const script = document.createElement('script');
+                script.src = source;
+                script.async = false;
+                script.onload = resolve;
+                script.onerror = loadNext;
+                document.head.appendChild(script);
+            };
+            loadNext();
         });
         return Boolean(window.supabase && typeof window.supabase.createClient === 'function');
     }
