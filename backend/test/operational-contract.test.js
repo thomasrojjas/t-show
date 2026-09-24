@@ -21,6 +21,10 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(route, /task_kind.*template/);
   assert.match(route, /snapshot:source/);
   assert.match(route, /current_index:0/);
+  assert.match(route, /action==='next'/);
+  assert.match(route, /action==='previous'/);
+  assert.match(route, /action==='reset'/);
+  assert.match(route, /action==='seek'/);
 });
 
 test('operational storage is additive and preserves rehearsal isolation', () => {

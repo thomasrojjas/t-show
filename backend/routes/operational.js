@@ -53,6 +53,25 @@ const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
 const audit = (projectId, actorId, action, metadata = {}) => supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
 
+router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard, async(req,res,next)=>{
+  const a=await access(req.params.id,true); if(!canManage(a))return next();
+  const {data:rehearsal,error:readError}=await supabase.from('tshow_rehearsals').select('*').eq('id',req.params.rehearsalId).eq('project_id',req.params.id).maybeSingle();
+  if(readError)return fail(res,500,'No se pudo leer el ensayo.','service_unavailable'); if(!rehearsal)return fail(res,404,'El ensayo no existe.','not_found');
+  const action=String(req.body.action||'status'); const blocks=Array.isArray(rehearsal.snapshot?.blocks)?rehearsal.snapshot.blocks:[]; const patch={updated_at:new Date().toISOString()};
+  if(action==='start')patch.status='running';
+  else if(action==='pause')patch.status='paused';
+  else if(action==='finish')patch.status='finished';
+  else if(action==='reset'){patch.status='draft';patch.current_index=0;patch.elapsed_seconds=0;patch.simulated_now=null;}
+  else if(action==='next')patch.current_index=Math.min(Math.max(0,blocks.length-1),Number(rehearsal.current_index||0)+1);
+  else if(action==='previous')patch.current_index=Math.max(0,Number(rehearsal.current_index||0)-1);
+  else if(action==='seek'){const timestamp=Date.parse(req.body.simulatedNow||'');if(!Number.isFinite(timestamp))return fail(res,400,'El instante simulado no es válido.','validation_error');patch.simulated_now=new Date(timestamp).toISOString();}
+  else if(action==='status'&&['draft','running','paused','finished','cancelled'].includes(req.body.status))patch.status=req.body.status;
+  else return fail(res,400,'Acción de ensayo inválida.','validation_error');
+  const {data,error}=await supabase.from('tshow_rehearsals').update(patch).eq('id',rehearsal.id).eq('updated_at',rehearsal.updated_at).select().single();
+  if(error||!data)return fail(res,409,'El ensayo cambió en otra sesión. Actualiza e inténtalo nuevamente.','conflict');
+  await audit(req.params.id,req.user.id,'operational.rehearsal.controlled',{rehearsalId:rehearsal.id,action,currentIndex:data.current_index,status:data.status}); res.json({success:true,data});
+});
+
 router.post('/projects/:id/timing-adjustments/preview', requireSupabaseAuth, guard, async (req,res)=>{
   const a=await access(req,req.params.id,true); if(!canWrite(a))return fail(res,403,'No tienes permisos para proponer ajustes.','forbidden');
   const input=Array.isArray(req.body.blocks)?req.body.blocks:[];
