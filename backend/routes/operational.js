@@ -180,17 +180,19 @@ router.get('/projects/:id/notices', requireSupabaseAuth, guard, async (req,res,n
 router.patch('/projects/:id/operational-feature', requireSupabaseAuth, async (req,res)=>{const a=await access(req,req.params.id,true);if(!canManage(a))return fail(res,403,'Solo el propietario o administrador puede habilitar Producción.','forbidden');const enabledValue=req.body.enabled===true;const {data,error}=await supabase.from('tshow_operational_feature_flags').upsert({project_id:req.params.id,enabled:enabledValue,enabled_by:req.user.id,enabled_at:enabledValue?new Date().toISOString():null,updated_at:new Date().toISOString()},{onConflict:'project_id'}).select().single();if(error)return fail(res,400,'No se pudo actualizar la habilitación operativa.','validation_error');await audit(req.params.id,req.user.id,'operational.feature.updated',{enabled:enabledValue});res.json({success:true,data});});
 router.get('/projects/:id/production', requireSupabaseAuth, guard, async (req, res) => {
   const a = await access(req, req.params.id); if (!a) return fail(res, 403, 'No tienes acceso operativo a este evento.', 'forbidden');
-  const [areas, tasks, artists, appearances, notices, readiness] = await Promise.all([
+  const [areas, tasks, artists, appearances, notices, readiness, areaMemberships] = await Promise.all([
     supabase.from('tshow_project_areas').select('*').eq('project_id', req.params.id).eq('status','active').order('name'),
     supabase.from('tshow_tasks').select('*').eq('project_id', req.params.id).order('due_at'),
     supabase.from('tshow_artists').select('*').eq('project_id', req.params.id).order('name'),
     supabase.from('tshow_artist_appearances').select('*').eq('project_id', req.params.id).order('updated_at',{ascending:false}),
     supabase.from('tshow_operational_notices').select('id,title,body,block_id,area_id,created_by,created_at,tshow_operational_notice_recipients(user_id,seen_at,confirmed_at)').eq('project_id', req.params.id).order('created_at',{ascending:false}).limit(30),
-    supabase.from('tshow_block_area_readiness').select('*,tshow_project_areas(name,area_key),tshow_project_blocks(title,position,start_time)').eq('project_id', req.params.id).order('updated_at',{ascending:false})
+    supabase.from('tshow_block_area_readiness').select('*,tshow_project_areas(name,area_key),tshow_project_blocks(title,position,start_time)').eq('project_id', req.params.id).order('updated_at',{ascending:false}),
+    supabase.from('tshow_project_area_members').select('area_id,can_update').eq('user_id', req.user.id)
   ]);
-  const errors = [areas,tasks,artists,appearances,notices,readiness].find(x => x.error); if (errors) return fail(res, 500, 'No se pudo cargar el espacio operativo.', 'service_unavailable');
+  const errors = [areas,tasks,artists,appearances,notices,readiness,areaMemberships].find(x => x.error); if (errors) return fail(res, 500, 'No se pudo cargar el espacio operativo.', 'service_unavailable');
   const visibleNotices=(notices.data||[]).map(({tshow_operational_notice_recipients,...notice})=>({...notice,recipient:(tshow_operational_notice_recipients||[]).find(recipient=>recipient.user_id===req.user.id)||null}));
-  res.json({ success:true, enabled:true, serverTime:new Date().toISOString(), project:{ id:a.project.id, documentVersion:a.project.document_version }, data:{ areas:areas.data||[], tasks:tasks.data||[], artists:artists.data||[], appearances:appearances.data||[], notices:visibleNotices, readiness:readiness.data||[] }, capabilities:{ manageAreas:canManage(a), editOperational:canWrite(a), createRehearsal:canManage(a) } });
+  const areaUpdate=canWrite(a)||(areaMemberships.data||[]).some(item=>item.can_update===true);
+  res.json({ success:true, enabled:true, serverTime:new Date().toISOString(), project:{ id:a.project.id, documentVersion:a.project.document_version }, data:{ areas:areas.data||[], tasks:tasks.data||[], artists:artists.data||[], appearances:appearances.data||[], notices:visibleNotices, readiness:readiness.data||[] }, capabilities:{ manageAreas:canManage(a), editOperational:canWrite(a), areaUpdate, createRehearsal:canManage(a) } });
 });
 
 router.get('/projects/:id/areas', requireSupabaseAuth, guard, async (req,res)=>{ const a=await access(req,req.params.id); if(!a)return fail(res,403,'No tienes acceso a este evento.','forbidden'); const {data,error}=await supabase.from('tshow_project_areas').select('*,tshow_project_area_members(user_id,can_update)').eq('project_id',req.params.id).order('name'); if(error)return fail(res,500,'No se pudieron cargar las áreas.'); res.json({success:true,data:data||[]}); });
