@@ -119,7 +119,7 @@
         close() { this.panel.hidden = true; this.scrim.hidden = true; document.body.classList.remove('chat-open'); this.launcher.setAttribute('aria-expanded', 'false'); this.launcher.focus(); }
 
         async selectEvent(projectId) {
-            this.selectedProjectId = projectId; this.renderSummary(); this.loadMessages(projectId); this.draftNode.value = this.loadDraft(projectId); this.updateComposer();
+            this.selectedProjectId = projectId; this.renderSummary(); this.loadMessages(projectId); this.draftNode.value = await this.loadDraftAsync(projectId); this.updateComposer();
         }
 
         async loadMessages(projectId) {
@@ -128,7 +128,7 @@
             try {
                 const result = await window.Auth.api(`/api/projects/${encodeURIComponent(projectId)}/chat/messages`);
                 this.messages.set(projectId, new Map((result.data?.messages || []).map(message => [message.id, message])));
-                if (projectId === this.selectedProjectId) { this.renderMessages(); this.draftNode.value = this.loadDraft(projectId); this.updateComposer(); this.markRead(); }
+                if (projectId === this.selectedProjectId) { this.renderMessages(); this.draftNode.value = await this.loadDraftAsync(projectId); this.updateComposer(); this.markRead(); }
             } catch (error) { if (projectId === this.selectedProjectId) this.messagesNode.innerHTML = `<p class="chat-empty chat-error">${esc(error.message || 'No pudimos cargar los mensajes.')}</p>`; }
             finally { this.messagesNode.removeAttribute('aria-busy'); }
         }
@@ -168,8 +168,9 @@
         showNotice(text) { const notice = document.getElementById('chatNotice'); notice.textContent = text; notice.hidden = false; clearTimeout(this.noticeTimer); this.noticeTimer = setTimeout(() => { notice.hidden = true; }, 5000); }
         async toggleSound() { this.soundEnabled = !this.soundEnabled; this.soundButton.setAttribute('aria-pressed', String(this.soundEnabled)); this.soundButton.textContent = this.soundEnabled ? 'Sonido encendido' : 'Sonido apagado'; try { await window.Auth.api('/api/chat/preferences', { method:'PATCH', body:JSON.stringify({ soundEnabled:this.soundEnabled }) }); if (this.soundEnabled) this.playSound(); } catch (_) { this.soundEnabled = !this.soundEnabled; } }
         playSound() { if (!this.soundEnabled) return; try { const context = new (window.AudioContext || window.webkitAudioContext)(); const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = 760; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .14); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .14); } catch (_) {} }
-        saveDraft(projectId, value) { try { sessionStorage.setItem(DRAFT_PREFIX + projectId, value); } catch (_) {} }
+        saveDraft(projectId, value) { try { sessionStorage.setItem(DRAFT_PREFIX + projectId, value); } catch (_) {} window.TShowOffline?.saveDraft(`chat:${projectId}`, value).catch(() => {}); }
         loadDraft(projectId) { try { return sessionStorage.getItem(DRAFT_PREFIX + projectId) || ''; } catch (_) { return ''; } }
+        async loadDraftAsync(projectId) { try { const saved=await window.TShowOffline?.readDraft(`chat:${projectId}`); if(typeof saved==='string') return saved; } catch (_) {} return this.loadDraft(projectId); }
     }
 
     const boot = () => {

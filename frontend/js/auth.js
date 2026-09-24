@@ -115,7 +115,7 @@ const Auth = (() => {
     async function getProfile() { return (await api('/api/me')).data; }
     async function forgotPassword(email) { const { error } = await (await client()).auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' }); if (error) throw error; }
     async function updatePassword(password) { const { error } = await (await client()).auth.updateUser({ password }); if (error) throw error; }
-    async function logout(redirect = true) { await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
+    async function logout(redirect = true) { try { const user = await (await client()).auth.getUser(); await window.TShowOffline?.clearUser(user.data?.user?.id || ''); } catch (_) {} await (await client()).auth.signOut(); if (redirect) window.location.href = '/'; }
     function pendingInvitation() {
         const params = new URLSearchParams(location.search);
         const invitationPage = /^\/invite(?:\.html)?\/?$/.test(location.pathname);
