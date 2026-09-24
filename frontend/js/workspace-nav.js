@@ -317,6 +317,7 @@
   let operationalData={};
   let operationalOfflineMode=false;
   function lockOperationalControls(){const panel=document.getElementById('operationalPanel');if(!panel)return;panel.querySelectorAll('select,input,textarea,button:not([data-operational-refresh])').forEach(node=>{node.disabled=operationalOfflineMode;node.title=operationalOfflineMode?'Sin conexión: esta acción requiere reconexión':'';});}
+  function renderChecklistProgress(panel,data,tab){if(tab!=='checklist')return;const tasks=data.checklist||[],completed=tasks.filter(item=>item.status==='completed').length,blocked=tasks.filter(item=>item.status==='blocked').length;const summary=document.createElement('p');summary.className='shell-muted operational-checklist-progress';summary.setAttribute('role','status');summary.textContent=`Progreso: ${completed} de ${tasks.length} completadas${blocked?` · ${blocked} bloqueada${blocked===1?'':'s'}`:''}`;const heading=panel.querySelector('.panel-title');if(heading)heading.insertAdjacentElement('afterend',summary);}
   function operationalPanel(tab='readiness'){
     const panel=document.getElementById('operationalPanel'); if(!panel)return; const data=operationalData;
     const statusLabel={pending:'Pendiente',preparing:'Preparando',ready:'Listo',problem:'Problema',not_applicable:'No aplica',in_progress:'En curso',blocked:'Bloqueada',completed:'Completada',cancelled:'Cancelada',expected:'Por llegar',on_site:'En recinto',in_dressing_room:'En camarín',finished:'Presentación terminada'};
@@ -338,6 +339,7 @@
     if(tab==='artists')panel.querySelectorAll('[data-operational-appearance]').forEach(select=>{const appearance=(data.artists||[]).flatMap(item=>item.tshow_artist_appearances||[]).find(item=>item.id===select.dataset.operationalAppearance);if(appearance)select.value=appearance.status||'expected';});
     const capabilities=data.capabilities||{};if(capabilities.manageAreas===false)panel.querySelectorAll('[data-operational-area-new],[data-operational-area-edit],[data-operational-area-archive],[data-operational-template]').forEach(node=>{node.hidden=true;});if(capabilities.editOperational===false)panel.querySelectorAll('[data-operational-task-template],[data-operational-task-new],[data-operational-artist-new],[data-operational-appearance-new],[data-operational-notice],[data-operational-notice-form],[data-operational-preview]').forEach(node=>{node.hidden=true;});if(capabilities.areaUpdate===false)panel.querySelectorAll('[data-operational-task],[data-operational-readiness],[data-operational-cue-new],[data-operational-cue-edit]').forEach(node=>{node.disabled=true;node.hidden=capabilities.editOperational===false;});if(capabilities.createRehearsal===false)panel.querySelectorAll('[data-operational-rehearsal],[data-operational-rehearsal-action]').forEach(node=>{node.hidden=true;});
     if(capabilities.manageAreas===false)panel.querySelectorAll('[data-operational-area-member-add],[data-operational-area-member-remove]').forEach(node=>{node.hidden=true;});
+    renderChecklistProgress(panel,data,tab);
     lockOperationalControls();
   }
   async function loadProduction(){
