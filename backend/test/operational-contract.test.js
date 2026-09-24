@@ -31,6 +31,9 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   const workspace = fs.readFileSync(path.join(root, 'frontend/js/workspace-nav.js'), 'utf8');
   assert.match(workspace, /Reloj simulado/);
   assert.match(workspace, /elapsed_seconds/);
+  assert.match(workspace, /operationalOfflineMode=true/);
+  assert.match(workspace, /solo consulta/);
+  assert.match(workspace, /lockOperationalControls/);
 });
 
 test('operational storage is additive and preserves rehearsal isolation', () => {
