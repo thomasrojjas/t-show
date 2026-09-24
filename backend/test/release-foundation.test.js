@@ -31,6 +31,14 @@ test('legacy helper RPCs are not exposed and mutable search paths are fixed', ()
   assert.match(functionHardening, /set search_path = public, pg_temp/i);
 });
 
+test('production view exposes area management and preserves the selected operational tab on refresh', () => {
+  const workspace = read('frontend/js/workspace-nav.js');
+  assert.match(workspace, /data-operational-area-new/);
+  assert.match(workspace, /\/projects\/\$\{encodeURIComponent\(currentProject\)\}\/areas\//);
+  assert.match(workspace, /const activeKey=document\.querySelector\('\[data-operational-tab\]\.is-active'\)/);
+  assert.match(workspace, /operationalPanel\(activeKey\)/);
+});
+
 test('payment activation remains behind provider reconciliation', () => {
   const billing = read('backend/routes/billing.js');
   const bricksRoute = billing.slice(billing.indexOf("router.post('/mercadopago/bricks'"), billing.indexOf("router.post('/mercadopago/subscriptions'"));
