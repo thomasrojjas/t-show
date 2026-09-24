@@ -29,7 +29,8 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
         if (requestPath === `/api/projects/${project.id}`) return route.fulfill({ json: { data: { id: project.id, event_name: project.eventName, payload: { ...project, permission: browserRole }, permission: browserRole } } });
         if (requestPath.endsWith('/production')) return route.fulfill({ json: { success: true, serverTime: '2026-09-23T15:00:00Z', project: { id: project.id, documentVersion: 1 }, data: { areas: [], tasks: [], artists: [], appearances: [], notices: [] }, capabilities: { manageAreas: browserRole === 'owner', editOperational: browserRole === 'owner', areaUpdate: browserRole === 'owner' || browserRole === 'area_operator', createRehearsal: browserRole === 'owner' } } });
         if (requestPath.endsWith('/readiness')) return route.fulfill({ json: { success: true, data: [{ id: 'r1', status: 'ready', updated_at: '2026-09-23T14:59:00Z', confirmed_by: 'qa-user', note: '', tshow_project_blocks: { title: 'Apertura', start_time: '20:00' }, tshow_project_areas: { name: 'Sonido' } }] } });
-        if (requestPath.endsWith('/technical-cues') || requestPath.endsWith('/artists') || requestPath.endsWith('/notices') || requestPath.endsWith('/rehearsals')) return route.fulfill({ json: { success: true, data: [] } });
+        if (requestPath.endsWith('/technical-cues') || requestPath.endsWith('/notices') || requestPath.endsWith('/rehearsals')) return route.fulfill({ json: { success: true, data: [] } });
+        if (requestPath.endsWith('/artists')) return route.fulfill({ json: { success: true, data: [{ id: 'artist-1', name: 'Agrupación QA', kind: 'artist', tshow_artist_appearances: [{ id: 'appearance-1', status: 'expected', call_time: '18:00', dressing_room: 'A' }, { id: 'appearance-2', status: 'ready', call_time: '20:00', dressing_room: 'B' }] }] } });
         return route.fulfill({ json: { data: [] } });
       }
       const asset = path.join(root, 'frontend', requestPath === '/' || !path.extname(requestPath) ? 'app.html' : requestPath);
@@ -47,7 +48,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.getByRole('tab', { name: 'Checklist' }).click(); await page.waitForSelector('[data-operational-task-new]');
     await page.getByRole('button', { name: 'Aplicar plantilla' }).click(); await page.waitForTimeout(50); assert(requests.some(item => item.path.endsWith('/tasks/apply-template')));
     await page.getByRole('tab', { name: 'Indicaciones' }).click(); await page.waitForSelector('[data-operational-cue-new]');
-    await page.getByRole('tab', { name: 'Artistas' }).click(); await page.waitForSelector('[data-operational-artist-new]');
+    await page.getByRole('tab', { name: 'Artistas' }).click(); await page.waitForSelector('[data-operational-artist-new]'); assert.equal(await page.locator('[data-operational-appearance]').count(), 2, 'all artist appearances must be independently visible'); assert.equal(await page.locator('[data-operational-appearance-history]').count(), 2, 'all appearance histories must be available');
     await page.getByRole('tab', { name: 'Avisos' }).click(); await page.waitForSelector('[data-operational-notice]');
     await page.getByRole('tab', { name: 'Atrasos' }).click(); await page.waitForSelector('[data-operational-preview]');
     await page.getByRole('tab', { name: 'Ensayos' }).click(); await page.waitForSelector('[data-operational-rehearsal]');
