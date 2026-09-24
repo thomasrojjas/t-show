@@ -87,6 +87,11 @@ create index if not exists tshow_notices_project_idx on public.tshow_operational
 create index if not exists tshow_notice_recipient_idx on public.tshow_operational_notice_recipients(user_id,confirmed_at);
 create index if not exists tshow_rehearsals_project_idx on public.tshow_rehearsals(project_id,created_at desc);
 
+grant select on public.tshow_project_areas, public.tshow_project_area_members, public.tshow_technical_cues,
+  public.tshow_block_area_readiness, public.tshow_artists, public.tshow_artist_appearances,
+  public.tshow_operational_notices, public.tshow_operational_notice_recipients,
+  public.tshow_rehearsals, public.tshow_timing_adjustments to authenticated;
+
 do $$ declare t text; begin
   foreach t in array array['tshow_project_areas','tshow_project_area_members','tshow_technical_cues','tshow_block_area_readiness','tshow_artists','tshow_artist_appearances','tshow_operational_notices','tshow_operational_notice_recipients','tshow_rehearsals','tshow_timing_adjustments'] loop
     execute format('alter table public.%I enable row level security', t);

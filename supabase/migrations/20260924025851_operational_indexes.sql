@@ -1,0 +1,21 @@
+-- Cover foreign-key lookups used by operational lists and cascades.
+create index if not exists tshow_project_areas_created_by_idx on public.tshow_project_areas(created_by);
+create index if not exists tshow_area_members_user_idx on public.tshow_project_area_members(user_id);
+create index if not exists tshow_cues_area_idx on public.tshow_technical_cues(area_id);
+create index if not exists tshow_cues_block_idx on public.tshow_technical_cues(block_id);
+create index if not exists tshow_cues_updated_by_idx on public.tshow_technical_cues(updated_by);
+create index if not exists tshow_readiness_area_idx on public.tshow_block_area_readiness(area_id);
+create index if not exists tshow_readiness_confirmed_by_idx on public.tshow_block_area_readiness(confirmed_by);
+create index if not exists tshow_artists_created_by_idx on public.tshow_artists(created_by);
+create index if not exists tshow_appearances_artist_idx on public.tshow_artist_appearances(artist_id);
+create index if not exists tshow_appearances_block_idx on public.tshow_artist_appearances(block_id);
+create index if not exists tshow_appearances_responsible_idx on public.tshow_artist_appearances(responsible_id);
+create index if not exists tshow_appearances_updated_by_idx on public.tshow_artist_appearances(updated_by);
+create index if not exists tshow_notices_area_idx on public.tshow_operational_notices(area_id);
+create index if not exists tshow_notices_block_idx on public.tshow_operational_notices(block_id);
+create index if not exists tshow_notices_created_by_idx on public.tshow_operational_notices(created_by);
+create index if not exists tshow_notice_recipient_user_idx on public.tshow_operational_notice_recipients(user_id);
+create index if not exists tshow_rehearsals_created_by_idx on public.tshow_rehearsals(created_by);
+create index if not exists tshow_adjustments_project_idx on public.tshow_timing_adjustments(project_id);
+create index if not exists tshow_adjustments_created_by_idx on public.tshow_timing_adjustments(created_by);
+create index if not exists tshow_adjustments_applied_by_idx on public.tshow_timing_adjustments(applied_by);
