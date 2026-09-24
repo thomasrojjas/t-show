@@ -14,6 +14,8 @@ test('operational API keeps internal access, feature gating and delegated area w
   assert.match(route, /area operators may update their assigned checklist/i);
   assert.match(route, /tshow_project_area_members/);
   assert.match(route, /No tienes permisos para actualizar tareas/);
+  assert.match(route, /router\.get\('\/operational-inbox'/);
+  assert.match(route, /seen_at.*null/);
 });
 
 test('operational API exposes idempotent checklist templates and rehearsal snapshots', () => {

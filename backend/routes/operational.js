@@ -185,6 +185,32 @@ router.post('/projects/:id/tasks/apply-template', requireSupabaseAuth, guard, as
 });
 // A recipient-scoped inbox keeps directed notices private while preserving the
 // existing project notice route for backwards-compatible clients.
+router.get('/operational-inbox', requireSupabaseAuth, async (req,res)=>{
+  try {
+    const [{data:owned,error:ownedError},{data:members,error:membersError}]=await Promise.all([
+      supabase.from('tshow_projects').select('id,event_name').eq('owner_id',req.user.id).is('deleted_at',null),
+      supabase.from('tshow_project_members').select('project_id').eq('user_id',req.user.id)
+    ]);
+    if(ownedError||membersError)return fail(res,503,'No se pudo cargar la bandeja operativa.','service_unavailable');
+    const projectIds=[...new Set([...(owned||[]).map(row=>row.id),...(members||[]).map(row=>row.project_id)])];
+    if(!projectIds.length)return res.json({success:true,data:[],unreadCount:0});
+    const {data:recipients,error:recipientError}=await supabase.from('tshow_operational_notice_recipients').select('notice_id,seen_at,confirmed_at').eq('user_id',req.user.id).is('seen_at',null).limit(100);
+    if(recipientError)return fail(res,503,'No se pudo cargar la bandeja operativa.','service_unavailable');
+    const noticeIds=(recipients||[]).map(row=>row.notice_id).filter(uuid);
+    if(!noticeIds.length)return res.json({success:true,data:[],unreadCount:0});
+    const [{data:flags,error:flagError},{data:notices,error:noticeError},{data:projects,error:projectError}]=await Promise.all([
+      supabase.from('tshow_operational_feature_flags').select('project_id').in('project_id',projectIds).eq('enabled',true),
+      supabase.from('tshow_operational_notices').select('id,project_id,title,body,block_id,created_by,created_at').in('id',noticeIds).in('project_id',projectIds).order('created_at',{ascending:false}).limit(100),
+      supabase.from('tshow_projects').select('id,event_name').in('id',projectIds)
+    ]);
+    if(flagError||noticeError||projectError)return fail(res,503,'No se pudo cargar la bandeja operativa.','service_unavailable');
+    const enabledProjects=new Set((flags||[]).map(row=>row.project_id));
+    const recipientByNotice=new Map((recipients||[]).map(row=>[row.notice_id,row]));
+    const projectNames=new Map((projects||[]).map(row=>[row.id,row.event_name]));
+    const data=(notices||[]).filter(notice=>enabledProjects.has(notice.project_id)).map(notice=>({...notice,eventName:projectNames.get(notice.project_id)||'Evento',recipient:recipientByNotice.get(notice.id)||null}));
+    res.json({success:true,data,unreadCount:data.length});
+  } catch (_) { return fail(res,503,'No se pudo cargar la bandeja operativa.','service_unavailable'); }
+});
 router.get('/projects/:id/operational-inbox', requireSupabaseAuth, guard, async (req,res)=>{
   const a=await access(req,req.params.id); if(!a)return fail(res,403,'No tienes acceso a este evento.','forbidden');
   const [{data:notices,error:noticeError},{data:recipients,error:recipientError}]=await Promise.all([

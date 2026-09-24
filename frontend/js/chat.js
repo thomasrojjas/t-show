@@ -29,12 +29,33 @@
                 return;
             }
             this.refreshSummary();
+            this.refreshNotices();
             this.startRealtime();
             this.summaryTimer = setInterval(() => this.refreshSummary(), 30000);
+            this.noticeTimer = setInterval(() => this.refreshNotices(), 30000);
             this.pollTimer = setInterval(() => { if (document.visibilityState === 'visible' && !this.realtimeReady) this.refreshSummary(true); }, 10000);
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.refreshSummary(true); });
             window.addEventListener('focus', () => this.refreshSummary(true));
         }
+
+        async refreshNotices() {
+            try {
+                const result=await window.Auth.api('/api/operational-inbox');
+                this.notices=Array.isArray(result.data)?result.data:(result.data?.data||[]);
+                const count=Number(result.unreadCount ?? result.data?.unreadCount ?? this.notices.length);
+                const badge=document.getElementById('workspaceNoticeBadge');
+                if(badge){badge.textContent=count>99?'99+':String(count);badge.hidden=count<1;}
+                if(this.noticeDialog?.open)this.renderNotices();
+            } catch(error) { if(error.status!==401&&error.status!==403)this.noticeError=error.message; }
+        }
+
+        renderNotices() {
+            if(!this.noticeList)return;
+            const list=this.notices||[];
+            this.noticeList.innerHTML=list.length?list.map(notice=>`<article class="operational-notice-item"><span class="chat-kicker">${esc(notice.eventName||'Evento')}</span><strong>${esc(notice.title)}</strong><p>${esc(notice.body)}</p><small>${new Date(notice.created_at).toLocaleString('es-CL')}</small><button type="button" data-notice-seen="${esc(notice.project_id)}" data-notice-id="${esc(notice.id)}">Marcar visto</button></article>`).join(''):'<p class="chat-empty">No tienes avisos pendientes.</p>';
+        }
+
+        openNotices() { this.renderNotices(); this.noticeDialog?.showModal(); }
 
         mount() {
             if (!document.getElementById('chatLauncher')) document.body.insertAdjacentHTML('beforeend', `
@@ -50,6 +71,11 @@
                     </div>
                 </aside>
                 <div id="chatNotice" class="chat-notice" role="status" aria-live="polite" hidden></div>`);
+            if (!document.getElementById('operationalNoticeDialog')) document.body.insertAdjacentHTML('beforeend', `
+                <dialog id="operationalNoticeDialog" class="operational-notice-dialog" aria-labelledby="operationalNoticeTitle">
+                  <header><div><span class="chat-kicker">Comunicación interna</span><h2 id="operationalNoticeTitle">Avisos pendientes</h2></div><button id="operationalNoticeClose" class="chat-close" type="button" aria-label="Cerrar avisos">×</button></header>
+                  <div id="operationalNoticeList" class="operational-notice-list"><p class="chat-empty">Cargando avisos…</p></div>
+                </dialog>`);
             this.mountWorkspaceEntry();
         }
 
@@ -67,14 +93,20 @@
             button.setAttribute('aria-controls', 'chatPanel');
             button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01"/></svg><span>Chat</span><b id="workspaceChatBadge" class="chat-badge" hidden>0</b>';
             button.addEventListener('click', () => this.open());
-            nav.append(label, button);
+            const noticeButton=document.createElement('button');
+            noticeButton.id='workspaceNoticeButton'; noticeButton.className='workspace-chat-entry'; noticeButton.type='button'; noticeButton.setAttribute('aria-haspopup','dialog'); noticeButton.setAttribute('aria-controls','operationalNoticeDialog');
+            noticeButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>Avisos</span><b id="workspaceNoticeBadge" class="chat-badge" hidden>0</b>';
+            noticeButton.addEventListener('click', () => this.openNotices());
+            nav.append(label, button, noticeButton);
         }
 
         bind() {
             this.launcher = document.getElementById('chatLauncher'); this.panel = document.getElementById('chatPanel'); this.scrim = document.getElementById('chatScrim');
-            this.closeButton = document.getElementById('chatClose'); this.eventList = document.getElementById('chatEventList'); this.messagesNode = document.getElementById('chatMessages');
+            this.closeButton = document.getElementById('chatClose'); this.eventList = document.getElementById('chatEventList'); this.messagesNode = document.getElementById('chatMessages'); this.noticeDialog=document.getElementById('operationalNoticeDialog'); this.noticeList=document.getElementById('operationalNoticeList');
             this.composer = document.getElementById('chatComposer'); this.draftNode = document.getElementById('chatDraft'); this.sendButton = document.getElementById('chatSend'); this.soundButton = document.getElementById('chatSound');
             this.launcher.onclick = () => this.open(); this.closeButton.onclick = () => this.close(); this.scrim.onclick = () => this.close();
+            document.getElementById('operationalNoticeClose').onclick=()=>this.noticeDialog.close();
+            this.noticeList.addEventListener('click',async event=>{const button=event.target.closest('[data-notice-seen]');if(!button)return;button.disabled=true;try{await window.Auth.api(`/api/projects/${encodeURIComponent(button.dataset.noticeSeen)}/notices/${encodeURIComponent(button.dataset.noticeId)}/seen`,{method:'POST'});this.notices=(this.notices||[]).filter(item=>item.id!==button.dataset.noticeId);this.renderNotices();this.refreshNotices();}catch(_){button.disabled=false;}});
             this.soundButton.onclick = () => this.toggleSound();
             this.composer.onsubmit = event => { event.preventDefault(); this.send(); };
             this.draftNode.oninput = () => { if (this.selectedProjectId) this.saveDraft(this.selectedProjectId, this.draftNode.value); this.updateComposer(); };
@@ -162,7 +194,7 @@
         async markRead() { if (!this.panel || this.panel.hidden || !document.hasFocus() || !this.selectedProjectId || !this.atBottom()) return; const list = [...(this.messages.get(this.selectedProjectId)?.values() || [])]; const last = list.sort((a,b) => b.sequence-a.sequence)[0]; if (!last) return; const event = this.events.get(this.selectedProjectId); if (event && event.lastReadSequence >= last.sequence) return; try { await window.Auth.api(`/api/projects/${encodeURIComponent(this.selectedProjectId)}/chat/read`, { method:'PUT', body:JSON.stringify({ sequence:last.sequence }) }); if (event) event.lastReadSequence = last.sequence; if (event) event.unreadCount = 0; this.renderSummary(); } catch (_) {} }
         atBottom() { return this.messagesNode.scrollHeight - this.messagesNode.scrollTop - this.messagesNode.clientHeight < 48; }
 
-        async startRealtime() { try { const client = await window.Auth.client(); const token = await window.Auth.token(); if (token) client.realtime.setAuth(token); const user = await client.auth.getUser(); this.currentUserId = user.data?.user?.id || this.currentUserId || ''; this.channel = client.channel('tshow-chat-workspace').on('postgres_changes', { event:'INSERT', schema:'public', table:'tshow_chat_messages' }, payload => this.receive(payload.new)).subscribe(status => { this.realtimeReady = status === 'SUBSCRIBED'; }); } catch (_) { this.realtimeReady = false; } }
+        async startRealtime() { try { const client = await window.Auth.client(); const token = await window.Auth.token(); if (token) client.realtime.setAuth(token); const user = await client.auth.getUser(); this.currentUserId = user.data?.user?.id || this.currentUserId || ''; this.channel = client.channel('tshow-chat-workspace').on('postgres_changes', { event:'INSERT', schema:'public', table:'tshow_chat_messages' }, payload => this.receive(payload.new)).on('postgres_changes', { event:'*', schema:'public', table:'tshow_operational_notice_recipients', filter:`user_id=eq.${this.currentUserId}` }, () => this.refreshNotices()).subscribe(status => { this.realtimeReady = status === 'SUBSCRIBED'; }); } catch (_) { this.realtimeReady = false; } }
         receive(row) { if (!row?.id || !this.events.has(row.project_id)) { this.refreshSummary(true); return; } const message = { id:row.id, projectId:row.project_id, sequence:Number(row.sequence), senderId:row.sender_id, senderName:row.sender_name, body:row.body, block:row.block_key ? {key:row.block_key,number:row.block_number,title:row.block_title || ''} : null, createdAt:row.created_at, clientMessageId:row.client_message_id }; const map = this.messages.get(row.project_id) || new Map(); if (map.has(message.id)) return; map.set(message.id, message); this.messages.set(row.project_id, map); const own = row.sender_id === this.currentUserId; const active = row.project_id === this.selectedProjectId && !this.panel.hidden; let wasBottom = false; if (active) { wasBottom = this.atBottom(); this.renderMessages(); if (!wasBottom) document.getElementById('chatNewMessages').hidden = false; if (wasBottom && document.hasFocus()) this.markRead(); } const beingRead = active && wasBottom && document.hasFocus(); if (!own && !beingRead) { const event = this.events.get(row.project_id); event.unreadCount = Number(event.unreadCount || 0) + 1; this.renderSummary(); if (!this.notificationsSuppressed()) { this.showNotice(`${event.name} · ${row.sender_name}: ${String(row.body).slice(0, 90)}`); if (this.soundEnabled) this.playSound(); } } }
         notificationsSuppressed() { return document.body.classList.contains('stage-open') || document.body.classList.contains('camarines-open'); }
         showNotice(text) { const notice = document.getElementById('chatNotice'); notice.textContent = text; notice.hidden = false; clearTimeout(this.noticeTimer); this.noticeTimer = setTimeout(() => { notice.hidden = true; }, 5000); }

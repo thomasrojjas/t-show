@@ -15,6 +15,15 @@ test('live guest passes are additive and keep snapshot as the default', () => {
   assert.match(operations, /select\('id,access_mode,expires_at,revoked_at,locked_until,access_count'\)/);
 });
 
+test('workspace exposes a private operational notice tray', () => {
+  const chat = read('frontend/js/chat.js');
+  const css = read('frontend/css/chat.css');
+  assert.match(chat, /operationalNoticeDialog/);
+  assert.match(chat, /\/api\/operational-inbox/);
+  assert.match(chat, /tshow_operational_notice_recipients/);
+  assert.match(css, /\.operational-notice-dialog/);
+});
+
 test('live observer API returns a compact snapshot and never the published document', () => {
   const operations = read('backend/routes/operations.js');
   assert.match(operations, /router\.get\('\/guest-passes\/live\/:sessionToken'/);
