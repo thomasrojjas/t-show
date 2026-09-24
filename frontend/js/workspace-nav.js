@@ -403,7 +403,8 @@
       const rehearsal=event.target.closest('[data-operational-rehearsal-action]');
       if(rehearsal){const action=rehearsal.dataset.action;const body={action};if(action==='seek'){const value=prompt('Instante simulado ISO o fecha local',new Date().toISOString());if(!value)return;body.simulatedNow=value;}try{await ApiClient.request(`/projects/${encodeURIComponent(currentProject)}/rehearsals/${encodeURIComponent(rehearsal.dataset.operationalRehearsalAction)}`,{method:'PATCH',body:JSON.stringify(body)});const result=await ApiClient.request(`/projects/${encodeURIComponent(currentProject)}/rehearsals`);operationalData.rehearsals=result.data||[];operationalPanel('rehearsals');}catch(error){document.getElementById('operationalSyncStatus').textContent=error.message||'No se pudo actualizar el ensayo.';}return;}
     });
-    window.addEventListener('tshow:operational-change',()=>{if(currentRoute==='production')loadProduction();});
+    let operationalRefreshTimer;
+    window.addEventListener('tshow:operational-change',()=>{if(currentRoute!=='production')return;clearTimeout(operationalRefreshTimer);operationalRefreshTimer=setTimeout(()=>loadProduction(),180);});
     document.addEventListener('click',event=>{const live=event.target.closest('#scheduleLive');if(!live)return;event.preventDefault();window.location.href=currentProject?`live.html?project=${encodeURIComponent(currentProject)}`:'live.html';});
     document.getElementById('workspaceTutorial').addEventListener('keydown',event=>{if(event.key==='Escape')closeTutorial();if(event.key==='ArrowRight')showTutorialStep(tutorialStep+1);if(event.key==='ArrowLeft')showTutorialStep(tutorialStep-1);});
     document.querySelectorAll('[data-close-tutorial]').forEach(node=>node.addEventListener('click',()=>closeTutorial()));
