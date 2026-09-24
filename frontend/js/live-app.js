@@ -58,6 +58,7 @@ class LiveApp {
     async init() {
         if (!this.projectId) { location.replace('/projects'); return; }
         this.$('backLink').href = `/schedule?project=${encodeURIComponent(this.projectId)}`;
+        this.$('productionLink').href = `/production?project=${encodeURIComponent(this.projectId)}`;
         // The bootstrap paints the cached project theme before auth/network work. Keep it
         // active until the complete server identity is confirmed below.
         window.TShowTheme?.apply(window.TShowTheme.current || 'light', { persist:false });
@@ -73,6 +74,7 @@ class LiveApp {
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', visualTheme === 'light' ? '#f3f4f4' : '#101216');
         this.updateThemeSwitcher();
         this.permission = this.project.permission || 'viewer';
+        this.$('productionLink').hidden = !this.operator;
         this.text('eventName', this.project.eventName || 'Evento');
         document.title = `T-Show · ${this.project.eventName || 'En vivo'}`;
         this.text('roleLabel', { owner:'Propietario', admin:'Administrador', editor:'Director', viewer:'Solo lectura' }[this.permission] || 'Solo lectura');

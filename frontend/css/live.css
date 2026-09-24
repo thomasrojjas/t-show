@@ -31,7 +31,7 @@ h1,h2,p{margin:0}h1,h2{font-weight:600;overflow-wrap:anywhere;line-height:1.25}h
 .header-actions{display:flex;gap:8px;align-items:center}.header-actions button,.header-actions summary{font-size:13px}
 details{position:relative}summary{list-style:none}summary::-webkit-details-marker{display:none}
 .more-panel{position:absolute;top:calc(100% + 8px);right:0;width:250px;padding:8px;display:grid;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 30px color-mix(in srgb,#000 52%,transparent)}
-.more-panel button{text-align:left;background:transparent;border-color:transparent}.more-panel button:hover{background:color-mix(in srgb,var(--surface) 72%,var(--border))}.more-panel small{padding:0 12px 10px;font-size:12px}
+.more-panel button,.more-panel .more-link{text-align:left;background:transparent;border-color:transparent}.more-panel button:hover,.more-panel .more-link:hover{background:color-mix(in srgb,var(--surface) 72%,var(--border))}.more-panel .more-link{display:block;padding:10px 12px;border-radius:6px;color:var(--text);text-decoration:none;font-size:13px}.more-panel small{padding:0 12px 10px;font-size:12px}
 .feedback{margin:16px 28px 0;padding:12px 16px;border:1px solid var(--border);border-left:3px solid var(--accent);display:flex;gap:16px;align-items:center;justify-content:space-between;background:var(--surface)}.feedback[data-error=true]{border-left-color:var(--error)}
 .console{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(0,1fr);grid-template-areas:'controls controls' 'rundown details';gap:20px;align-items:start;margin:24px auto;padding:0 28px;max-width:1920px}
 .detail-column{grid-area:details;display:grid;grid-template-areas:'monitor' 'neighbors' 'context';gap:20px;min-width:0}

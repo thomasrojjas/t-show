@@ -47,6 +47,7 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(html, /id="stagePrevious"/);
   assert.match(html, /class="stage-brand"/);
   assert.match(html, /id="nextHeaderCountdown"/);
+  assert.match(html, /id="productionLink"/);
   assert.match(html, /id="camarinesButton"/);
   assert.match(html, /id="camarinesRows"/);
   assert.match(html, /id="camarinesCountdown"/);
@@ -66,6 +67,7 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(app, /action:'previous'/);
   assert.match(app, /stageStatus\.dataset\.active/);
   assert.match(app, /renderCamarines\(snap, current, timer, timerLabel, labels\)/);
+  assert.match(app, /productionLink.*hidden = !this\.operator/);
   assert.match(app, /const previousItem = snap\.previousItem/);
   assert.match(app, /camarinesPreviousTitle/);
   assert.match(app, /camarinesNextTitle/);
