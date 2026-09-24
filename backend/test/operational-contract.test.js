@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, '../..');
 const route = fs.readFileSync(path.join(root, 'backend/routes/operational.js'), 'utf8');
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260924023919_operational_evolution.sql'), 'utf8');
 const completeness = fs.readFileSync(path.join(root, 'supabase/migrations/20260924033000_operational_completeness.sql'), 'utf8');
+const appearanceHistory = fs.readFileSync(path.join(root, 'supabase/migrations/20260924130000_artist_appearance_history.sql'), 'utf8');
 
 test('operational API keeps internal access, feature gating and delegated area writes explicit', () => {
   assert.match(route, /tshow_operational_feature_flags/);
@@ -54,6 +55,14 @@ test('operational storage is additive and preserves rehearsal isolation', () => 
   assert.match(migration, /create table if not exists public\.tshow_timing_adjustments/);
   assert.match(completeness, /add column if not exists snapshot/);
   assert.match(completeness, /add column if not exists current_index/);
+});
+
+test('artist appearance transitions retain an isolated audit history', () => {
+  assert.match(appearanceHistory, /create table if not exists public\.tshow_artist_appearance_events/);
+  assert.match(appearanceHistory, /enable row level security/);
+  assert.match(appearanceHistory, /tshow_can_access_internal_project/);
+  assert.match(route, /tshow_artist_appearance_events/);
+  assert.match(route, /fromStatus/);
 });
 
 test('timing adjustment application is version guarded and creates a document snapshot', () => {

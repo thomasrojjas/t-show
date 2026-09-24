@@ -77,6 +77,36 @@ router.use('/projects/:id/technical-cues', requireSupabaseAuth, guard, async (re
   } catch (error) { return next(error); }
 });
 
+// Keep an append-only state history for artist appearances. The current row
+// remains the fast operational projection; this middleware records each
+// accepted transition before returning the compatible appearance response.
+router.use('/projects/:id/appearances/:appearanceId', requireSupabaseAuth, guard, async (req, res, next) => {
+  if (req.method !== 'PATCH') return next();
+  try {
+    const a = await access(req, req.params.id);
+    let allowed = canWrite(a);
+    if (!allowed && a) {
+      const { data: dressing } = await supabase.from('tshow_project_areas').select('id').eq('project_id', req.params.id).eq('area_key', 'dressing').eq('status', 'active').maybeSingle();
+      if (dressing) allowed = Boolean((await supabase.from('tshow_project_area_members').select('can_update').eq('area_id', dressing.id).eq('user_id', req.user.id).maybeSingle()).data?.can_update);
+    }
+    if (!a || !allowed) return fail(res, 403, 'No tienes permisos para actualizar la presentación.', 'forbidden');
+    const { data: previous, error: readError } = await supabase.from('tshow_artist_appearances').select('*').eq('id', req.params.appearanceId).eq('project_id', req.params.id).maybeSingle();
+    if (readError) return fail(res, 503, 'No se pudo leer la presentación.', 'service_unavailable');
+    if (!previous) return fail(res, 404, 'Presentación no encontrada.', 'not_found');
+    const nextStatus = req.body.status && ['expected','on_site','in_dressing_room','ready','finished'].includes(req.body.status) ? req.body.status : previous.status;
+    const patch = { updated_by: req.user.id, updated_at: new Date().toISOString(), status: nextStatus };
+    if (req.body.dressingRoom !== undefined) patch.dressing_room = clean(req.body.dressingRoom, 100);
+    const { data, error } = await supabase.from('tshow_artist_appearances').update(patch).eq('id', previous.id).eq('project_id', req.params.id).select().single();
+    if (error) return fail(res, 400, 'No se pudo actualizar el estado del artista.', 'validation_error');
+    if (previous.status !== data.status) {
+      const { error: historyError } = await supabase.from('tshow_artist_appearance_events').insert({ appearance_id: data.id, project_id: req.params.id, from_status: previous.status, to_status: data.status, changed_by: req.user.id, note: clean(req.body.note, 2000) });
+      if (historyError) return fail(res, 503, 'El estado se actualizó, pero no se pudo registrar su historial.', 'partial_failure');
+    }
+    await audit(req.params.id, req.user.id, 'operational.appearance.updated', { appearanceId: data.id, fromStatus: previous.status, toStatus: data.status });
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+});
+
 router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard, async(req,res,next)=>{
   const a=await access(req.params.id,true); if(!canManage(a))return next();
   const {data:rehearsal,error:readError}=await supabase.from('tshow_rehearsals').select('*').eq('id',req.params.rehearsalId).eq('project_id',req.params.id).maybeSingle();
