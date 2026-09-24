@@ -153,11 +153,12 @@ router.get('/projects/:id/production', requireSupabaseAuth, guard, async (req, r
     supabase.from('tshow_tasks').select('*').eq('project_id', req.params.id).order('due_at'),
     supabase.from('tshow_artists').select('*').eq('project_id', req.params.id).order('name'),
     supabase.from('tshow_artist_appearances').select('*').eq('project_id', req.params.id).order('updated_at',{ascending:false}),
-    supabase.from('tshow_operational_notices').select('id,title,body,block_id,area_id,created_by,created_at').eq('project_id', req.params.id).order('created_at',{ascending:false}).limit(30),
+    supabase.from('tshow_operational_notices').select('id,title,body,block_id,area_id,created_by,created_at,tshow_operational_notice_recipients(user_id,seen_at,confirmed_at)').eq('project_id', req.params.id).order('created_at',{ascending:false}).limit(30),
     supabase.from('tshow_block_area_readiness').select('*,tshow_project_areas(name,area_key),tshow_project_blocks(title,position,start_time)').eq('project_id', req.params.id).order('updated_at',{ascending:false})
   ]);
   const errors = [areas,tasks,artists,appearances,notices,readiness].find(x => x.error); if (errors) return fail(res, 500, 'No se pudo cargar el espacio operativo.', 'service_unavailable');
-  res.json({ success:true, enabled:true, serverTime:new Date().toISOString(), project:{ id:a.project.id, documentVersion:a.project.document_version }, data:{ areas:areas.data||[], tasks:tasks.data||[], artists:artists.data||[], appearances:appearances.data||[], notices:notices.data||[], readiness:readiness.data||[] }, capabilities:{ manageAreas:canManage(a), editOperational:canWrite(a), createRehearsal:canManage(a) } });
+  const visibleNotices=(notices.data||[]).map(({tshow_operational_notice_recipients,...notice})=>({...notice,recipient:(tshow_operational_notice_recipients||[]).find(recipient=>recipient.user_id===req.user.id)||null}));
+  res.json({ success:true, enabled:true, serverTime:new Date().toISOString(), project:{ id:a.project.id, documentVersion:a.project.document_version }, data:{ areas:areas.data||[], tasks:tasks.data||[], artists:artists.data||[], appearances:appearances.data||[], notices:visibleNotices, readiness:readiness.data||[] }, capabilities:{ manageAreas:canManage(a), editOperational:canWrite(a), createRehearsal:canManage(a) } });
 });
 
 router.get('/projects/:id/areas', requireSupabaseAuth, guard, async (req,res)=>{ const a=await access(req,req.params.id); if(!a)return fail(res,403,'No tienes acceso a este evento.','forbidden'); const {data,error}=await supabase.from('tshow_project_areas').select('*,tshow_project_area_members(user_id,can_update)').eq('project_id',req.params.id).order('name'); if(error)return fail(res,500,'No se pudieron cargar las áreas.'); res.json({success:true,data:data||[]}); });
