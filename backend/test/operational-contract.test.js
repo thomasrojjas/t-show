@@ -68,6 +68,7 @@ test('artist appearance transitions retain an isolated audit history', () => {
   assert.match(workspace, /Historial de estados/);
   assert.match(workspace, /data-operational-area-responsible/);
   assert.match(workspace, /\/members`/);
+  assert.match(workspace, /data-action="finish"/);
 });
 
 test('timing adjustment application is version guarded and creates a document snapshot', () => {
