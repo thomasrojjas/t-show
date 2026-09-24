@@ -17,6 +17,7 @@ test('operational API keeps internal access, feature gating and delegated area w
 });
 
 test('operational API exposes idempotent checklist templates and rehearsal snapshots', () => {
+  assert.match(route, /readiness:readiness\.data\|\|\[\]/);
   assert.match(route, /tasks\/apply-template/);
   assert.match(route, /task_kind.*template/);
   assert.match(route, /snapshot:source/);
