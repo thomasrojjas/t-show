@@ -78,6 +78,7 @@ test('timing adjustment application is version guarded and creates a document sn
   assert.match(route, /document_version:nextVersion/);
   assert.match(route, /tshow_project_document_versions/);
   assert.match(route, /La pauta cambió durante la aplicación/);
+  assert.match(route, /buildTimingPreview/);
 });
 
 test('offline cache invalidates stale assets and includes the operational shell', () => {

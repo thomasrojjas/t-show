@@ -1,6 +1,7 @@
 const express = require('express');
 const { supabase } = require('../supabaseClient');
 const { requireSupabaseAuth } = require('../middleware/supabaseAuth');
+const { buildTimingPreview } = require('../lib/timing-adjustments');
 
 const router = express.Router();
 const clean = (value, max = 4000) => String(value ?? '').trim().slice(0, max);
@@ -136,16 +137,9 @@ router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard
 
 router.post('/projects/:id/timing-adjustments/preview', requireSupabaseAuth, guard, async (req,res)=>{
   const a=await access(req,req.params.id,true); if(!canWrite(a))return fail(res,403,'No tienes permisos para proponer ajustes.','forbidden');
-  const input=Array.isArray(req.body.blocks)?req.body.blocks:[];
-  if(!input.length)return fail(res,400,'Debes incluir bloques para simular.','validation_error');
-  const blocks=[];
-  for(const [index,b] of input.entries()){
-    const original=Number(b.originalMinutes), proposed=Number(b.proposedMinutes), minimum=Math.max(1,Number(b.minimumMinutes)||1), fixed=Boolean(b.fixed);
-    if(!Number.isFinite(original)||original<minimum||!Number.isFinite(proposed)||proposed<minimum)return fail(res,400,'Las duraciones y mínimos deben ser válidos.','validation_error');
-    if(fixed&&proposed!==original)return fail(res,409,`El bloque ${index+1} está fijado y no puede recortarse en esta simulación.`,'conflict');
-    blocks.push({blockId:uuid(b.blockId)?b.blockId:null,index,title:clean(b.title,180),originalMinutes:original,proposedMinutes:proposed,minimumMinutes:minimum,fixed});
-  }
-  const preview={blocks,deltaMinutes:blocks.reduce((total,b)=>total+b.proposedMinutes-b.originalMinutes,0),recoveredMinutes:blocks.reduce((total,b)=>total+Math.max(0,b.originalMinutes-b.proposedMinutes),0),createdAt:new Date().toISOString()};
+  let preview;
+  try { preview={...buildTimingPreview({blocks:Array.isArray(req.body.blocks)?req.body.blocks:[],targetRecoveryMinutes:req.body.targetRecoveryMinutes}),createdAt:new Date().toISOString()}; }
+  catch(error){return fail(res,error.message.includes('fijado')?409:400,error.message,'validation_error');}
   const {data,error}=await supabase.from('tshow_timing_adjustments').insert({project_id:req.params.id,base_document_version:a.project.document_version,preview,created_by:req.user.id}).select().single();
   if(error)return fail(res,400,'No se pudo guardar la simulación.','validation_error');
   await audit(req.params.id,req.user.id,'operational.timing_adjustment.previewed',{adjustmentId:data.id,recoveredMinutes:preview.recoveredMinutes});
