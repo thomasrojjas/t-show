@@ -69,6 +69,9 @@ test('artist appearance transitions retain an isolated audit history', () => {
   assert.match(workspace, /data-operational-area-responsible/);
   assert.match(workspace, /\/members`/);
   assert.match(workspace, /data-action="finish"/);
+  assert.match(workspace, /data-operational-notice-form/);
+  assert.match(workspace, /data-operational-notice-audience/);
+  assert.match(workspace, /idempotencyKey:crypto\.randomUUID\(\)/);
   assert.match(workspace, /paquete completo/);
   assert.match(workspace, /timing-adjustments/);
   assert.match(workspace, /capabilities.manageAreas/);
