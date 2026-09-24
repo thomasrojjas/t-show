@@ -32,6 +32,7 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(route, /action==='reset'/);
   assert.match(route, /action==='seek'/);
   const workspace = fs.readFileSync(path.join(root, 'frontend/js/workspace-nav.js'), 'utf8');
+  const realtime = fs.readFileSync(path.join(root, 'frontend/js/operational-realtime.js'), 'utf8');
   assert.match(workspace, /Reloj simulado/);
   assert.match(workspace, /elapsed_seconds/);
   assert.match(workspace, /operationalOfflineMode=true/);
@@ -42,6 +43,8 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(workspace, /areaName\(item\.area_id\)/);
   assert.match(workspace, /data-operational-artist-search/);
   assert.match(workspace, /Filtrar artistas por estado/);
+  assert.match(realtime, /subscribedProject/);
+  assert.match(realtime, /removeChannel/);
 });
 
 test('operational storage is additive and preserves rehearsal isolation', () => {
