@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "migrate:legacy": "node scripts/migrateLegacyProjects.js",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test test/**/*.test.js",
+    "test:operational-browser": "node scripts/verify-operational-browser.cjs"
   },
   "keywords": [
     "showtime",
