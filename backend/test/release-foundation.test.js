@@ -47,6 +47,13 @@ test('chat mounts its sidebar entry even when navigation initializes asynchronou
   assert.match(workspace, /tshow:workspace-nav-mounted/);
 });
 
+test('chat resolves authenticated identity before reading event drafts', () => {
+  const chat = read('frontend/js/chat.js');
+  assert.match(chat, /this\.userReady = window\.Auth\.currentUser/);
+  assert.match(chat, /this\.refreshing = this\.userReady\.then/);
+  assert.match(chat, /async loadDraftAsync\(projectId\) \{ await this\.userReady/);
+});
+
 test('payment activation remains behind provider reconciliation', () => {
   const billing = read('backend/routes/billing.js');
   const bricksRoute = billing.slice(billing.indexOf("router.post('/mercadopago/bricks'"), billing.indexOf("router.post('/mercadopago/subscriptions'"));

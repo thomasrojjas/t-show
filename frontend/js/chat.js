@@ -10,7 +10,7 @@
             this.messages = new Map();
             this.drafts = new Map();
             this.selectedProjectId = document.body.dataset.projectId || new URLSearchParams(location.search).get('project') || '';
-            window.Auth.currentUser?.().then(user => { this.currentUserId = user?.id || ''; }).catch(() => {});
+            this.userReady = window.Auth.currentUser ? window.Auth.currentUser().then(user => { this.currentUserId = user?.id || ''; return this.currentUserId; }).catch(() => '') : Promise.resolve('');
             this.channel = null;
             this.realtimeReady = false;
             this.refreshing = null;
@@ -119,7 +119,7 @@
 
         async refreshSummary(silent = false) {
             if (this.refreshing) return this.refreshing;
-            this.refreshing = window.Auth.api('/api/chat/summary').then(result => {
+            this.refreshing = this.userReady.then(() => window.Auth.api('/api/chat/summary')).then(result => {
                 this.soundEnabled = Boolean(result.data?.soundEnabled);
                 this.events = new Map((result.data?.events || []).map(event => [event.id, event]));
                 if (!this.selectedProjectId || !this.events.has(this.selectedProjectId)) this.selectedProjectId = document.body.dataset.projectId && this.events.has(document.body.dataset.projectId) ? document.body.dataset.projectId : (this.events.keys().next().value || '');
@@ -204,7 +204,7 @@
         draftKey(projectId) { return `${this.currentUserId || 'anonymous'}:${projectId}`; }
         saveDraft(projectId, value) { const key=this.draftKey(projectId); try { sessionStorage.setItem(DRAFT_PREFIX + key, value); } catch (_) {} window.TShowOffline?.saveDraft(`${key}:chat`, value).catch(() => {}); }
         loadDraft(projectId) { try { return sessionStorage.getItem(DRAFT_PREFIX + this.draftKey(projectId)) || ''; } catch (_) { return ''; } }
-        async loadDraftAsync(projectId) { try { const saved=await window.TShowOffline?.readDraft(`${this.draftKey(projectId)}:chat`); if(typeof saved==='string') return saved; } catch (_) {} return this.loadDraft(projectId); }
+        async loadDraftAsync(projectId) { await this.userReady; try { const saved=await window.TShowOffline?.readDraft(`${this.draftKey(projectId)}:chat`); if(typeof saved==='string') return saved; } catch (_) {} return this.loadDraft(projectId); }
     }
 
     const boot = () => {
