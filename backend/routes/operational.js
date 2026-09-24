@@ -55,6 +55,11 @@ async function areaBelongsToProject(projectId, areaId) {
   const { data, error } = await supabase.from('tshow_project_areas').select('id').eq('id', areaId).eq('project_id', projectId).maybeSingle();
   return !error && Boolean(data);
 }
+async function blockBelongsToProject(projectId, blockId) {
+  if (!uuid(blockId)) return false;
+  const { data, error } = await supabase.from('tshow_project_blocks').select('id').eq('id', blockId).eq('project_id', projectId).maybeSingle();
+  return !error && Boolean(data);
+}
 const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
 router.use('/projects/:id/technical-cues', async (req, res, next) => {
@@ -74,6 +79,22 @@ router.use('/projects/:id/notices/:noticeId', async (req, res, next) => {
   const { data, error } = await supabase.from('tshow_operational_notices').select('id').eq('id', req.params.noticeId).eq('project_id', req.params.id).maybeSingle();
   if (error) return fail(res, 503, 'No se pudo verificar el aviso.', 'service_unavailable');
   if (!data) return fail(res, 404, 'El aviso no pertenece a este evento.', 'not_found');
+  next();
+});
+router.use('/projects/:id/technical-cues', async (req, res, next) => {
+  if (['POST','PATCH'].includes(req.method) && req.body?.blockId && !(await blockBelongsToProject(req.params.id, req.body.blockId))) return fail(res, 400, 'El bloque no pertenece a este evento.', 'validation_error');
+  next();
+});
+router.use('/projects/:id/notices', async (req, res, next) => {
+  if (req.method === 'POST' && req.body?.blockId && !(await blockBelongsToProject(req.params.id, req.body.blockId))) return fail(res, 400, 'El bloque no pertenece a este evento.', 'validation_error');
+  next();
+});
+router.use('/projects/:id/artists/:artistId/appearances', async (req, res, next) => {
+  if (req.method !== 'POST') return next();
+  const { data: artist, error: artistError } = await supabase.from('tshow_artists').select('id').eq('id', req.params.artistId).eq('project_id', req.params.id).maybeSingle();
+  if (artistError) return fail(res, 503, 'No se pudo verificar el artista.', 'service_unavailable');
+  if (!artist) return fail(res, 404, 'El artista no pertenece a este evento.', 'not_found');
+  if (req.body?.blockId && !(await blockBelongsToProject(req.params.id, req.body.blockId))) return fail(res, 400, 'El bloque no pertenece a este evento.', 'validation_error');
   next();
 });
 router.use('/projects/:id/areas/:areaId/members', async (req, res, next) => {

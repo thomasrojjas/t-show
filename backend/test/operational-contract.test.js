@@ -81,6 +81,8 @@ test('artist appearance transitions retain an isolated audit history', () => {
   assert.match(route, /areaBelongsToProject/);
   assert.match(route, /El área no pertenece a este evento/);
   assert.match(route, /El aviso no pertenece a este evento/);
+  assert.match(route, /El artista no pertenece a este evento/);
+  assert.match(route, /blockBelongsToProject/);
 });
 
 test('timing adjustment application is version guarded and creates a document snapshot', () => {
