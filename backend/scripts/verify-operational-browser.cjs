@@ -35,7 +35,13 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.waitForSelector('[data-route="production"]', { state: 'attached' }); await page.evaluate(() => window.WorkspaceShell.navigate('production', true));
     await page.waitForFunction(() => document.querySelector('#view-production')?.classList.contains('is-active'));
     assert(await page.getByText('Todo listo.').count()); assert(await page.getByRole('tab', { name: 'Preparación' }).count());
-    await page.getByRole('tab', { name: 'Preparación' }).click(); await page.waitForFunction(() => document.querySelector('.operational-status')?.textContent.includes('Listo'));
+    await page.getByRole('tab', { name: 'Preparación' }).click(); await page.waitForFunction(() => document.querySelector('.operational-status')?.textContent.includes('Listo')); assert(await page.locator('[data-operational-readiness]').count());
+    await page.getByRole('tab', { name: 'Checklist' }).click(); await page.waitForSelector('[data-operational-task-new]');
+    await page.getByRole('tab', { name: 'Indicaciones' }).click(); await page.waitForSelector('[data-operational-cue-new]');
+    await page.getByRole('tab', { name: 'Artistas' }).click(); await page.waitForSelector('[data-operational-artist-new]');
+    await page.getByRole('tab', { name: 'Avisos' }).click(); await page.waitForSelector('[data-operational-notice]');
+    await page.getByRole('tab', { name: 'Atrasos' }).click(); await page.waitForSelector('[data-operational-preview]');
+    await page.getByRole('tab', { name: 'Ensayos' }).click(); await page.waitForSelector('[data-operational-rehearsal]');
     await page.getByRole('button', { name: 'Preparar consulta sin conexión' }).click(); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Consulta local preparada')); 
     assert.equal(errors.length, 0, errors.join('\n')); console.log('operational browser QA passed');
   } finally { await browser.close(); }
