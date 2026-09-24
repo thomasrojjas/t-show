@@ -1,6 +1,18 @@
 /* Supabase Auth client. Credentials are handled only by Supabase. */
 const Auth = (() => {
     let clientPromise;
+    async function ensureSupabaseBrowserClient() {
+        if (window.supabase && typeof window.supabase.createClient === 'function') return true;
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+            script.async = false;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('No se pudo cargar el servicio de autenticación desde las fuentes disponibles.'));
+            document.head.appendChild(script);
+        });
+        return Boolean(window.supabase && typeof window.supabase.createClient === 'function');
+    }
     async function client() {
         if (!clientPromise) clientPromise = (async () => {
             const base = window.SHOWTIME_API_URL || window.location.origin;
@@ -14,7 +26,7 @@ const Auth = (() => {
             const config = payload.data || payload;
             if (!response.ok) throw new Error(config.message || 'El servicio de autenticación no está disponible.');
             if (!config.supabaseUrl || !config.supabaseAnonKey) throw new Error('El servicio de autenticación no está configurado.');
-            if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('No se pudo cargar el cliente de autenticación. Recarga la página.');
+            if (!await ensureSupabaseBrowserClient()) throw new Error('No se pudo cargar el cliente de autenticación. Comprueba tu conexión e inténtalo nuevamente.');
             return window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
         })().catch(error => { clientPromise = null; throw error; });
         return clientPromise;
