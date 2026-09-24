@@ -50,13 +50,31 @@ async function access(req, projectId, write = false) {
   }
   return null;
 }
+async function areaBelongsToProject(projectId, areaId) {
+  if (!uuid(areaId)) return false;
+  const { data, error } = await supabase.from('tshow_project_areas').select('id').eq('id', areaId).eq('project_id', projectId).maybeSingle();
+  return !error && Boolean(data);
+}
 const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
+router.use('/projects/:id/technical-cues', async (req, res, next) => {
+  if (['POST','PATCH'].includes(req.method) && req.body?.areaId && !(await areaBelongsToProject(req.params.id, req.body.areaId))) return fail(res, 400, 'El área no pertenece a este evento.', 'validation_error');
+  next();
+});
+router.use('/projects/:id/tasks', async (req, res, next) => {
+  if (['POST','PATCH'].includes(req.method) && req.body?.areaId && !(await areaBelongsToProject(req.params.id, req.body.areaId))) return fail(res, 400, 'El área no pertenece a este evento.', 'validation_error');
+  next();
+});
+router.use('/projects/:id/notices', async (req, res, next) => {
+  if (['POST','PATCH'].includes(req.method) && req.body?.areaId && !(await areaBelongsToProject(req.params.id, req.body.areaId))) return fail(res, 400, 'El área no pertenece a este evento.', 'validation_error');
+  next();
+});
 async function areaOperator(req, projectId, areaId) {
   const a = await access(req, projectId);
   if (!a) return null;
   if (canWrite(a)) return a;
   if (!uuid(areaId)) return null;
+  if (!(await areaBelongsToProject(projectId, areaId))) return null;
   const { data: assignment } = await supabase.from('tshow_project_area_members').select('can_update').eq('area_id', areaId).eq('user_id', req.user.id).maybeSingle();
   return assignment?.can_update ? a : null;
 }
