@@ -5,13 +5,14 @@ class LiveApp {
         document.body.dataset.projectId = this.projectId || '';
         this.state = LiveEngine.defaults(); this.version = 0; this.projectVersion = 0; this.rows = new Map();
         this.connected = false; this.busy = false; this.follow = true; this.tab = 'script'; this.offset = 0;
-        this.permission = 'viewer'; this.selection = null; this.readingKey = ''; this.syncing = null;
+        this.permission = 'viewer'; this.selection = null; this.readingKey = ''; this.syncing = null; this.readinessRows = [];
         this.observerPass = null;
         this.bind();
         this.init().catch(error => this.message(error.message, true, true));
     }
     $(id) { return document.getElementById(id); }
     text(id, value) { const node = this.$(id); if (!node) return; if (node.textContent !== String(value)) node.textContent = value; }
+    escape(value) { return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char])); }
     now() { return Date.now() + this.offset; }
     get operator() { return ['owner', 'admin', 'editor'].includes(this.permission); }
     get manager() { return ['owner', 'admin'].includes(this.permission); }
@@ -84,9 +85,12 @@ class LiveApp {
             if (['18', '22', '26'].includes(size)) { this.$('textSize').value = size; this.setTextSize(); }
         } catch (_) { /* Preferences are optional. */ }
         await this.refresh();
+        this.$('liveReadinessLink').href = `/production?project=${encodeURIComponent(this.projectId)}`;
+        this.refreshReadiness();
         if (new URLSearchParams(location.search).get('observer') === '1' && this.manager) this.openObserver();
         this.timer = setInterval(() => this.render(), 1000);
         this.healthTimer = setInterval(() => this.refresh(), 15000);
+        this.readinessTimer = setInterval(() => this.refreshReadiness(), 15000);
         this.listen();
     }
     async listen() {
@@ -129,6 +133,27 @@ class LiveApp {
             finally { this.syncing = null; }
         })();
         return this.syncing;
+    }
+    async refreshReadiness() {
+        if (!this.projectId || this.readinessSyncing) return;
+        this.readinessSyncing = (async () => {
+            try {
+                const result = await Auth.api(`/api/projects/${encodeURIComponent(this.projectId)}/readiness-summary`);
+                this.readinessRows = result.data || [];
+                this.renderReadiness(this.snapshot);
+            } catch (_) { this.$('liveReadinessSummary').hidden = true; }
+            finally { this.readinessSyncing = null; }
+        })();
+        return this.readinessSyncing;
+    }
+    renderReadiness(snap) {
+        const panel=this.$('liveReadinessSummary'); if(!panel||!snap||!this.readinessRows.length){if(panel)panel.hidden=true;return;}
+        const block=snap.nextItem||snap.currentItem; if(!block){panel.hidden=true;return;}
+        const rows=this.readinessRows.filter(row=>String(row.block_id||'')===String(block.key||block.id||'')); if(!rows.length){panel.hidden=true;return;}
+        const labels={pending:'Pendiente',preparing:'Preparando',ready:'Listo',problem:'Problema',not_applicable:'No aplica'};
+        this.text('liveReadinessTitle',block.title||'Siguiente bloque');
+        this.$('liveReadinessAreas').innerHTML=rows.map(row=>`<span class="live-readiness-chip" data-status="${this.escape(row.status)}"><b>${this.escape(row.tshow_project_areas?.name||'Área')}</b><small>${this.escape(labels[row.status]||row.status)}</small></span>`).join('');
+        panel.hidden=false;
     }
     message(value, error = false, retry = false) {
         this.$('feedback').hidden = false; this.$('feedback').dataset.error = String(error);
@@ -438,6 +463,7 @@ class LiveApp {
         try { snap = LiveEngine.computeLiveSnapshot(this.project, this.state, this.now()); }
         catch (error) { this.message(error.message, true); return; }
         this.snapshot = snap;
+        this.renderReadiness(snap);
         const blocked = !this.connected || this.busy;
         const status = snap.status;
         const labels = { idle:'En espera', scheduled:'Programado', 'schedule-invalidated':'Programación desactualizada', live:snap.scheduleEnded ? 'Horario concluido' : 'En vivo', paused:'Pausado', finished:'Finalizado' };
