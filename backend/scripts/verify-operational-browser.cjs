@@ -49,7 +49,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.getByRole('tab', { name: 'Avisos' }).click(); await page.waitForSelector('[data-operational-notice]');
     await page.getByRole('tab', { name: 'Atrasos' }).click(); await page.waitForSelector('[data-operational-preview]');
     await page.getByRole('tab', { name: 'Ensayos' }).click(); await page.waitForSelector('[data-operational-rehearsal]');
-    await page.getByRole('button', { name: 'Preparar consulta sin conexión' }).click(); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Consulta local preparada')); 
+    await page.getByRole('button', { name: 'Preparar consulta sin conexión' }).click(); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Consulta local preparada')); await context.setOffline(true); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Sin conexión')); await page.getByRole('tab', { name: 'Checklist' }).click(); await page.waitForSelector('[data-operational-task-new][disabled]'); await context.setOffline(false);
     assert.equal(errors.length, 0, errors.join('\n')); console.log('operational browser QA passed');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
