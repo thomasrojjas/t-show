@@ -55,6 +55,10 @@ test('operational storage is additive and preserves rehearsal isolation', () => 
   assert.match(migration, /create table if not exists public\.tshow_timing_adjustments/);
   assert.match(completeness, /add column if not exists snapshot/);
   assert.match(completeness, /add column if not exists current_index/);
+  const realtimeCompletion = fs.readFileSync(path.join(root, 'supabase/migrations/20260924163000_operational_realtime_completion.sql'), 'utf8');
+  assert.match(realtimeCompletion, /tshow_technical_cues/);
+  assert.match(realtimeCompletion, /tshow_artist_appearances/);
+  assert.match(realtimeCompletion, /tshow_rehearsals/);
 });
 
 test('artist appearance transitions retain an isolated audit history', () => {
