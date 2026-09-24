@@ -63,6 +63,7 @@ test('artist appearance transitions retain an isolated audit history', () => {
   assert.match(appearanceHistory, /tshow_can_access_internal_project/);
   assert.match(route, /tshow_artist_appearance_events/);
   assert.match(route, /fromStatus/);
+  assert.match(route, /appearances\/:appearanceId\/history/);
 });
 
 test('timing adjustment application is version guarded and creates a document snapshot', () => {

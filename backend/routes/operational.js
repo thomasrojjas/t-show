@@ -107,6 +107,14 @@ router.use('/projects/:id/appearances/:appearanceId', requireSupabaseAuth, guard
   } catch (error) { return next(error); }
 });
 
+router.get('/projects/:id/appearances/:appearanceId/history', requireSupabaseAuth, guard, async (req, res) => {
+  const a = await access(req, req.params.id);
+  if (!a) return fail(res, 403, 'No tienes acceso a este evento.', 'forbidden');
+  const { data, error } = await supabase.from('tshow_artist_appearance_events').select('id,appearance_id,from_status,to_status,changed_by,note,changed_at').eq('project_id', req.params.id).eq('appearance_id', req.params.appearanceId).order('changed_at', { ascending: false }).limit(100);
+  if (error) return fail(res, 500, 'No se pudo cargar el historial del artista.', 'service_unavailable');
+  res.json({ success: true, data: data || [] });
+});
+
 router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard, async(req,res,next)=>{
   const a=await access(req.params.id,true); if(!canManage(a))return next();
   const {data:rehearsal,error:readError}=await supabase.from('tshow_rehearsals').select('*').eq('id',req.params.rehearsalId).eq('project_id',req.params.id).maybeSingle();
