@@ -5,10 +5,11 @@ const test = require('node:test');
 
 const root = path.resolve(__dirname, '..', '..');
 const read = relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8');
+const functionHardening = read('supabase/migrations/20260924043000_harden_public_function_execute.sql');
 
 test('release migrations and verifier cover schema versions 21 and 22', () => {
   const foundation = read('backend/db/migrations/021_release_foundation.sql');
-  const operations = read('backend/db/migrations/022_release_operations.sql');
+const operations = read('backend/db/migrations/022_release_operations.sql');
   const verifier = read('backend/db/verify/verify_release_schema.sql');
   assert.match(foundation, /tshow_schema_versions[\s\S]*21/i);
   assert.match(operations, /tshow_schema_versions[\s\S]*22/i);
@@ -22,6 +23,12 @@ test('sensitive release functions are not executable by public roles', () => {
   const operations = read('backend/db/migrations/022_release_operations.sql');
   assert.match(foundation, /revoke\s+(?:all|execute)\s+on function public\.tshow_accept_invitation_service/i);
   assert.match(operations, /revoke\s+(?:all|execute)\s+on function public\.tshow_restore_project_service/i);
+});
+
+test('legacy helper RPCs are not exposed and mutable search paths are fixed', () => {
+  assert.match(functionHardening, /revoke execute on function public\.rls_auto_enable\(\) from public, anon, authenticated/i);
+  assert.match(functionHardening, /tshow_effective_project_limit\(uuid\)/i);
+  assert.match(functionHardening, /set search_path = public, pg_temp/i);
 });
 
 test('payment activation remains behind provider reconciliation', () => {
