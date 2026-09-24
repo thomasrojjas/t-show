@@ -22,6 +22,8 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
       if (requestPath.startsWith('/api/')) {
         if (route.request().method() !== 'GET') requests.push({ method: route.request().method(), path: requestPath });
         if (requestPath === '/api/projects') return route.fulfill({ json: { data: [{ id: project.id, event_name: project.eventName, payload: project, member_role: 'owner' }], meta: { ownedCount: 1, limit: 20, remaining: 19 } } });
+        if (requestPath === '/api/chat/summary') return route.fulfill({ json: { success: true, data: { events: [{ id: project.id, eventName: project.eventName, unreadCount: 0 }], soundEnabled: false } } });
+        if (requestPath === '/api/operational-inbox') return route.fulfill({ json: { success: true, data: [], unreadCount: 0 } });
         if (requestPath === `/api/projects/${project.id}`) return route.fulfill({ json: { data: { id: project.id, event_name: project.eventName, payload: project, permission: 'owner' } } });
         if (requestPath.endsWith('/production')) return route.fulfill({ json: { success: true, serverTime: '2026-09-23T15:00:00Z', project: { id: project.id, documentVersion: 1 }, data: { areas: [], tasks: [], artists: [], appearances: [], notices: [] }, capabilities: { manageAreas: true, editOperational: true, createRehearsal: true } } });
         if (requestPath.endsWith('/readiness')) return route.fulfill({ json: { success: true, data: [{ id: 'r1', status: 'ready', tshow_project_blocks: { title: 'Apertura', start_time: '20:00' }, tshow_project_areas: { name: 'Sonido' } }] } });
@@ -36,6 +38,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.goto(`https://tshow.test/summary?project=${project.id}`);
     await page.waitForSelector('[data-route="production"]', { state: 'attached' }); await page.evaluate(() => window.WorkspaceShell.navigate('production', true));
     await page.waitForFunction(() => document.querySelector('#view-production')?.classList.contains('is-active'));
+    await page.waitForSelector('#workspaceChatButton'); assert(await page.getByRole('button', { name: 'Chat' }).count()); await page.locator('#workspaceChatButton').click(); await page.waitForFunction(() => !document.querySelector('#chatPanel')?.hidden); assert(await page.getByRole('heading', { name: 'Chat del equipo' }).count()); await page.locator('#chatClose').click();
     assert(await page.getByText('Todo listo.').count()); assert(await page.getByRole('tab', { name: 'Preparación' }).count());
     await page.getByRole('tab', { name: 'Preparación' }).click(); await page.waitForFunction(() => document.querySelector('.operational-status')?.textContent.includes('Listo')); assert(await page.locator('[data-operational-readiness]').count());
     await page.locator('[data-operational-readiness]').selectOption('preparing'); await page.waitForTimeout(50); assert(requests.some(item => item.path.endsWith('/readiness/r1')));
