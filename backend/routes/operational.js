@@ -69,6 +69,19 @@ router.use('/projects/:id/notices', async (req, res, next) => {
   if (['POST','PATCH'].includes(req.method) && req.body?.areaId && !(await areaBelongsToProject(req.params.id, req.body.areaId))) return fail(res, 400, 'El área no pertenece a este evento.', 'validation_error');
   next();
 });
+router.use('/projects/:id/notices/:noticeId', async (req, res, next) => {
+  if (!['POST','PATCH','DELETE'].includes(req.method)) return next();
+  const { data, error } = await supabase.from('tshow_operational_notices').select('id').eq('id', req.params.noticeId).eq('project_id', req.params.id).maybeSingle();
+  if (error) return fail(res, 503, 'No se pudo verificar el aviso.', 'service_unavailable');
+  if (!data) return fail(res, 404, 'El aviso no pertenece a este evento.', 'not_found');
+  next();
+});
+router.use('/projects/:id/areas/:areaId/members', async (req, res, next) => {
+  const { data, error } = await supabase.from('tshow_project_areas').select('id').eq('id', req.params.areaId).eq('project_id', req.params.id).maybeSingle();
+  if (error) return fail(res, 503, 'No se pudo verificar el área.', 'service_unavailable');
+  if (!data) return fail(res, 404, 'El área no pertenece a este evento.', 'not_found');
+  next();
+});
 async function areaOperator(req, projectId, areaId) {
   const a = await access(req, projectId);
   if (!a) return null;
