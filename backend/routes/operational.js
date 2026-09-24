@@ -51,7 +51,31 @@ async function access(req, projectId, write = false) {
 }
 const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
+async function areaOperator(req, projectId, areaId) {
+  const a = await access(req, projectId);
+  if (!a) return null;
+  if (canWrite(a)) return a;
+  if (!uuid(areaId)) return null;
+  const { data: assignment } = await supabase.from('tshow_project_area_members').select('can_update').eq('area_id', areaId).eq('user_id', req.user.id).maybeSingle();
+  return assignment?.can_update ? a : null;
+}
 const audit = (projectId, actorId, action, metadata = {}) => supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
+
+// Delegated area operators may maintain their own technical cues without
+// receiving schedule-edit permissions. Owners/editors continue through the
+// canonical route below.
+router.use('/projects/:id/technical-cues', requireSupabaseAuth, guard, async (req, res, next) => {
+  if (req.method !== 'POST' || !req.user?.id || !uuid(req.body?.areaId)) return next();
+  try {
+    const a = await areaOperator(req, req.params.id, req.body.areaId);
+    if (!a || canWrite(a)) return next();
+    const patch = { project_id: req.params.id, block_id: uuid(req.body.blockId) ? req.body.blockId : null, area_id: req.body.areaId, body: clean(req.body.body, 4000), updated_by: req.user.id };
+    const { data, error } = await supabase.from('tshow_technical_cues').upsert(patch, { onConflict: 'project_id,block_id,area_id' }).select().single();
+    if (error) return fail(res, 400, 'No se pudo guardar la indicación.', 'validation_error');
+    await audit(req.params.id, req.user.id, 'operational.cue.updated', { cueId: data.id });
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+});
 
 router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard, async(req,res,next)=>{
   const a=await access(req.params.id,true); if(!canManage(a))return next();
