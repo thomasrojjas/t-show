@@ -34,6 +34,9 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(workspace, /operationalOfflineMode=true/);
   assert.match(workspace, /solo consulta/);
   assert.match(workspace, /lockOperationalControls/);
+  assert.match(workspace, /data-operational-cue-filter/);
+  assert.match(workspace, /Filtrar indicaciones por área/);
+  assert.match(workspace, /areaName\(item\.area_id\)/);
 });
 
 test('operational storage is additive and preserves rehearsal isolation', () => {
