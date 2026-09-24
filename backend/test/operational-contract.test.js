@@ -37,6 +37,8 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(workspace, /data-operational-cue-filter/);
   assert.match(workspace, /Filtrar indicaciones por área/);
   assert.match(workspace, /areaName\(item\.area_id\)/);
+  assert.match(workspace, /data-operational-artist-search/);
+  assert.match(workspace, /Filtrar artistas por estado/);
 });
 
 test('operational storage is additive and preserves rehearsal isolation', () => {
