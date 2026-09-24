@@ -24,6 +24,12 @@ test('workspace exposes a private operational notice tray', () => {
   assert.match(css, /\.operational-notice-dialog/);
 });
 
+test('chat drafts are isolated by authenticated user and event', () => {
+  const chat = read('frontend/js/chat.js');
+  assert.match(chat, /draftKey\(projectId\).*currentUserId/);
+  assert.match(chat, /\$\{key\}:chat/);
+});
+
 test('live observer API returns a compact snapshot and never the published document', () => {
   const operations = read('backend/routes/operations.js');
   assert.match(operations, /router\.get\('\/guest-passes\/live\/:sessionToken'/);

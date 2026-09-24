@@ -200,9 +200,10 @@
         showNotice(text) { const notice = document.getElementById('chatNotice'); notice.textContent = text; notice.hidden = false; clearTimeout(this.noticeTimer); this.noticeTimer = setTimeout(() => { notice.hidden = true; }, 5000); }
         async toggleSound() { this.soundEnabled = !this.soundEnabled; this.soundButton.setAttribute('aria-pressed', String(this.soundEnabled)); this.soundButton.textContent = this.soundEnabled ? 'Sonido encendido' : 'Sonido apagado'; try { await window.Auth.api('/api/chat/preferences', { method:'PATCH', body:JSON.stringify({ soundEnabled:this.soundEnabled }) }); if (this.soundEnabled) this.playSound(); } catch (_) { this.soundEnabled = !this.soundEnabled; } }
         playSound() { if (!this.soundEnabled) return; try { const context = new (window.AudioContext || window.webkitAudioContext)(); const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = 760; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .14); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .14); } catch (_) {} }
-        saveDraft(projectId, value) { try { sessionStorage.setItem(DRAFT_PREFIX + projectId, value); } catch (_) {} window.TShowOffline?.saveDraft(`chat:${projectId}`, value).catch(() => {}); }
-        loadDraft(projectId) { try { return sessionStorage.getItem(DRAFT_PREFIX + projectId) || ''; } catch (_) { return ''; } }
-        async loadDraftAsync(projectId) { try { const saved=await window.TShowOffline?.readDraft(`chat:${projectId}`); if(typeof saved==='string') return saved; } catch (_) {} return this.loadDraft(projectId); }
+        draftKey(projectId) { return `${this.currentUserId || 'anonymous'}:${projectId}`; }
+        saveDraft(projectId, value) { const key=this.draftKey(projectId); try { sessionStorage.setItem(DRAFT_PREFIX + key, value); } catch (_) {} window.TShowOffline?.saveDraft(`${key}:chat`, value).catch(() => {}); }
+        loadDraft(projectId) { try { return sessionStorage.getItem(DRAFT_PREFIX + this.draftKey(projectId)) || ''; } catch (_) { return ''; } }
+        async loadDraftAsync(projectId) { try { const saved=await window.TShowOffline?.readDraft(`${this.draftKey(projectId)}:chat`); if(typeof saved==='string') return saved; } catch (_) {} return this.loadDraft(projectId); }
     }
 
     const boot = () => {
