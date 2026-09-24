@@ -169,7 +169,7 @@ router.get('/projects/:id/appearances/:appearanceId/history', requireSupabaseAut
 });
 
 router.patch('/projects/:id/rehearsals/:rehearsalId', requireSupabaseAuth, guard, async(req,res,next)=>{
-  const a=await access(req.params.id,true); if(!canManage(a))return next();
+  const a=await access(req,req.params.id,true); if(!canManage(a))return next();
   const {data:rehearsal,error:readError}=await supabase.from('tshow_rehearsals').select('*').eq('id',req.params.rehearsalId).eq('project_id',req.params.id).maybeSingle();
   if(readError)return fail(res,500,'No se pudo leer el ensayo.','service_unavailable'); if(!rehearsal)return fail(res,404,'El ensayo no existe.','not_found');
   const action=String(req.body.action||'status'); const blocks=Array.isArray(rehearsal.snapshot?.blocks)?rehearsal.snapshot.blocks:[]; const patch={updated_at:new Date().toISOString()};
@@ -199,7 +199,7 @@ router.post('/projects/:id/timing-adjustments/preview', requireSupabaseAuth, gua
 });
 
 router.post('/projects/:id/timing-adjustments/:adjustmentId/apply', requireSupabaseAuth, guard, async (req,res)=>{
-  const a=await access(req.params.id,true); if(!canManage(a))return fail(res,403,'Solo el propietario o administrador puede aplicar ajustes.','forbidden');
+  const a=await access(req,req.params.id,true); if(!canManage(a))return fail(res,403,'Solo el propietario o administrador puede aplicar ajustes.','forbidden');
   const {data:adjustment}=await supabase.from('tshow_timing_adjustments').select('*').eq('id',req.params.adjustmentId).eq('project_id',req.params.id).eq('status','preview').maybeSingle();
   if(!adjustment)return fail(res,404,'La simulación no existe o ya fue aplicada.','not_found');
   if(Number(req.body.expectedDocumentVersion)!==Number(a.project.document_version)||Number(adjustment.base_document_version)!==Number(a.project.document_version))return fail(res,409,'La pauta cambió. Genera una nueva simulación antes de aplicar.','conflict');
@@ -245,7 +245,7 @@ router.get('/projects/:id/production', requireSupabaseAuth, guard, async (req, r
   const {data:areaMemberships,error:areaMembershipError}=areaIds.length?await supabase.from('tshow_project_area_members').select('area_id,can_update').eq('user_id',req.user.id).in('area_id',areaIds):{data:[],error:null};
   if(areaMembershipError)return fail(res,500,'No se pudo cargar tus permisos operativos.','service_unavailable');
   const visibleNotices=(notices.data||[]).map(({tshow_operational_notice_recipients,...notice})=>({...notice,recipient:(tshow_operational_notice_recipients||[]).find(recipient=>recipient.user_id===req.user.id)||null}));
-  const areaUpdate=canWrite(a)||(areaMemberships.data||[]).some(item=>item.can_update===true);
+  const areaUpdate=canWrite(a)||(areaMemberships||[]).some(item=>item.can_update===true);
   res.json({ success:true, enabled:true, serverTime:new Date().toISOString(), project:{ id:a.project.id, documentVersion:a.project.document_version }, data:{ areas:areas.data||[], tasks:tasks.data||[], artists:artists.data||[], appearances:appearances.data||[], notices:visibleNotices, readiness:readiness.data||[] }, capabilities:{ manageAreas:canManage(a), editOperational:canWrite(a), areaUpdate, createRehearsal:canManage(a) } });
 });
 
@@ -286,7 +286,7 @@ router.post('/projects/:id/timing-adjustments/:adjustmentId/apply', requireSupab
   const {data:updated,error:updateError}=await supabase.from('tshow_projects').update({payload:nextPayload}).eq('id',req.params.id).eq('document_version',a.project.document_version).select('id,document_version').maybeSingle();if(updateError||!updated)return fail(res,409,'La pauta cambió durante la aplicación.','conflict');await supabase.from('tshow_timing_adjustments').update({status:'applied',applied_by:req.user.id,applied_at:new Date().toISOString()}).eq('id',adjustment.id);await audit(req.params.id,req.user.id,'operational.timing_adjustment.applied',{adjustmentId:adjustment.id});res.json({success:true,data:updated});});
 
 router.post('/projects/:id/tasks/apply-template', requireSupabaseAuth, guard, async(req,res)=>{
-  const a=await access(req.params.id,true); if(!canWrite(a))return fail(res,403,'No tienes permisos para aplicar la checklist.','forbidden');
+  const a=await access(req,req.params.id,true); if(!canWrite(a))return fail(res,403,'No tienes permisos para aplicar la checklist.','forbidden');
   const templates=[['sound','Revisar micrófonos y líneas','Confirmar prueba de sonido antes de abrir puertas.'],['lighting','Verificar luces de escena','Confirmar escenas y respaldo de operación.'],['screens','Cargar videos y gráficas','Probar reproducción y formato de cada pieza.'],['stage','Revisar escenario','Confirmar montaje, accesos y seguridad.'],['dressing','Confirmar artistas y camarines','Validar llegada y preparación del siguiente artista.'],['doors','Preparar apertura de puertas','Coordinar acceso, señalética y equipo de atención.']];
   const {data:areas,error:areaError}=await supabase.from('tshow_project_areas').select('id,area_key').eq('project_id',req.params.id).eq('status','active');
   if(areaError)return fail(res,500,'No se pudo leer la plantilla de áreas.','service_unavailable');

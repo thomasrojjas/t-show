@@ -227,7 +227,8 @@ class App {
     }
 
     async deleteProject(id) {
-        if (confirm('¿Estás seguro de eliminar este proyecto?')) {
+        const accepted = await window.TShowUI?.confirm({title: 'Eliminar proyecto', description: 'Se eliminará este evento del espacio de trabajo. Sus datos no se borrarán de inmediato.', confirmLabel: 'Eliminar proyecto'});
+        if (accepted) {
             const res = await ApiClient.deleteProject(id);
             if (this.currentProjectId === id) this.currentProjectId = null;
             PrintExportManager.showToast(res.message || 'Proyecto eliminado', 'danger');
@@ -275,8 +276,9 @@ class App {
         });
     }
 
-    resetToDefaults() {
-        if (confirm('¿Restablecer todos los campos a la configuración inicial por defecto?')) {
+    async resetToDefaults() {
+        const accepted = await window.TShowUI?.confirm({title: 'Restablecer configuración', description: 'Se reemplazarán los datos editables por una pauta inicial de ejemplo.', confirmLabel: 'Restablecer'});
+        if (accepted) {
             document.getElementById('eventName').value = 'Gran Evento Estelar';
             document.getElementById('convocatoriaTime').value = '18:30';
             document.getElementById('convocatoriaDuration').value = '30';

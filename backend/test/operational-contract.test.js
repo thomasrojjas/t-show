@@ -99,7 +99,9 @@ test('timing adjustment application is version guarded and creates a document sn
 
 test('offline cache invalidates stale assets and includes the operational shell', () => {
   const serviceWorker = fs.readFileSync(path.join(root, 'frontend/service-worker.js'), 'utf8');
-  assert.match(serviceWorker, /tshow-static-v3/);
+  assert.match(serviceWorker, /tshow-static-v4/);
+  assert.match(serviceWorker, /ui-kit\.css/);
+  assert.match(serviceWorker, /ui-kit\.js/);
   assert.match(serviceWorker, /\/js\/chat\.js/);
   assert.match(serviceWorker, /\/js\/workspace-nav\.js/);
   assert.match(serviceWorker, /\/css\/chat\.css/);
