@@ -5,6 +5,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
 const project = { id: 'qa-operational', eventName: 'Ensayo operativo ficticio', eventDate: '2026-09-23', permission: 'owner' };
+let browserRole = 'owner';
 const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentUser:async()=>({id:'qa-user'}),getProfile:async()=>({id:'qa-user',first_name:'QA',last_name:'Producción',role:'account_owner'}),token:async()=>'qa',api:async(p,o)=>{const r=await fetch(p,o);const b=await r.json();if(!r.ok){const e=Error(b.message);e.code=b.code;throw e;}return b;},logout:async()=>{}};`;
 
 (async () => {
@@ -21,12 +22,12 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
       if (requestPath === '/js/config.js') return route.fulfill({ contentType: 'application/javascript', body: 'window.SHOWTIME_API_URL=location.origin;' });
       if (requestPath.startsWith('/api/')) {
         if (route.request().method() !== 'GET') requests.push({ method: route.request().method(), path: requestPath });
-        if (requestPath === '/api/projects') return route.fulfill({ json: { data: [{ id: project.id, event_name: project.eventName, payload: project, member_role: 'owner' }], meta: { ownedCount: 1, limit: 20, remaining: 19 } } });
+        if (requestPath === '/api/projects') return route.fulfill({ json: { data: [{ id: project.id, event_name: project.eventName, payload: { ...project, permission: browserRole }, member_role: browserRole }], meta: { ownedCount: browserRole === 'owner' ? 1 : 0, limit: 20, remaining: 19 } } });
         if (requestPath === '/api/chat/summary') return route.fulfill({ json: { success: true, data: { events: [{ id: project.id, name: project.eventName, canWrite: true, lastReadSequence: 0, unreadCount: 0 }], soundEnabled: false } } });
         if (requestPath === '/api/operational-inbox') return route.fulfill({ json: { success: true, data: [], unreadCount: 0 } });
         if (requestPath.endsWith('/chat/messages')) return route.fulfill({ json: { success: true, data: { messages: [] } } });
-        if (requestPath === `/api/projects/${project.id}`) return route.fulfill({ json: { data: { id: project.id, event_name: project.eventName, payload: project, permission: 'owner' } } });
-        if (requestPath.endsWith('/production')) return route.fulfill({ json: { success: true, serverTime: '2026-09-23T15:00:00Z', project: { id: project.id, documentVersion: 1 }, data: { areas: [], tasks: [], artists: [], appearances: [], notices: [] }, capabilities: { manageAreas: true, editOperational: true, createRehearsal: true } } });
+        if (requestPath === `/api/projects/${project.id}`) return route.fulfill({ json: { data: { id: project.id, event_name: project.eventName, payload: { ...project, permission: browserRole }, permission: browserRole } } });
+        if (requestPath.endsWith('/production')) return route.fulfill({ json: { success: true, serverTime: '2026-09-23T15:00:00Z', project: { id: project.id, documentVersion: 1 }, data: { areas: [], tasks: [], artists: [], appearances: [], notices: [] }, capabilities: { manageAreas: browserRole === 'owner', editOperational: browserRole === 'owner', createRehearsal: browserRole === 'owner' } } });
         if (requestPath.endsWith('/readiness')) return route.fulfill({ json: { success: true, data: [{ id: 'r1', status: 'ready', tshow_project_blocks: { title: 'Apertura', start_time: '20:00' }, tshow_project_areas: { name: 'Sonido' } }] } });
         if (requestPath.endsWith('/technical-cues') || requestPath.endsWith('/artists') || requestPath.endsWith('/notices') || requestPath.endsWith('/rehearsals')) return route.fulfill({ json: { success: true, data: [] } });
         return route.fulfill({ json: { data: [] } });
@@ -51,6 +52,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.getByRole('tab', { name: 'Atrasos' }).click(); await page.waitForSelector('[data-operational-preview]');
     await page.getByRole('tab', { name: 'Ensayos' }).click(); await page.waitForSelector('[data-operational-rehearsal]');
     await page.getByRole('button', { name: 'Preparar consulta sin conexión' }).click(); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Consulta local preparada')); await context.setOffline(true); await page.waitForFunction(() => document.querySelector('#operationalSyncStatus')?.textContent.includes('Sin conexión')); await page.getByRole('tab', { name: 'Checklist' }).click(); await page.waitForSelector('[data-operational-task-new][disabled]'); await context.setOffline(false);
+    browserRole = 'viewer'; await page.reload(); await page.waitForSelector('[data-route="production"]', { state: 'attached' }); await page.evaluate(() => window.WorkspaceShell.navigate('production', true)); await page.waitForFunction(() => document.querySelector('#view-production')?.classList.contains('is-active')); await page.getByRole('tab', { name: 'Preparación' }).click(); assert.equal(await page.locator('[data-operational-area-new]').isVisible().catch(() => false), false, 'viewer area controls must be hidden'); await page.getByRole('tab', { name: 'Checklist' }).click(); assert.equal(await page.locator('[data-operational-task-new]').isVisible().catch(() => false), false, 'viewer task controls must be hidden');
     assert.equal(errors.length, 0, errors.join('\n')); console.log('operational browser QA passed');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
