@@ -1,0 +1,38 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = path.resolve(__dirname, '../..');
+const route = fs.readFileSync(path.join(root, 'backend/routes/operational.js'), 'utf8');
+const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260924023919_operational_evolution.sql'), 'utf8');
+const completeness = fs.readFileSync(path.join(root, 'supabase/migrations/20260924033000_operational_completeness.sql'), 'utf8');
+
+test('operational API keeps internal access, feature gating and delegated area writes explicit', () => {
+  assert.match(route, /tshow_operational_feature_flags/);
+  assert.match(route, /feature_disabled/);
+  assert.match(route, /area operators may update their assigned checklist/i);
+  assert.match(route, /tshow_project_area_members/);
+  assert.match(route, /No tienes permisos para actualizar tareas/);
+});
+
+test('operational API exposes idempotent checklist templates and rehearsal snapshots', () => {
+  assert.match(route, /tasks\/apply-template/);
+  assert.match(route, /task_kind.*template/);
+  assert.match(route, /snapshot:source/);
+  assert.match(route, /current_index:0/);
+});
+
+test('operational storage is additive and preserves rehearsal isolation', () => {
+  assert.match(migration, /create table if not exists public\.tshow_rehearsals/);
+  assert.match(migration, /create table if not exists public\.tshow_timing_adjustments/);
+  assert.match(completeness, /add column if not exists snapshot/);
+  assert.match(completeness, /add column if not exists current_index/);
+});
+
+test('timing adjustment application is version guarded and creates a document snapshot', () => {
+  assert.match(route, /expectedDocumentVersion/);
+  assert.match(route, /document_version:nextVersion/);
+  assert.match(route, /tshow_project_document_versions/);
+  assert.match(route, /La pauta cambió durante la aplicación/);
+});

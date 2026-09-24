@@ -12,6 +12,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
   try {
     const context = await browser.newContext();
     const errors = [];
+    const requests = [];
     await context.addInitScript(() => localStorage.setItem('tshow_onboarding_v1:qa-user', 'done'));
     await context.route('**/*', route => {
       const url = new URL(route.request().url()); const requestPath = url.pathname;
@@ -19,6 +20,7 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
       if (requestPath === '/js/auth.js') return route.fulfill({ contentType: 'application/javascript', body: authStub });
       if (requestPath === '/js/config.js') return route.fulfill({ contentType: 'application/javascript', body: 'window.SHOWTIME_API_URL=location.origin;' });
       if (requestPath.startsWith('/api/')) {
+        if (route.request().method() !== 'GET') requests.push({ method: route.request().method(), path: requestPath });
         if (requestPath === '/api/projects') return route.fulfill({ json: { data: [{ id: project.id, event_name: project.eventName, payload: project, member_role: 'owner' }], meta: { ownedCount: 1, limit: 20, remaining: 19 } } });
         if (requestPath === `/api/projects/${project.id}`) return route.fulfill({ json: { data: { id: project.id, event_name: project.eventName, payload: project, permission: 'owner' } } });
         if (requestPath.endsWith('/production')) return route.fulfill({ json: { success: true, serverTime: '2026-09-23T15:00:00Z', project: { id: project.id, documentVersion: 1 }, data: { areas: [], tasks: [], artists: [], appearances: [], notices: [] }, capabilities: { manageAreas: true, editOperational: true, createRehearsal: true } } });
@@ -36,7 +38,9 @@ const authStub = `window.Auth={requireSession:async()=>({id:'qa-user'}),currentU
     await page.waitForFunction(() => document.querySelector('#view-production')?.classList.contains('is-active'));
     assert(await page.getByText('Todo listo.').count()); assert(await page.getByRole('tab', { name: 'Preparación' }).count());
     await page.getByRole('tab', { name: 'Preparación' }).click(); await page.waitForFunction(() => document.querySelector('.operational-status')?.textContent.includes('Listo')); assert(await page.locator('[data-operational-readiness]').count());
+    await page.locator('[data-operational-readiness]').selectOption('preparing'); await page.waitForTimeout(50); assert(requests.some(item => item.path.endsWith('/readiness/r1')));
     await page.getByRole('tab', { name: 'Checklist' }).click(); await page.waitForSelector('[data-operational-task-new]');
+    await page.getByRole('button', { name: 'Aplicar plantilla' }).click(); await page.waitForTimeout(50); assert(requests.some(item => item.path.endsWith('/tasks/apply-template')));
     await page.getByRole('tab', { name: 'Indicaciones' }).click(); await page.waitForSelector('[data-operational-cue-new]');
     await page.getByRole('tab', { name: 'Artistas' }).click(); await page.waitForSelector('[data-operational-artist-new]');
     await page.getByRole('tab', { name: 'Avisos' }).click(); await page.waitForSelector('[data-operational-notice]');
