@@ -223,7 +223,19 @@ class LiveApp {
         };
         this.$('cancelScheduleButton').onclick = () => this.execute({ action:'cancel-schedule' }, ['Cancelar programación', 'El evento volverá a quedar en espera. La escaleta y el historial se conservarán.']);
         this.$('previousButton').onclick = () => this.execute({ action:'previous' });
-        this.$('nextButton').onclick = () => this.execute({ action:'next' });
+        this.$('nextButton').onclick = async () => {
+            const next = this.snapshot?.nextItem;
+            const rows = next ? this.readinessRows.filter(row => String(row.block_id || '') === String(next.key || next.id || '')) : [];
+            const pending = rows.filter(row => !['ready', 'not_applicable'].includes(row.status));
+            let prompt;
+            let readinessOverride;
+            if (pending.length) {
+                const names = pending.map(row => row.tshow_project_areas?.name || 'Área').join(', ');
+                prompt = ['Avanzar con preparación pendiente', `Estas áreas aún no están confirmadas para «${next.title || 'el siguiente bloque'}»: ${names}. Puedes continuar, pero quedará registrado que avanzaste con advertencia.`];
+                readinessOverride = { blockId: next.key || next.id || null, pendingAreaIds: pending.map(row => row.area_id).filter(Boolean), confirmedAt: new Date().toISOString() };
+            }
+            this.execute({ action:'next', ...(readinessOverride ? { readinessOverride } : {}) }, prompt);
+        };
         this.$('extendButton').onclick = () => this.execute({ action:'extend', minutes:Number(this.$('extendMinutes').value) });
         this.$('restartBlock').onclick = () => this.execute({ action:'restart-block' }, ['Reiniciar tiempo del bloque', 'Se registrará el tramo actual y el cronómetro volverá a la duración completa del bloque.']);
         this.$('finishButton').onclick = () => this.execute({ action:'finish' }, ['Finalizar evento', 'La sesión quedará finalizada y conservará los tiempos registrados.']);

@@ -320,6 +320,13 @@ router.put('/projects/:id/live', requireSupabaseAuth, async (req, res) => {
   if (error) return res.status(error.code === '40001' ? 409 : 503).json({ success: false,
     code: error.code === '40001' ? 'LIVE_CONFLICT' : 'LIVE_SAVE_FAILED',
     message: error.code === '40001' ? 'Otro operador actualizó la sesión. Recarga antes de repetir la acción.' : 'No se pudo guardar. Recarga la sesión para comprobar el resultado.' });
+  if (action === 'next' && req.body.readinessOverride?.pendingAreaIds?.length) {
+    await audit(req.params.id, req.user.id, 'live.next_with_readiness_warning', {
+      blockId: req.body.readinessOverride.blockId || null,
+      pendingAreaIds: req.body.readinessOverride.pendingAreaIds.slice(0, 50),
+      confirmedAt: req.body.readinessOverride.confirmedAt || null
+    });
+  }
   res.json({ success: true, data: data.state, version: data.revision, projectVersion: granted.project.document_version || 0, serverNow: new Date().toISOString() });
 });
 

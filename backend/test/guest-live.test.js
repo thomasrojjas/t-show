@@ -94,6 +94,14 @@ test('live console exposes the observer action and a separate next-block panel',
   assert.match(app, /const remaining = snap\.items\.filter\(row => row\.num >= startNum\)/);
 });
 
+test('manual live advance warns and audits pending area preparation', () => {
+  const live = fs.readFileSync(path.join(__dirname, '../../frontend/js/live-app.js'), 'utf8');
+  const api = fs.readFileSync(path.join(__dirname, '../routes/saas.js'), 'utf8');
+  assert.match(live, /Avanzar con preparación pendiente/);
+  assert.match(live, /readinessOverride/);
+  assert.match(api, /live\.next_with_readiness_warning/);
+});
+
 test('project selector uses equal horizontal pages and hides pagination on mobile', () => {
   const nav = read('frontend/js/workspace-nav.js');
   const sober = read('frontend/css/workspace-sober.css');
