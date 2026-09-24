@@ -52,6 +52,21 @@ const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
 const audit = (projectId, actorId, action, metadata = {}) => supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
 
+// Recipient-scoped notice reads are registered before the legacy project-wide
+// handler below, keeping old clients compatible without exposing directed
+// notices to another project member.
+router.get('/projects/:id/notices', requireSupabaseAuth, guard, async (req,res,next)=>{
+  const a=await access(req,req.params.id); if(!a)return fail(res,403,'No tienes acceso a este evento.','forbidden');
+  const [{data:notices,error:noticeError},{data:recipients,error:recipientError}]=await Promise.all([
+    supabase.from('tshow_operational_notices').select('*').eq('project_id',req.params.id).order('created_at',{ascending:false}).limit(100),
+    supabase.from('tshow_operational_notice_recipients').select('*').eq('user_id',req.user.id)
+  ]);
+  if(noticeError||recipientError)return next(noticeError||recipientError);
+  const byNotice=new Map((recipients||[]).map(row=>[row.notice_id,row]));
+  const data=(notices||[]).filter(notice=>notice.created_by===req.user.id||byNotice.has(notice.id)).map(notice=>({...notice,recipient:byNotice.get(notice.id)||null}));
+  res.json({success:true,data,unconfirmedCount:data.filter(notice=>notice.recipient&&!notice.recipient.confirmed_at).length});
+});
+
 router.patch('/projects/:id/operational-feature', requireSupabaseAuth, async (req,res)=>{const a=await access(req,req.params.id,true);if(!canManage(a))return fail(res,403,'Solo el propietario o administrador puede habilitar Producción.','forbidden');const enabledValue=req.body.enabled===true;const {data,error}=await supabase.from('tshow_operational_feature_flags').upsert({project_id:req.params.id,enabled:enabledValue,enabled_by:req.user.id,enabled_at:enabledValue?new Date().toISOString():null,updated_at:new Date().toISOString()},{onConflict:'project_id'}).select().single();if(error)return fail(res,400,'No se pudo actualizar la habilitación operativa.','validation_error');await audit(req.params.id,req.user.id,'operational.feature.updated',{enabled:enabledValue});res.json({success:true,data});});
 router.get('/projects/:id/production', requireSupabaseAuth, guard, async (req, res) => {
   const a = await access(req, req.params.id); if (!a) return fail(res, 403, 'No tienes acceso operativo a este evento.', 'forbidden');
