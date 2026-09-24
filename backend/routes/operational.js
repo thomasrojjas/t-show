@@ -15,6 +15,7 @@ const guard = async (req, res, next) => { try { if (await featureEnabled(req)) r
 // route below, so this middleware only handles the narrower delegated case.
 router.use('/projects/:id/tasks/:taskId', async (req,res,next)=>{
   if(req.method!=='PATCH')return next();
+  if(!req.user?.id)return next();
   try{
     if(!(await featureEnabled(req)))return fail(res,503,'Las funciones operativas están temporalmente desactivadas para este evento.','feature_disabled');
     const a=await access(req,req.params.id); if(!a)return next();
@@ -51,6 +52,40 @@ async function access(req, projectId, write = false) {
 const canManage = a => a && ['owner','admin'].includes(a.role);
 const canWrite = a => a && ['owner','admin','editor'].includes(a.role);
 const audit = (projectId, actorId, action, metadata = {}) => supabase.from('tshow_audit_log').insert({ project_id: projectId, actor_id: actorId, action, metadata });
+
+router.post('/projects/:id/timing-adjustments/preview', requireSupabaseAuth, guard, async (req,res)=>{
+  const a=await access(req,req.params.id,true); if(!canWrite(a))return fail(res,403,'No tienes permisos para proponer ajustes.','forbidden');
+  const input=Array.isArray(req.body.blocks)?req.body.blocks:[];
+  if(!input.length)return fail(res,400,'Debes incluir bloques para simular.','validation_error');
+  const blocks=[];
+  for(const [index,b] of input.entries()){
+    const original=Number(b.originalMinutes), proposed=Number(b.proposedMinutes), minimum=Math.max(1,Number(b.minimumMinutes)||1), fixed=Boolean(b.fixed);
+    if(!Number.isFinite(original)||original<minimum||!Number.isFinite(proposed)||proposed<minimum)return fail(res,400,'Las duraciones y mínimos deben ser válidos.','validation_error');
+    if(fixed&&proposed!==original)return fail(res,409,`El bloque ${index+1} está fijado y no puede recortarse en esta simulación.`,'conflict');
+    blocks.push({blockId:uuid(b.blockId)?b.blockId:null,index,title:clean(b.title,180),originalMinutes:original,proposedMinutes:proposed,minimumMinutes:minimum,fixed});
+  }
+  const preview={blocks,deltaMinutes:blocks.reduce((total,b)=>total+b.proposedMinutes-b.originalMinutes,0),recoveredMinutes:blocks.reduce((total,b)=>total+Math.max(0,b.originalMinutes-b.proposedMinutes),0),createdAt:new Date().toISOString()};
+  const {data,error}=await supabase.from('tshow_timing_adjustments').insert({project_id:req.params.id,base_document_version:a.project.document_version,preview,created_by:req.user.id}).select().single();
+  if(error)return fail(res,400,'No se pudo guardar la simulación.','validation_error');
+  await audit(req.params.id,req.user.id,'operational.timing_adjustment.previewed',{adjustmentId:data.id,recoveredMinutes:preview.recoveredMinutes});
+  res.status(201).json({success:true,data});
+});
+
+router.post('/projects/:id/timing-adjustments/:adjustmentId/apply', requireSupabaseAuth, guard, async (req,res)=>{
+  const a=await access(req.params.id,true); if(!canManage(a))return fail(res,403,'Solo el propietario o administrador puede aplicar ajustes.','forbidden');
+  const {data:adjustment}=await supabase.from('tshow_timing_adjustments').select('*').eq('id',req.params.adjustmentId).eq('project_id',req.params.id).eq('status','preview').maybeSingle();
+  if(!adjustment)return fail(res,404,'La simulación no existe o ya fue aplicada.','not_found');
+  if(Number(req.body.expectedDocumentVersion)!==Number(a.project.document_version)||Number(adjustment.base_document_version)!==Number(a.project.document_version))return fail(res,409,'La pauta cambió. Genera una nueva simulación antes de aplicar.','conflict');
+  const payload=JSON.parse(JSON.stringify(a.project.payload||{})); const rows=Array.isArray(payload.blocks)?payload.blocks:[];
+  for(const item of adjustment.preview.blocks||[]){const row=item.blockId?rows.find(b=>String(b.id||b.externalId||'')===String(item.blockId)):rows[item.index];if(!row) return fail(res,409,'Uno de los bloques ya no existe. Genera una nueva simulación.','conflict');if(item.fixed&&Number(row.duration)!==Number(item.originalMinutes))return fail(res,409,'Un bloque fijado cambió desde la simulación.','conflict');row.duration=String(item.proposedMinutes);}
+  const nextVersion=Number(a.project.document_version||0)+1;
+  const {data:updated,error:updateError}=await supabase.from('tshow_projects').update({payload,document_version:nextVersion}).eq('id',req.params.id).eq('document_version',a.project.document_version).select('id,document_version').maybeSingle();
+  if(updateError||!updated)return fail(res,409,'La pauta cambió durante la aplicación.','conflict');
+  await supabase.from('tshow_project_document_versions').insert({project_id:req.params.id,version:nextVersion,snapshot:payload,created_by:req.user.id,reason:'Ajuste operativo de atraso'});
+  await supabase.from('tshow_timing_adjustments').update({status:'applied',applied_by:req.user.id,applied_at:new Date().toISOString()}).eq('id',adjustment.id);
+  await audit(req.params.id,req.user.id,'operational.timing_adjustment.applied',{adjustmentId:adjustment.id,version:nextVersion});
+  res.json({success:true,data:updated});
+});
 
 // Recipient-scoped notice reads are registered before the legacy project-wide
 // handler below, keeping old clients compatible without exposing directed
