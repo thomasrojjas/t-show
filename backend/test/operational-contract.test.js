@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const route = fs.readFileSync(path.join(root, 'backend/routes/operational.js'), 'utf8');
+const workspace = fs.readFileSync(path.join(root, 'frontend/js/workspace-nav.js'), 'utf8');
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260924023919_operational_evolution.sql'), 'utf8');
 const completeness = fs.readFileSync(path.join(root, 'supabase/migrations/20260924033000_operational_completeness.sql'), 'utf8');
 const appearanceHistory = fs.readFileSync(path.join(root, 'supabase/migrations/20260924130000_artist_appearance_history.sql'), 'utf8');
@@ -34,7 +35,6 @@ test('operational API exposes idempotent checklist templates and rehearsal snaps
   assert.match(route, /action==='previous'/);
   assert.match(route, /action==='reset'/);
   assert.match(route, /action==='seek'/);
-  const workspace = fs.readFileSync(path.join(root, 'frontend/js/workspace-nav.js'), 'utf8');
   const realtime = fs.readFileSync(path.join(root, 'frontend/js/operational-realtime.js'), 'utf8');
   assert.match(workspace, /Reloj simulado/);
   assert.match(workspace, /elapsed_seconds/);
@@ -64,6 +64,8 @@ test('artist appearance transitions retain an isolated audit history', () => {
   assert.match(route, /tshow_artist_appearance_events/);
   assert.match(route, /fromStatus/);
   assert.match(route, /appearances\/:appearanceId\/history/);
+  assert.match(workspace, /data-operational-appearance-history/);
+  assert.match(workspace, /Historial de estados/);
 });
 
 test('timing adjustment application is version guarded and creates a document snapshot', () => {
