@@ -99,7 +99,7 @@ test('timing adjustment application is version guarded and creates a document sn
 
 test('offline cache invalidates stale assets and includes the operational shell', () => {
   const serviceWorker = fs.readFileSync(path.join(root, 'frontend/service-worker.js'), 'utf8');
-  assert.match(serviceWorker, /tshow-static-v5/);
+  assert.match(serviceWorker, /tshow-static-v6/);
   assert.match(serviceWorker, /ui-kit\.css/);
   assert.match(serviceWorker, /ui-kit\.js/);
   assert.match(serviceWorker, /vendor\/supabase\.js/);
