@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Show Time - Planificador Profesional de Timing</title>
     <script src="js/theme-bootstrap.js"></script>
+    <script>
+        (() => {
+            const path = window.location.pathname.replace(/\/$/, '');
+            const hasProject = new URLSearchParams(window.location.search).has('project');
+            if ((path === '/projects' || path === '/app.html') && !hasProject) {
+                document.documentElement.classList.add('project-picker-first');
+            }
+        })();
+    </script>
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">

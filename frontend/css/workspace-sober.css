@@ -120,6 +120,16 @@ body.workspace-surface .glass-panel,body.workspace-surface .panel,body.workspace
 body.workspace-surface .header-bar{display:none!important}
 body.workspace-surface{background:var(--theme-bg,#101216)!important;color:var(--theme-text,#f2f4f7)!important;font-family:var(--workspace-font,"IBM Plex Sans",sans-serif)!important}
 body.workspace-surface .workspace-shell{background:transparent!important;color:var(--theme-text,#f5f7fb)!important}
+/* El selector de proyectos debe ser la primera vista visible tras autenticarse. */
+html.project-picker-first body > .header-bar,
+html.project-picker-first body > .main-grid,
+html.project-picker-first body > footer,
+html.project-picker-first body.workspace-surface nav.workspace-sidebar-shell,
+html.project-picker-first body.has-mobile-shell .mobile-shell-header,
+html.project-picker-first body.has-mobile-shell .mobile-shell-bar,
+html.project-picker-first body.has-mobile-shell .mobile-shell-sheet{display:none!important}
+html.project-picker-first body.workspace-surface .workspace-shell{width:100%!important;margin:0!important;padding-top:0!important}
+html.project-picker-first body.workspace-surface .workspace-view[data-route="projects"]{display:block!important}
 body.workspace-surface .workspace-sidebar-shell{background:color-mix(in srgb,var(--theme-bg,#050812) 90%,transparent)!important;border-color:var(--theme-border,#2b3a54)!important}
 body.workspace-surface .workspace-sidebar-nav>a:hover,body.workspace-surface .workspace-sidebar-nav>a:focus-visible,body.workspace-surface .workspace-help-button:hover,body.workspace-surface .workspace-help-button:focus-visible{background:color-mix(in srgb,var(--theme-accent,#74a7ff) 14%,transparent)!important}
 body.workspace-surface .workspace-sidebar-nav>a[aria-current=page]{background:color-mix(in srgb,var(--theme-accent,#74a7ff) 18%,transparent)!important;border-color:color-mix(in srgb,var(--theme-accent,#74a7ff) 36%,transparent)!important;box-shadow:inset 3px 0 0 var(--theme-accent,#74a7ff)!important}
