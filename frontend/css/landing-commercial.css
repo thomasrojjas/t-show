@@ -52,3 +52,45 @@
 #closeScreenshot{font:inherit;padding:12px 20px;background:var(--accent);color:var(--ink);border:0;cursor:pointer}
 @media(max-width:1100px){.landing-body .plans-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.landing-body .product-screens,.landing-body .plans-list,.landing-body .integration-layout,.landing-body .audience-list{grid-template-columns:1fr}.landing-body .hero-image{min-height:250px}.landing-body .hero h1{font-size:42px}.landing-body .nav-account a:first-child{display:inline;font-size:12px}.landing-body .site-nav{gap:8px}.landing-body .nav-account{gap:10px}.landing-body .wordmark-logo img{width:64px;height:64px}.landing-body .nav-account .button{padding:12px;font-size:12px}.landing-body .plans-heading{display:block}.pricing-controls{justify-items:start;margin-top:24px}.pricing-toggle{width:100%}.pricing-toggle button{flex:1}.price-card-content{padding:28px 24px 24px}}
+
+/* Product-led landing: preparation, coordination and live operation. */
+.landing-body .hero-commercial{grid-template-columns:minmax(0,1fr) minmax(420px,.9fr);gap:clamp(48px,7vw,112px)}
+.landing-body .hero-commercial .hero-copy{max-width:760px}
+.landing-body .hero-commercial .hero-lede{max-width:620px}
+.landing-body .hero-commercial .hero-note{margin:24px 0 0;color:#858b96;font-size:12px;line-height:1.45;max-width:480px}
+.landing-body .hero-product-image{min-height:clamp(340px,42vw,560px);background:#11161f;box-shadow:0 28px 80px rgba(0,0,0,.42)}
+.landing-body .hero-product-image img{object-position:top left;filter:none}
+.landing-body .hero-product-image:after{background:linear-gradient(180deg,transparent 35%,rgba(5,5,5,.85))}
+.landing-body .statement-commercial{display:grid;grid-template-columns:25% minmax(0,1fr);gap:40px}
+.landing-body .statement-commercial .section-index{margin-top:8px}
+.landing-body .statement-commercial h2{max-width:780px}
+.landing-body .statement-commercial div>p{max-width:620px}
+.landing-body .section-index{font-family:"IBM Plex Mono",monospace}
+.landing-body .proof-section,.landing-body .live-proof-section,.landing-body .coordination-section,.landing-body .advanced-section{background:linear-gradient(180deg,rgba(21,25,35,.38),transparent 60%)}
+.landing-body .coordination-section,.landing-body .advanced-section{padding:clamp(82px,10vw,140px) 0;border-bottom:1px solid var(--line)}
+.landing-body .product-screens-primary{grid-template-columns:minmax(0,1.18fr) minmax(300px,.82fr);align-items:start;gap:clamp(32px,6vw,92px)}
+.landing-body .screen-card-featured .screen-frame{box-shadow:0 22px 70px rgba(0,0,0,.34)}
+.feature-rail{border-top:1px solid var(--line)}
+.feature-rail article{display:grid;grid-template-columns:42px minmax(0,1fr);gap:18px;padding:21px 0;border-bottom:1px solid var(--line)}
+.feature-rail-mark{color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:12px;padding-top:3px}
+.feature-rail h3,.live-copy h3,.coordination-list h3{margin:0 0 6px;font-size:19px;letter-spacing:-.025em}
+.feature-rail p,.live-copy p,.coordination-list p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.live-proof-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);align-items:start;gap:clamp(36px,7vw,104px)}
+.live-copy{border-top:1px solid var(--line)}
+.live-copy-item{padding:22px 0;border-bottom:1px solid var(--line)}
+.coordination-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(280px,1.05fr);align-items:start;gap:clamp(36px,7vw,104px)}
+.coordination-example{padding:24px;background:#0e1219;border:1px solid #39404d;box-shadow:0 22px 60px rgba(0,0,0,.32)}
+.coordination-example-head{display:flex;justify-content:space-between;gap:18px;padding-bottom:17px;border-bottom:1px solid #303642;color:#8e96a5;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em}
+.coordination-example-head b{color:#ff6868;font-weight:500;letter-spacing:0}
+.message-line{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:17px 0;border-bottom:1px solid #252b34;font-size:13px}
+.message-line strong{color:#f4f4f1;font-weight:650}.message-line p{margin:0;color:#c3c8d0}.message-line time{color:#737b88;font-family:"IBM Plex Mono",monospace;font-size:10px}.message-line.is-reply{padding-left:18px}.notice-line{display:grid;gap:8px;margin-top:20px;padding:14px 15px;border-left:3px solid var(--accent);background:#18131a;font-size:13px}.notice-line span{color:#ff6a6a;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em}.notice-line strong{font-weight:600}.notice-line em{color:#aeb5c1;font-style:normal;font-size:12px}
+.coordination-list{border-top:1px solid var(--line)}
+.coordination-list article{padding:22px 0;border-bottom:1px solid var(--line)}
+.advanced-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.advanced-list article{display:grid;gap:14px;padding:24px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}.advanced-list article:last-child{border-right:0}.advanced-list strong{font-size:19px;letter-spacing:-.025em}.advanced-list span{color:var(--muted);font-size:14px;line-height:1.5}.section-note{margin:18px 0 0;color:#858b96;font-size:12px}
+.steps-section .steps b{font-weight:650;color:var(--ink)}
+.closing-actions{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.landing-body .closing{background:linear-gradient(120deg,rgba(255,48,48,.08),transparent 45%)}
+@media(max-width:1100px){.landing-body .hero-commercial{grid-template-columns:1fr}.landing-body .hero-commercial .hero-image{min-height:52vw}.landing-body .product-screens-primary,.landing-body .live-proof-layout,.landing-body .coordination-grid{grid-template-columns:1fr}.feature-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}.advanced-list{grid-template-columns:1fr}.advanced-list article{border-right:0}}
+@media(max-width:700px){.landing-body .statement-commercial{display:block}.landing-body .statement-commercial .section-index{margin-bottom:36px}.landing-body .product-screens-primary{gap:34px}.feature-rail{display:block}.feature-rail article{grid-template-columns:36px minmax(0,1fr)}.landing-body .hero-product-image{min-height:250px}.coordination-example{padding:18px}.message-line{grid-template-columns:1fr auto}.message-line p{grid-column:1/-1}.message-line time{grid-column:2;grid-row:1}.landing-body .closing-actions{align-items:flex-start;flex-direction:column;gap:18px}}
+@media(prefers-reduced-motion:reduce){.landing-body .button{transition:none}}

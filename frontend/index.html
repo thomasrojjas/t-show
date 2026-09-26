@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Prepara la escaleta, comparte indicaciones y dirige tu evento con T-Show. Conecta las métricas de PASSLINK desde Pro.">
-  <title>T-Show — Dirige tu evento con una pauta compartida</title>
+  <meta name="description" content="T-Show coordina la escaleta, las áreas y el equipo de tu evento antes y durante la operación en vivo.">
+  <meta property="og:title" content="T-Show — Tu equipo coordinado, cada momento bajo control">
+  <meta property="og:description" content="Prepara tu producción, comparte indicaciones y dirige el show desde una misma referencia.">
+  <meta property="og:type" content="website">
+  <title>T-Show — Tu equipo coordinado, cada momento bajo control</title>
   <link rel="icon" type="image/png" sizes="512x512" href="assets/branding/tshow-isotipo.png">
   <link rel="apple-touch-icon" href="assets/branding/tshow-isotipo.png">
-  <link rel="preload" as="image" href="assets/backgrounds/workspace-desktop-poster-v1.webp" media="(min-width: 768px)">
-  <link rel="preload" as="image" href="assets/backgrounds/workspace-mobile-poster-v1.webp" media="(max-width: 767px)">
+  <link rel="preload" as="image" href="assets/product/live-console.png">
   <link rel="stylesheet" href="css/landing.css">
   <link rel="stylesheet" href="css/glass-workspace.css">
   <link rel="stylesheet" href="css/landing-commercial.css">
@@ -19,151 +21,65 @@
   <header class="site-header">
     <nav class="site-nav" aria-label="Navegación principal">
       <a class="wordmark wordmark-logo" href="/" aria-label="T-Show, inicio"><img src="assets/branding/tshow-wordmark.png" width="150" height="150" alt="T-Show"></a>
-      <div class="nav-sections">
-        <a href="#producto">Producto</a>
-        <a href="#ticketera">PASSLINK</a>
-        <a href="#equipos">Para equipos</a>
-        <a href="#como-funciona">Cómo funciona</a>
-        <a href="#planes">Planes</a>
-        <a href="#preguntas">Preguntas</a>
-        <a href="#contacto">Contacto</a>
-      </div>
-      <div class="nav-account">
-        <a href="login.html">Iniciar sesión</a>
-        <a class="button button-light" href="register.html">Crear cuenta</a>
-      </div>
+      <div class="nav-sections"><a href="#producto">Producto</a><a href="#equipos">Para equipos</a><a href="#como-funciona">Cómo funciona</a><a href="#planes">Planes</a><a href="#preguntas">Preguntas</a><a href="#contacto">Contacto</a></div>
+      <div class="nav-account"><a href="login.html">Iniciar sesión</a><a class="button button-light" href="register.html">Crear cuenta</a></div>
     </nav>
   </header>
 
   <main id="contenido">
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero hero-commercial" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow">T-SHOW / OPERACIÓN EN VIVO</p>
-        <h1 id="hero-title">Dirige tu evento con todo el equipo en la misma pauta.</h1>
-        <p class="hero-lede">Prepara la escaleta, comparte las indicaciones y sigue cada bloque en vivo. T-Show reúne la información que producción, técnica y escenario necesitan para coordinarse.</p>
-        <div class="hero-actions">
-          <a class="button button-light" href="register.html">Crear cuenta</a>
-          <a class="text-action" href="#producto">Ver el sistema</a>
-        </div>
+        <h1 id="hero-title">Tu equipo coordinado. Cada momento del show bajo control.</h1>
+        <p class="hero-lede">Prepara la escaleta, asigna responsables y comparte las indicaciones del evento en un mismo lugar. Durante el show, todos consultan el bloque actual y lo que viene.</p>
+        <div class="hero-actions"><a class="button button-light" href="billing.html?plan=pro&amp;interval=month" data-subscribe-plan="pro">Contratar Pro</a><a class="text-action" href="#producto">Ver cómo funciona <span aria-hidden="true">↓</span></a></div>
+        <p class="hero-note">Para productoras, equipos técnicos y organizaciones que necesitan llegar preparados.</p>
       </div>
-      <figure class="hero-image">
-        <img src="assets/tshow-stage.webp" width="1920" height="1080" alt="Luces de escenario atravesando la neblina de un recinto de conciertos">
-        <figcaption>La operación empieza antes de que se encienda la primera luz.</figcaption>
-      </figure>
-      <a class="hero-scroll-cue" href="#problema-title" aria-label="Ver cómo funciona T-Show"><span aria-hidden="true">⌄</span></a>
+      <figure class="hero-image hero-product-image"><img src="assets/product/live-console.png" width="1366" height="768" alt="Consola de operación en vivo de T-Show con un evento de demostración" fetchpriority="high"><figcaption>La operación completa, desde la misma referencia.</figcaption></figure>
+      <a class="hero-scroll-cue" href="#problema-title" aria-label="Ver el problema que resuelve T-Show"><span aria-hidden="true">⌄</span></a>
     </section>
 
-    <section class="statement" aria-labelledby="problema-title">
-
-      <div>
-        <h2 id="problema-title">Cuando la pauta vive en muchas partes, el equipo deja de avanzar como uno solo.</h2>
-        <p>Planillas, mensajes y cambios de último minuto separan a producción, técnica y escenario. T-Show reúne la información crítica para que tu equipo decida rápido y llegue preparado al siguiente momento.</p>
-      </div>
-    </section>
+    <section class="statement statement-commercial" aria-labelledby="problema-title"><p class="section-index">EL PROBLEMA</p><div><h2 id="problema-title">Cuando la información se reparte, el show pierde ritmo.</h2><p>Planillas, mensajes y cambios de último minuto separan a producción, técnica y escenario. T-Show reúne la pauta y el estado operativo para que el equipo decida con la misma información.</p></div></section>
 
     <section id="producto" class="proof-section" aria-labelledby="proof-title">
-      <div class="section-heading"><h2 id="proof-title">De la planificación al escenario.</h2><p>Así trabaja tu equipo en T-Show. Capturas reales del sistema con datos de demostración; pulsa una imagen para ampliarla.</p></div>
-      <div class="product-screens">
-        <figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar Prepara la escaleta"><img src="assets/product/schedule-demo.png" width="1366" height="3897" loading="lazy" decoding="async" alt="Prepara la escaleta: captura de T-Show con datos de demostración"></button><figcaption><strong>Prepara la escaleta</strong><span>Ordena los bloques y comprueba los horarios antes de compartir la pauta.</span></figcaption></figure>
-        <figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar Coordina las indicaciones"><img src="assets/product/notes-demo.png" width="1366" height="3887" loading="lazy" decoding="async" alt="Coordina las indicaciones: captura de T-Show con datos de demostración"></button><figcaption><strong>Coordina las indicaciones</strong><span>Consulta el guion y las notas que corresponden a cada momento.</span></figcaption></figure>
-        <figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar Ejecuta desde la consola"><img src="assets/product/live-console.png" width="1366" height="768" loading="lazy" decoding="async" alt="Ejecuta desde la consola: captura de T-Show con datos de demostración"></button><figcaption><strong>Ejecuta desde la consola</strong><span>Sigue el bloque actual y el siguiente desde Operación en vivo.</span></figcaption></figure>
-        <figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar Comparte la vista de escenario"><img src="assets/product/live-stage.png" width="1366" height="768" loading="lazy" decoding="async" alt="Comparte la vista de escenario: captura de T-Show con datos de demostración"></button><figcaption><strong>Comparte la vista de escenario</strong><span>Ofrece una lectura centrada en el momento del evento.</span></figcaption></figure>
-      </div>
-    </section>
-
-    <section id="equipos" class="audience-section" aria-labelledby="equipos-title">
-      <div class="section-heading"><h2 id="equipos-title">Una referencia compartida para cada responsable.</h2><p>Invita a tu equipo al proyecto y asigna los permisos disponibles. Cada persona consulta la información del mismo evento.</p></div>
-      <ul class="audience-list">
-        <li><strong>Dirección</strong><p>Sigue el desarrollo del evento desde la consola.</p></li>
-        <li><strong>Producción y técnica</strong><p>Consulta la pauta y las notas operativas.</p></li>
-        <li><strong>Animación</strong><p>Encuentra el guion de cada bloque.</p></li>
-        <li><strong>Escenario</strong><p>Visualiza el momento actual y el siguiente.</p></li>
-      </ul>
-    </section>
-    <section id="ticketera" class="integration-section" aria-labelledby="ticketera-title">
-      <div class="section-heading"><p class="passlink-label">PASSLINK · Servicio independiente</p><h2 id="ticketera-title">Vende entradas. Opera el evento. Conecta los resultados.</h2><p>PASSLINK es nuestra plataforma de boletaje y control de accesos. Se contrata por separado y, desde Pro en T-Show, puedes conectar el evento para consultar sus métricas desde tu operación.</p></div>
-      <div class="integration-layout">
-        <div>
-          <ol class="passlink-steps"><li>Contrata PASSLINK y crea tu evento de venta.</li><li>En T-Show Pro o superior, abre <strong>Métricas</strong>.</li><li>Elige el evento correspondiente y pulsa <strong>Conectar</strong>.</li></ol>
-          <div class="passlink-capabilities"><strong>PASSLINK incluye</strong><span>Boletaje sin comisión por ticket</span><span>Tickets QR y validación offline</span><span>Aforos, categorías y reportes en vivo</span><span>Recaudación directa a tu cuenta</span></div>
-          <p>Cada proyecto de T-Show se vincula con un evento de PASSLINK. La venta, emisión y gestión de entradas se realizan en PASSLINK.</p>
-          <p>La conexión funciona entre servidores y T-Show no muestra datos personales de compradores.</p>
-          <div class="passlink-actions"><a class="button button-light" href="https://ticketera-five.vercel.app/landing" target="_blank" rel="noopener noreferrer">Conocer PASSLINK</a><a class="text-action" href="https://ticketera-five.vercel.app/registro-productora.html" target="_blank" rel="noopener noreferrer">Contratar PASSLINK</a><a class="text-action" href="#planes">Ver planes de T-Show</a></div>
+      <div class="section-heading proof-heading"><p class="section-index">ANTES DE ABRIR PUERTAS</p><h2 id="proof-title">Llega al show sabiendo qué falta y quién lo tiene.</h2><p>Prepara el evento por áreas y convierte la pauta en acciones que el equipo puede revisar y confirmar.</p></div>
+      <div class="product-screens product-screens-primary">
+        <figure class="screen-card screen-card-featured"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar la escaleta de T-Show"><img src="assets/product/schedule-demo.png" width="1366" height="3897" loading="lazy" decoding="async" alt="Escaleta de T-Show con bloques y horarios de demostración"></button><figcaption><strong>Una pauta que el equipo puede usar</strong><span>Ordena bloques, horarios, guion e indicaciones antes de compartir el evento.</span></figcaption></figure>
+        <div class="feature-rail" aria-label="Herramientas de preparación">
+          <article><span class="feature-rail-mark">01</span><div><h3>Áreas y responsables</h3><p>Organiza sonido, iluminación, escenario, pantallas o camarines y deja claro quién está a cargo.</p></div></article>
+          <article><span class="feature-rail-mark">02</span><div><h3>Checklist previo</h3><p>Revisa pendientes por área, registra avances y detecta problemas antes de abrir puertas.</p></div></article>
+          <article><span class="feature-rail-mark">03</span><div><h3>Indicaciones por bloque</h3><p>Guarda instrucciones técnicas junto al momento exacto en que deben ejecutarse.</p></div></article>
+          <article><span class="feature-rail-mark">04</span><div><h3>Artistas y presentaciones</h3><p>Consulta convocatorias, camarines y estado de cada presentación sin perder la referencia horaria.</p></div></article>
         </div>
-        <figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar Resultados de PASSLINK"><img src="assets/product/metrics-demo.png" width="1366" height="964" loading="lazy" decoding="async" alt="Resultados de PASSLINK: captura de T-Show con datos de demostración"></button><figcaption><strong>Resultados de PASSLINK en T-Show</strong><span>Consulta entradas emitidas, acreditaciones e ingresos del evento conectado.</span></figcaption></figure>
       </div>
     </section>
 
-    <section id="planes" class="plans-section" aria-labelledby="planes-title">
-      <div class="plans-heading"><div class="section-heading"><h2 id="planes-title">Un plan para cada etapa de tu producción.</h2><p>Empieza con tu primer evento. Amplía tu capacidad y conecta PASSLINK desde Pro.</p></div><div class="pricing-controls" role="group" aria-label="Período de precios"><span>Precios en CLP</span><div class="pricing-toggle"><button type="button" class="is-selected" data-billing="monthly" aria-pressed="true">Mensual</button><button type="button" data-billing="annual" aria-pressed="false">Anual <em>Ahorra 30 %</em></button></div></div></div>
-      <div class="feature-list plans-list">
-        <article class="price-card"><div class="price-card-content"><p class="plan-label">PARA EMPEZAR</p><h3>Starter</h3><p>Empieza con tu primer evento.</p><div class="plan-price"><strong>Gratis</strong><small>para comenzar</small></div><a class="plan-button" href="register.html">Crear cuenta</a><div class="plan-divider"></div><ul><li class="included">1 proyecto</li><li class="included">Escaleta, guion y operación en vivo</li><li class="excluded">Conexión PASSLINK</li></ul></div></article>
-        <article class="price-card plan-featured"><div class="price-card-content"><p class="plan-label">CONEXIÓN DESDE ESTE PLAN</p><h3>Pro</h3><p>Coordina una agenda de eventos y consulta sus resultados.</p><div class="plan-price"><strong data-monthly="$29.990" data-annual="$20.993">$29.990</strong><small data-monthly="al mes" data-annual="al mes equivalente">al mes</small><span data-annual="total anual: $251.916" hidden>Total anual: $251.916</span></div><a class="plan-button" href="billing.html?plan=pro&amp;interval=month" data-subscribe-plan="pro">Contratar Pro</a><div class="plan-divider"></div><ul><li class="included">Hasta 20 proyectos</li><li class="included">Equipo e invitaciones</li><li class="included">Operación en vivo compartida</li><li class="included">Conexión PASSLINK disponible</li><li class="plan-footnote">PASSLINK se contrata por separado</li><li class="plan-footnote">Renovación automática del plan</li></ul></div></article>
-        <article class="price-card"><div class="price-card-content"><p class="plan-label">PARA OPERACIONES INTENSIVAS</p><h3>Max</h3><p>Más capacidad para una agenda intensiva.</p><div class="plan-price"><strong data-monthly="$49.990" data-annual="$34.993">$49.990</strong><small data-monthly="al mes" data-annual="al mes equivalente">al mes</small><span data-annual="total anual: $419.916" hidden>Total anual: $419.916</span></div><a class="plan-button" href="billing.html?plan=max&amp;interval=month" data-subscribe-plan="max">Contratar Max</a><div class="plan-divider"></div><ul><li class="included">Hasta 50 proyectos</li><li class="included">Equipo y operación en vivo</li><li class="included">Conexión PASSLINK disponible</li><li class="plan-footnote">PASSLINK se contrata por separado</li><li class="plan-footnote">Renovación automática del plan</li></ul></div></article>
-        <article class="price-card enterprise-card"><div class="price-card-content"><p class="plan-label">PARA ORGANIZACIONES</p><h3>Empresa</h3><p>Una configuración alineada con el volumen y las necesidades de tu organización.</p><div class="plan-price"><strong>A medida</strong></div><a class="plan-button" href="#contacto" data-plan="Empresa">Hablar con ventas</a><div class="plan-divider"></div><ul><li class="included">Proyectos ilimitados</li><li class="included">Conexión PASSLINK disponible</li><li class="included">Acompañamiento comercial</li><li class="plan-footnote">Requiere contratar PASSLINK por separado</li></ul></div></article>
-      </div>
-      <p class="plans-note">Los precios se expresan en pesos chilenos. El plan anual se cobra por adelantado.</p>
+    <section id="equipos" class="audience-section live-proof-section" aria-labelledby="equipos-title">
+      <div class="section-heading"><p class="section-index">DURANTE EL SHOW</p><h2 id="equipos-title">Cada persona ve lo que necesita para actuar a tiempo.</h2><p>Producción dirige. Técnica prepara. Animación consulta. Escenario y camarines siguen el ritmo sin depender de una cadena de mensajes.</p></div>
+      <div class="live-proof-layout"><figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar la consola de operación en vivo"><img src="assets/product/live-console.png" width="1366" height="768" loading="lazy" decoding="async" alt="Consola de operación en vivo con bloque actual y siguiente bloque"></button><figcaption><strong>Operación en vivo</strong><span>Lee el estado del show, el bloque actual y la siguiente referencia desde cualquier pantalla autorizada.</span></figcaption></figure><div class="live-copy"><div class="live-copy-item"><h3>Producción</h3><p>Avanza, pausa o cambia de modo con una pauta que conserva sus horarios y referencias.</p></div><div class="live-copy-item"><h3>Animación y guion</h3><p>Encuentra el texto y las indicaciones del bloque que corresponde al momento del evento.</p></div><div class="live-copy-item"><h3>Escenario y camarines</h3><p>Consulta la vista que necesitas: actual, anterior, siguiente y pendientes, sin entrar a editar la pauta.</p></div></div></div>
     </section>
 
-    <section id="como-funciona" class="steps-section" aria-labelledby="pasos-title">
-      <div class="section-heading">
-
-        <h2 id="pasos-title">De una idea a una operación alineada.</h2>
-      </div>
-      <ol class="steps">
-        <li><strong>01</strong><span>Crea tu cuenta y abre un nuevo evento.</span></li>
-        <li><strong>02</strong><span>Define horarios, bloques e indicaciones.</span></li>
-        <li><strong>03</strong><span>Invita a tu equipo y asigna sus permisos.</span></li>
-        <li><strong>04</strong><span>Opera la pauta durante el espectáculo.</span></li>
-      </ol>
+    <section class="coordination-section" aria-labelledby="coordination-title">
+      <div class="section-heading"><p class="section-index">EL EQUIPO CONECTADO</p><h2 id="coordination-title">Las instrucciones llegan con contexto, no perdidas en el chat.</h2><p>Usa el chat interno para conversar por evento y los avisos para enviar una instrucción concreta y confirmar que fue recibida.</p></div>
+      <div class="coordination-grid"><div class="coordination-example" aria-label="Ejemplo de comunicación interna"><div class="coordination-example-head"><span>CHAT DEL EVENTO</span><b>3 mensajes nuevos</b></div><div class="message-line"><strong>Producción</strong><p>¿Sonido listo para el bloque 06?</p><time>19:42</time></div><div class="message-line is-reply"><strong>Sonido</strong><p>Micrófonos revisados. Listos para salir.</p><time>19:43</time></div><div class="notice-line"><span>AVISO · BLOQUE 06</span><strong>Preparar entrada de artista</strong><em>Confirmar recibido</em></div></div><div class="coordination-list"><article><h3>Chat por evento</h3><p>Mensajes internos para el equipo autorizado, con autor, hora y bloque opcional.</p></article><article><h3>Avisos con confirmación</h3><p>Envía a una persona, un área o todo el equipo y distingue leer de confirmar recibido.</p></article><article><h3>Permisos claros</h3><p>El equipo participa según su acceso. Los observadores externos no reciben información interna.</p></article></div></div>
     </section>
 
-    <section id="preguntas" class="faq-section" aria-labelledby="faq-title">
-      <div class="section-heading"><h2 id="faq-title">Lo esencial, sin rodeos.</h2></div>
-      <div class="faq-list">
-        <details><summary>¿Qué puedo hacer hoy con T-Show?</summary><p>Crear y ajustar un timing, organizar bloques y utilizar el modo en vivo para seguir una pauta de evento.</p></details>
-        <details><summary>¿Necesito instalar algo?</summary><p>No. T-Show funciona desde el navegador.</p></details>
-        <details><summary>¿Puedo usarlo para eventos que no son conciertos?</summary><p>Sí. Está pensado para cualquier producción con una secuencia, horarios y un equipo que coordinar.</p></details>
-        <details><summary>¿Qué es PASSLINK?</summary><p>Es nuestra plataforma de boletaje y control de accesos: permite vender entradas sin comisión por ticket, emitir tickets QR, validar sin internet, controlar aforos y consultar reportes.</p></details>
-        <details><summary>¿Cómo conecto T-Show con PASSLINK?</summary><p>Primero contrata PASSLINK y crea tu evento. Después, desde Pro o superior en T-Show, abre <strong>Métricas</strong>, elige el evento equivalente y pulsa Conectar. Cada evento de PASSLINK se vincula con un único proyecto de T-Show.</p></details>
-        <details><summary>¿PASSLINK viene incluido en T-Show?</summary><p>No. PASSLINK se contrata por separado. Pro, Max y Empresa habilitan la conexión de métricas desde T-Show; Starter no incluye esa conexión.</p></details>
-        <details><summary>¿Puedo vender entradas desde T-Show?</summary><p>La venta y gestión de entradas se realizan en PASSLINK. T-Show permite consultar las métricas del evento conectado.</p></details>
-        <details><summary>¿Cómo trabaja mi equipo?</summary><p>Invita a cada persona desde Equipo y asigna los permisos disponibles. Las personas invitadas trabajan sobre el proyecto compartido, sin necesitar un plan Pro propio para consultar su integración.</p></details>
-      </div>
-    </section>
+    <section class="advanced-section" aria-labelledby="advanced-title"><div class="section-heading"><p class="section-index">PARA ANTICIPAR</p><h2 id="advanced-title">Cuando el plan cambia, puedes revisar el impacto antes de decidir.</h2><p>Herramientas adicionales para producción: consulta preparada sin conexión, ensayos aislados y simulación de ajustes de tiempo, según la configuración de tu evento.</p></div><div class="advanced-list"><article><strong>Ensayos aislados</strong><span>Practica avances y pausas sin afectar la ejecución real.</span></article><article><strong>Ajustes de atraso</strong><span>Simula una recuperación y revisa los bloques afectados antes de aplicarla.</span></article><article><strong>Consulta sin conexión</strong><span>Conserva la última pauta confirmada para consultar información cuando no haya red.</span></article></div><p class="section-note">La consulta sin conexión es de solo lectura; los cambios compartidos requieren reconexión.</p></section>
 
-    <section id="contacto" class="contact-section" aria-labelledby="contact-title">
-      <div class="section-heading"><h2 id="contact-title">Hablemos de tu próxima producción.</h2><p>Cuéntanos qué necesitas coordinar. BaseAndes responderá en contacto@baseandes.com.</p></div>
-      <form id="contactForm" class="contact-form" novalidate>
-        <label>Nombre<input name="name" required maxlength="120" autocomplete="name" placeholder="Tu nombre"></label>
-        <label>Correo<input name="email" type="email" required maxlength="180" autocomplete="email" placeholder="nombre@organizacion.cl"></label>
-        <label>Organización <span>(opcional)</span><input name="organization" maxlength="180" autocomplete="organization" placeholder="Municipalidad, productora o empresa"></label>
-        <label>Mensaje<textarea name="message" required minlength="10" maxlength="4000" rows="5" placeholder="Cuéntanos qué tipo de evento necesitas coordinar"></textarea></label>
-        <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="contact-honeypot">
-        <p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p>
-        <button class="button button-light" type="submit">Enviar consulta</button>
-      </form>
-    </section>
+    <section id="como-funciona" class="steps-section" aria-labelledby="pasos-title"><div class="section-heading"><p class="section-index">CÓMO SE EMPIEZA</p><h2 id="pasos-title">De una idea a una operación alineada.</h2></div><ol class="steps"><li><strong>01</strong><span><b>Crea el evento.</b> Define su nombre, fecha, bloques y horarios.</span></li><li><strong>02</strong><span><b>Prepara la pauta.</b> Añade guion, indicaciones, áreas, tareas y responsables.</span></li><li><strong>03</strong><span><b>Incorpora al equipo.</b> Invita a cada persona con el acceso que necesita.</span></li><li><strong>04</strong><span><b>Opera el show.</b> Sigue el bloque actual, comunica cambios y consulta lo que viene.</span></li></ol></section>
 
-    <section class="closing" aria-labelledby="closing-title">
+    <section id="planes" class="plans-section" aria-labelledby="planes-title"><div class="plans-heading"><div class="section-heading"><p class="section-index">PLANES</p><h2 id="planes-title">Empieza con un evento. Escala cuando tu operación lo necesite.</h2><p>Pro está pensado para equipos que coordinan una agenda de producciones y necesitan trabajar sobre una misma referencia.</p></div><div class="pricing-controls" role="group" aria-label="Período de precios"><span>Precios en CLP</span><div class="pricing-toggle"><button type="button" class="is-selected" data-billing="monthly" aria-pressed="true">Mensual</button><button type="button" data-billing="annual" aria-pressed="false">Anual <em>Ahorra 30 %</em></button></div></div></div><div class="feature-list plans-list"><article class="price-card"><div class="price-card-content"><p class="plan-label">PARA EMPEZAR</p><h3>Starter</h3><p>Empieza con tu primer evento.</p><div class="plan-price"><strong>Gratis</strong><small>para comenzar</small></div><a class="plan-button" href="register.html">Crear cuenta</a><div class="plan-divider"></div><ul><li class="included">1 proyecto</li><li class="included">Escaleta, guion y operación en vivo</li><li class="excluded">Conexión PASSLINK</li></ul></div></article><article class="price-card plan-featured"><div class="price-card-content"><p class="plan-label">PARA EQUIPOS DE PRODUCCIÓN</p><h3>Pro</h3><p>Coordina una agenda de eventos y trabaja con tu equipo en vivo.</p><div class="plan-price"><strong data-monthly="$29.990" data-annual="$20.993">$29.990</strong><small data-monthly="al mes" data-annual="al mes equivalente">al mes</small><span data-annual="total anual: $251.916" hidden>Total anual: $251.916</span></div><a class="plan-button" href="billing.html?plan=pro&amp;interval=month" data-subscribe-plan="pro">Contratar Pro</a><div class="plan-divider"></div><ul><li class="included">Hasta 20 proyectos</li><li class="included">Equipo e invitaciones</li><li class="included">Operación en vivo compartida</li><li class="included">Conexión PASSLINK disponible</li><li class="plan-footnote">PASSLINK se contrata por separado</li><li class="plan-footnote">Renovación automática del plan</li></ul></div></article><article class="price-card"><div class="price-card-content"><p class="plan-label">PARA OPERACIONES INTENSIVAS</p><h3>Max</h3><p>Más capacidad para una agenda intensiva.</p><div class="plan-price"><strong data-monthly="$49.990" data-annual="$34.993">$49.990</strong><small data-monthly="al mes" data-annual="al mes equivalente">al mes</small><span data-annual="total anual: $419.916" hidden>Total anual: $419.916</span></div><a class="plan-button" href="billing.html?plan=max&amp;interval=month" data-subscribe-plan="max">Contratar Max</a><div class="plan-divider"></div><ul><li class="included">Hasta 50 proyectos</li><li class="included">Equipo y operación en vivo</li><li class="included">Conexión PASSLINK disponible</li><li class="plan-footnote">PASSLINK se contrata por separado</li><li class="plan-footnote">Renovación automática del plan</li></ul></div></article><article class="price-card enterprise-card"><div class="price-card-content"><p class="plan-label">PARA ORGANIZACIONES</p><h3>Empresa</h3><p>Una configuración alineada con el volumen y las necesidades de tu organización.</p><div class="plan-price"><strong>A medida</strong></div><a class="plan-button" href="#contacto" data-plan="Empresa">Hablar con ventas</a><div class="plan-divider"></div><ul><li class="included">Proyectos ilimitados</li><li class="included">Conexión PASSLINK disponible</li><li class="included">Acompañamiento comercial</li><li class="plan-footnote">Requiere contratar PASSLINK por separado</li></ul></div></article></div><p class="plans-note">Los precios se expresan en pesos chilenos. El plan anual se cobra por adelantado. La disponibilidad de contratación se verifica al entrar al flujo seguro de pagos.</p></section>
 
-      <h2 id="closing-title">Prepara tu próximo evento con una pauta compartida.</h2>
-      <a class="button button-light" href="register.html">Crear cuenta</a>
-    </section>
+    <section id="ticketera" class="integration-section" aria-labelledby="ticketera-title"><div class="section-heading"><p class="passlink-label">PASSLINK · SERVICIO INDEPENDIENTE</p><h2 id="ticketera-title">Vende entradas y consulta sus resultados desde tu operación.</h2><p>PASSLINK es nuestra plataforma de boletaje y control de accesos. Se contrata por separado y, desde Pro en T-Show, puedes conectar el evento para consultar sus métricas.</p></div><div class="integration-layout"><div><ol class="passlink-steps"><li>Contrata PASSLINK y crea tu evento de venta.</li><li>En T-Show Pro o superior, abre <strong>Métricas</strong>.</li><li>Elige el evento correspondiente y pulsa <strong>Conectar</strong>.</li></ol><div class="passlink-capabilities"><strong>PASSLINK incluye</strong><span>Boletaje sin comisión por ticket</span><span>Tickets QR y validación offline</span><span>Aforos, categorías y reportes en vivo</span><span>Recaudación directa a tu cuenta</span></div><p>La venta, emisión y gestión de entradas se realizan en PASSLINK. T-Show consulta las métricas del evento conectado.</p><div class="passlink-actions"><a class="button button-light" href="https://ticketera-five.vercel.app/landing" target="_blank" rel="noopener noreferrer">Conocer PASSLINK</a><a class="text-action" href="#planes">Ver planes de T-Show</a></div></div><figure class="screen-card"><button class="screen-frame screenshot-open" type="button" aria-label="Ampliar resultados de PASSLINK"><img src="assets/product/metrics-demo.png" width="1366" height="964" loading="lazy" decoding="async" alt="Resultados de PASSLINK en T-Show con datos de demostración"></button><figcaption><strong>Resultados de PASSLINK en T-Show</strong><span>Consulta entradas emitidas, acreditaciones e ingresos del evento conectado.</span></figcaption></figure></div></section>
+
+    <section id="preguntas" class="faq-section" aria-labelledby="faq-title"><div class="section-heading"><p class="section-index">PREGUNTAS</p><h2 id="faq-title">Lo esencial, sin rodeos.</h2><p>Conoce qué puede hacer cada persona del equipo y qué ocurre con la información del evento.</p></div><div class="faq-list"><details><summary>¿Qué problema resuelve T-Show?</summary><p>Reúne escaleta, horarios, guion, indicaciones y coordinación del equipo en una misma referencia para preparar y operar un evento.</p></details><details><summary>¿Qué puede hacer mi equipo?</summary><p>Puedes invitar personas al proyecto y asignar los permisos disponibles. Producción, técnica, animación, escenario y camarines consultan la información que necesitan según su acceso.</p></details><details><summary>¿El chat está abierto a observadores externos?</summary><p>No. El chat y los avisos internos están disponibles para miembros autorizados del evento. Los observadores por QR solo consultan la información pública habilitada.</p></details><details><summary>¿Puedo operar sin internet?</summary><p>La consulta preparada conserva la última información confirmada para lectura. Los cambios compartidos, confirmaciones y envíos requieren reconexión.</p></details><details><summary>¿Qué pasa si necesito ajustar un atraso?</summary><p>Puedes revisar una simulación de los bloques afectados antes de aplicar un ajuste. La vista previa no modifica la pauta por sí sola.</p></details><details><summary>¿Necesito instalar algo?</summary><p>No. T-Show funciona desde el navegador en las pantallas autorizadas del equipo.</p></details><details><summary>¿Qué es PASSLINK?</summary><p>Es nuestra plataforma independiente de boletaje y control de accesos. La venta y gestión de entradas se realizan allí; T-Show permite consultar las métricas del evento conectado desde Pro o superior.</p></details><details><summary>¿Cómo se renuevan los planes?</summary><p>Pro y Max se renuevan automáticamente según el período elegido. Puedes cancelar la próxima renovación y conservarás el acceso hasta el final del período pagado.</p></details></div></section>
+
+    <section id="contacto" class="contact-section" aria-labelledby="contact-title"><div class="section-heading"><p class="section-index">HABLEMOS</p><h2 id="contact-title">Cuéntanos cómo organizas tu próxima producción.</h2><p>Si necesitas una configuración para tu organización o quieres revisar el flujo antes de contratar, escríbenos.</p></div><form id="contactForm" class="contact-form" novalidate><label>Nombre<input name="name" required maxlength="120" autocomplete="name" placeholder="Tu nombre"></label><label>Correo<input name="email" type="email" required maxlength="180" autocomplete="email" placeholder="nombre@organizacion.cl"></label><label>Organización <span>(opcional)</span><input name="organization" maxlength="180" autocomplete="organization" placeholder="Municipalidad, productora o empresa"></label><label>Mensaje<textarea name="message" required minlength="10" maxlength="4000" rows="5" placeholder="Cuéntanos qué tipo de evento necesitas coordinar"></textarea></label><input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="contact-honeypot"><p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p><button class="button button-light" type="submit">Enviar consulta</button></form></section>
+
+    <section class="closing" aria-labelledby="closing-title"><p class="section-index">LISTO PARA EL PRÓXIMO SHOW</p><h2 id="closing-title">Lleva a tu equipo a la misma referencia.</h2><div class="closing-actions"><a class="button button-light" href="billing.html?plan=pro&amp;interval=month" data-subscribe-plan="pro">Contratar Pro</a><a class="text-action" href="register.html">Crear cuenta gratis</a></div></section>
   </main>
 
-  <footer class="site-footer">
-    <a class="site-footer-brand" href="/" aria-label="T-Show, inicio"><img src="assets/branding/tshow-isotipo-footer.png" width="72" height="72" alt="T-Show"></a>
-    <div class="site-footer-copy"><span>© T-Show · BaseAndes Software</span><span>Software para eventos que necesitan llegar a tiempo.</span></div>
-  </footer>
-  <nav class="site-legal-links" aria-label="Enlaces legales"><a href="privacy.html">Privacidad</a><a href="terms.html">Términos</a><a href="refunds.html">Reembolsos</a><a href="data-policy.html">Datos</a></nav>
-  <dialog id="screenshotDialog" aria-label="Captura ampliada del sistema"><button type="button" id="closeScreenshot">Cerrar imagen</button><img id="expandedScreenshot" alt=""></dialog>
-  <script src="js/ambient-background.js"></script>
-  <script>window.AmbientBackground?.mount({ mode: 'workspace' });</script>
-  <script src="js/mobile-shell.js"></script>
-  <script src="js/landing-interactions.js"></script>
-  <script>
-    (function () { var form = document.getElementById('contactForm'); var status = document.getElementById('contactStatus'); if (!form) return; form.addEventListener('submit', async function (event) { event.preventDefault(); var data = Object.fromEntries(new FormData(form)); status.dataset.status = 'warning'; status.textContent = 'Enviando…'; try { var response = await fetch((window.SHOWTIME_API_URL || 'https://t-show-api.onrender.com') + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); var body = await response.json(); if (!response.ok) throw new Error(body.message); status.dataset.status = 'success'; status.textContent = body.message || 'Mensaje enviado correctamente.'; form.reset(); } catch (error) { status.dataset.status = 'error'; status.textContent = error.message || 'No se pudo enviar. Escríbenos a contacto@baseandes.com.'; } }); }());
-  </script>
+  <footer class="site-footer"><a class="site-footer-brand" href="/" aria-label="T-Show, inicio"><img src="assets/branding/tshow-isotipo-footer.png" width="72" height="72" alt="T-Show"></a><div class="site-footer-copy"><span>© T-Show · BaseAndes Software</span><span>Software para eventos que necesitan llegar a tiempo.</span></div></footer><nav class="site-legal-links" aria-label="Enlaces legales"><a href="privacy.html">Privacidad</a><a href="terms.html">Términos</a><a href="refunds.html">Reembolsos</a><a href="data-policy.html">Datos</a></nav><dialog id="screenshotDialog" aria-label="Captura ampliada del sistema"><button type="button" id="closeScreenshot">Cerrar imagen</button><img id="expandedScreenshot" alt=""></dialog>
+  <script src="js/ambient-background.js"></script><script>window.AmbientBackground?.mount({ mode: 'workspace' });</script><script src="js/mobile-shell.js"></script><script src="js/landing-interactions.js"></script><script>(function () { var form = document.getElementById('contactForm'); var status = document.getElementById('contactStatus'); if (!form) return; form.addEventListener('submit', async function (event) { event.preventDefault(); var data = Object.fromEntries(new FormData(form)); status.dataset.status = 'warning'; status.textContent = 'Enviando…'; try { var response = await fetch((window.SHOWTIME_API_URL || 'https://t-show-api.onrender.com') + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); var body = await response.json(); if (!response.ok) throw new Error(body.message); status.dataset.status = 'success'; status.textContent = body.message || 'Mensaje enviado correctamente.'; form.reset(); } catch (error) { status.dataset.status = 'error'; status.textContent = error.message || 'No se pudo enviar. Escríbenos a contacto@baseandes.com.'; } }); }());</script>
 </body>
 </html>
