@@ -352,6 +352,15 @@ router.get('/projects/:id/invitations', requireSupabaseAuth, async (req, res) =>
 router.post('/projects/:id/invitations', requireSupabaseAuth, async (req, res) => {
   const granted = await accessForRequest(req.params.id, req, true);
   if (!granted || !['owner', 'admin'].includes(granted.role)) return res.status(403).json({ success: false, message: 'Solo el propietario puede invitar.' });
+  const entitlement = await getEntitlement(granted.project.owner_id, req.user.profile?.role);
+  if (entitlement.memberLimit !== null) {
+    const [{ count: memberCount }, { count: pendingCount }] = await Promise.all([
+      supabase.from('tshow_project_members').select('user_id', { count: 'exact', head: true }).eq('project_id', req.params.id),
+      supabase.from('tshow_invitations').select('id', { count: 'exact', head: true }).eq('project_id', req.params.id).eq('status', 'pending').gte('expires_at', new Date().toISOString())
+    ]);
+    const usedSlots = 1 + Number(memberCount || 0) + Number(pendingCount || 0);
+    if (usedSlots >= entitlement.memberLimit) return res.status(409).json({ success: false, code: 'MEMBER_LIMIT_REACHED', message: `Tu plan permite hasta ${entitlement.memberLimit} integrantes por evento, incluyendo al propietario.` });
+  }
   const invitationWindow = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const { count: recentInvites } = await supabase.from('tshow_invitations').select('id', { count: 'exact', head: true }).eq('invited_by', req.user.id).gte('created_at', invitationWindow);
   if (Number(recentInvites || 0) >= 10) return res.status(429).json({ success: false, code: 'INVITATION_RATE_LIMIT', message: 'Alcanzaste el límite de invitaciones por hora. Intenta nuevamente más tarde.' });
@@ -491,7 +500,7 @@ router.post('/invitations/:token/accept', requireAuthenticatedUser, async (req, 
 });
 
 router.get('/billing/plans', requireSupabaseAuth, async (req, res) => {
-  const { data, error } = await supabase.from('tshow_plans').select('*').eq('active', true).order('interval');
+  const { data, error } = await supabase.from('tshow_plans').select('*').eq('active', true).eq('checkout_enabled', true).order('interval');
   const plans = (data || []).map(plan => ({ ...plan, annual_original_clp: plan.interval === 'year' && plan.discount_percent ? Math.round(Number(plan.amount_clp) / (1 - Number(plan.discount_percent) / 100)) : null, annual_offer_clp: plan.interval === 'year' ? plan.amount_clp : null }));
   res.status(error ? 400 : 200).json({ success: !error, data: plans, message: error?.message });
 });

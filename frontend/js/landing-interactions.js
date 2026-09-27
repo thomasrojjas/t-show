@@ -18,9 +18,55 @@
   }));
   updatePrices('monthly');
   updateSubscriptionLinks('monthly');
+  const ecosystem = document.querySelector('[data-ecosystem-explorer]');
+  const ecosystemTabs = [...document.querySelectorAll('[data-ecosystem-tab]')];
+  const ecosystemPanels = [...document.querySelectorAll('[data-ecosystem-panel]')];
+  const selectEcosystem = key => {
+    ecosystemTabs.forEach(tab => {
+      const selected = tab.dataset.ecosystemTab === key;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    ecosystemPanels.forEach(panel => {
+      const active = panel.dataset.ecosystemPanel === key;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+    });
+    window.TShowAnalytics?.capture('ecosystem_step_view', { module: key });
+  };
+  ecosystemTabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectEcosystem(tab.dataset.ecosystemTab));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? ecosystemTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + ecosystemTabs.length) % ecosystemTabs.length;
+      ecosystemTabs[next].focus();
+      selectEcosystem(ecosystemTabs[next].dataset.ecosystemTab);
+    });
+  });
+  if (ecosystem) selectEcosystem('sale');
+  const hardwareDemo = document.querySelector('[data-hardware-demo]');
+  document.querySelector('[data-hardware-trigger]')?.addEventListener('click', event => {
+    const button = event.currentTarget;
+    if (hardwareDemo?.classList.contains('is-printing')) return;
+    hardwareDemo?.classList.add('is-printing');
+    window.TShowAnalytics?.capture('hardware_demo_play');
+    button.textContent = 'Emisión demostrada';
+    window.setTimeout(() => {
+      hardwareDemo?.classList.remove('is-printing');
+      button.textContent = 'Ver emisión de demostración';
+    }, 1100);
+  });
+  document.querySelectorAll('[data-analytics-cta]').forEach(button => button.addEventListener('click', () => {
+    window.TShowAnalytics?.capture('cta_click', { destination: button.dataset.analyticsCta, section: button.closest('section')?.id || 'header' });
+  }));
   document.querySelectorAll('[data-plan]').forEach(button=>button.addEventListener('click',()=>{
-    if(!contactMessage||contactMessage.value.trim())return;
-    contactMessage.value=`Me interesa el plan ${button.dataset.plan} (${billingPeriod()==='annual'?'modalidad anual':'modalidad mensual'}).`;
+    if(!contactMessage)return;
+    const form=document.getElementById('contactForm');
+    const setHidden=(name,value)=>{let input=form?.querySelector(`[name="${name}"]`);if(!input&&form){input=document.createElement('input');input.type='hidden';input.name=name;form.appendChild(input);}if(input)input.value=value;};
+    const period=billingPeriod()==='annual'?'annual':'monthly';
+    setHidden('plan',button.dataset.plan||'');setHidden('interval',period);
+    if(!contactMessage.value.trim())contactMessage.value=`Me interesa el plan ${button.dataset.plan} (${period==='annual'?'modalidad anual':'modalidad mensual'}).`;
   }));
   const dialog=document.getElementById('screenshotDialog');
   let opener=null;

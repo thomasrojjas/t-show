@@ -11,13 +11,13 @@ async function passlinkAllowed(accountId, platformRole) {
   const now=Date.now();
   if(profile.entitlement_starts_at&&!(Date.parse(profile.entitlement_starts_at)<=now))return false;
   if(profile.entitlement_expires_at&&!(Date.parse(profile.entitlement_expires_at)>now))return false;
-  const subscription=await read(supabase.from('tshow_subscriptions').select('status,current_period_end,tshow_plans(code)').eq('account_id',accountId).maybeSingle());
+  const subscription=await read(supabase.from('tshow_subscriptions').select('status,current_period_end,tshow_plans(code,tier)').eq('account_id',accountId).maybeSingle());
   if(subscription){
     const plan=Array.isArray(subscription.tshow_plans)?subscription.tshow_plans[0]:subscription.tshow_plans;
     if(subscription.status!=='active')return false;
     if(subscription.current_period_end&&!(Date.parse(subscription.current_period_end)>now))return false;
     if(!plan)throw unavailable();
-    return Boolean(tiers[plan.code]);
+    return Boolean(tiers[plan.code] || ['pro', 'max', 'enterprise'].includes(plan.tier));
   }
   return Boolean(tiers[profile.account_plan]) && !['suspended','expired','cancelled','read_only'].includes(profile.commercial_status);
 }

@@ -70,7 +70,7 @@ const flowSignature = parameters => {
 };
 
 async function activePlan(planId) {
-  const { data } = await supabase.from('tshow_plans').select('*').eq('id', planId).eq('active', true).maybeSingle();
+  const { data } = await supabase.from('tshow_plans').select('*').eq('id', planId).eq('active', true).eq('checkout_enabled', true).maybeSingle();
   return data && Number.isInteger(data.amount_clp) && data.amount_clp > 0 ? data : null;
 }
 
@@ -147,6 +147,10 @@ async function sendProviderFailure(res, error, attempt = null) {
 async function activateVerifiedAttempt(attempt, paymentId, providerSubscriptionId, providerStatus, providerPayload) {
   if (!attempt || attempt.status === 'approved') return attempt;
   const { data: plan } = await supabase.from('tshow_plans').select('*').eq('id', attempt.plan_id).maybeSingle();
+  if (plan && Number(plan.catalog_version || 1) < 2) {
+    await updateAttempt(attempt.id, { status: 'cancelled', failure_code: 'LEGACY_CATALOG_RETIRED', reconciled_at: new Date().toISOString(), next_retry_at: null });
+    throw Object.assign(new Error('Esta contratación pertenece a un catálogo anterior y no puede activarse.'), { code: 'LEGACY_CATALOG_RETIRED', status: 409 });
+  }
   if (!plan || Number(plan.amount_clp) !== Number(attempt.amount_clp)) {
     await updateAttempt(attempt.id, { status: 'review', provider_status: providerStatus, failure_code: 'PLAN_AMOUNT_MISMATCH', reconciled_at: new Date().toISOString() });
     throw Object.assign(new Error('El monto verificado no coincide con el catálogo.'), { code: 'PAYMENT_AMOUNT_MISMATCH' });
@@ -154,7 +158,7 @@ async function activateVerifiedAttempt(attempt, paymentId, providerSubscriptionI
   const periodEnd = new Date();
   if (plan.interval === 'year') periodEnd.setUTCFullYear(periodEnd.getUTCFullYear() + 1);
   else periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1);
-  const accountPlan = String(plan.code || '').startsWith('max') ? 'max' : String(plan.code || '').startsWith('pro') ? 'pro' : null;
+  const accountPlan = plan.tier === 'max' || String(plan.code || '').startsWith('max') ? 'max' : plan.tier === 'pro' || String(plan.code || '').startsWith('pro') ? 'pro' : null;
   if (!accountPlan) throw Object.assign(new Error('El plan no tiene un nivel comercial válido.'), { code: 'PLAN_ENTITLEMENT_INVALID' });
 
   const now = new Date().toISOString();

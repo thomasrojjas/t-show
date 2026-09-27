@@ -17,7 +17,7 @@
     <header class="billing-head">
       <p class="form-kicker">PLANES Y PAGOS</p>
       <h1>Elige el ritmo<br>de tu operación.</h1>
-      <p class="auth-subtitle">Contrata tu plan con Mercado Pago. Los planes Pro y Max se renuevan automáticamente según el período elegido.</p>
+      <p class="auth-subtitle">Las suscripciones con ticketera se activan mediante una propuesta comercial confirmada. Mercado Pago se habilita después de revisar stock, contrato y despacho.</p>
     </header>
     <section class="plans" id="plans" aria-live="polite"><p>Cargando planes…</p></section>
     <section class="subscription-card" id="subscription" aria-live="polite" hidden></section>
@@ -105,7 +105,7 @@
         }
         const result = await Auth.api('/api/billing/plans');
         const list = result.data || [];
-        if (!list.length) { plans.innerHTML = '<p class="auth-subtitle">Los planes estarán disponibles próximamente.</p>'; return; }
+        if (!list.length) { plans.innerHTML = '<p class="auth-subtitle">No hay planes de autoservicio disponibles. Solicita Pro, Max o Venue desde la landing para revisar la propuesta y el equipamiento.</p>'; return; }
         const selected = list.find(plan => String(plan.code || '').toLowerCase().startsWith(wantedCode) && plan.interval === wantedInterval);
         plans.innerHTML = list.map(plan => {
           const amount = Number(plan.amount_clp || 0);
